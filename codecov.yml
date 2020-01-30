@@ -1,0 +1,20 @@
+coverage:
+  status:
+    project:
+      default:
+       enabled: yes
+       if_no_uploads: success   # will post commit status of "success" if no coverage reports we uploaded options: success, error, failure
+       if_not_found: success  # if parent is not found report status as success, error, or failure
+       if_ci_failed: success    # if ci fails report status as success, error, or failure
+    patch:
+      default:
+        enabled: yes
+        if_no_uploads: success   # will post commit status of "success" if no coverage reports we uploaded options: success, error, failure
+        if_not_found: success  # if parent is not found report status as success, error, or failure
+        if_ci_failed: success    # if ci fails report status as success, error, or failure
+    changes:
+      default:
+        enabled: yes
+        if_no_uploads: success   # will post commit status of "success" if no coverage reports we uploaded options: success, error, failure
+        if_not_found: success  # if parent is not found report status as success, error, or failure
+        if_ci_failed: success    # if ci fails report status as success, error, or failure
