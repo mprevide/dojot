@@ -1,6 +1,6 @@
 const { InfluxDB, Point } = require('@influxdata/influxdb-client');
 const { Logger } = require('@dojot/microservice-sdk');
-const { parseISODateToUnixNs } = require('../Utils');
+const { parseDateTimeToUnixNs } = require('../Utils');
 
 const logger = new Logger('influxdb-storer:influxdb/WriterData');
 /**
@@ -48,7 +48,7 @@ class WriterData {
   }
 
   /**
-   * Get a instance of  WriteApi for the supplied organization and bucket.
+   * Get an instance of  WriteApi for the supplied organization and bucket.
    *
    * @param {string} org Organization Name
    *
@@ -88,8 +88,8 @@ class WriterData {
    * @throws If Cannot write data
    *
    * NOTE: in the future, the strategy must change to ensure that a message is not lost,
-   * the commit must be manual for kafka for example, but here a batch strategy from the library
-   * is used, when something goes wrong when writing, an exception is not thrown and
+   * the commit must be manual for kafka for example, but here a batch strategy from the library.
+   * When something goes wrong when writing, an exception is not thrown and
    * as the messages are sent in batch there is no way to be sure which message was write
    * to commit or not, even changing the batch to 1 and deactivating the auto flush,
    * something that can be used to confirm the data is not returned.
@@ -105,11 +105,7 @@ class WriterData {
         Object.entries(attrs).forEach(([key, value]) => {
           logger.debug(`writer: setting key=${key}, value=${value}, type=${typeof value}`);
           if (typeof value === 'number') {
-            // if (Number.isInteger(value)) {
-            //   point.intField(key, value);
-            // } else {
             point.floatField(key, value);
-            // }
           } else if (typeof value === 'boolean') {
             point.booleanField(key, value);
           } else {
@@ -128,7 +124,7 @@ class WriterData {
   }
 
   /**
-   * Parse data to using with influxdb writer
+   * Parse data to use with influxdb writer
    *
    * @param {number|string} timestamp A integer unix timestamp ms
    *                        or a string restricted ISO 8601 (YYYY-MM-DDThh:mm:ss.fffffffffZ)
@@ -139,7 +135,7 @@ class WriterData {
       if (timestamp && Number.isInteger(timestamp) && timestamp >= 0) {
         return `${timestamp}000000`;
       } if (timestamp && typeof timestamp === 'string') {
-        return parseISODateToUnixNs(timestamp);
+        return parseDateTimeToUnixNs(timestamp);
       }
     } catch (e) {
       logger.warn(`parseDataToInfluxDB: Some error when trying parse the timestamp ${timestamp} `, e);

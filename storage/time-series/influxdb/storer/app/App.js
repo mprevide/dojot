@@ -1,19 +1,26 @@
 const flatten = require('flat');
-const { ConfigManager, Logger } = require('@dojot/microservice-sdk');
+const {
+  ServiceStateManager,
+  ConfigManager: { getConfig, transformObjectKeys },
+  Logger,
+} = require('@dojot/microservice-sdk');
+
 const camelCase = require('lodash.camelcase');
-const ServiceState = require('./ServiceStateMgmt');
 const InfluxState = require('./influx/State');
 const KafkaConsumer = require('./kafka/DojotConsumer');
 const InfluxWriter = require('./influx/WriterData');
 const InfluxOrgs = require('./influx/Organizations');
 const InfluxMeasurement = require('./influx/Measurements');
 
-const { influx: configInflux, delete: configDelete } = ConfigManager.getConfig('STORER');
+const { influx: configInflux, delete: configDelete, lightship: configLightship } = getConfig('STORER');
 
 const { write: { options: influxWriteOptions } } = flatten.unflatten(configInflux);
 const configInfluxWriteOptions = influxWriteOptions ? flatten(influxWriteOptions) : {};
-const configInfluxWriteOptionsCamelCase = ConfigManager
-  .transformObjectKeys(configInfluxWriteOptions, camelCase);
+const configInfluxWriteOptionsCamelCase = transformObjectKeys(configInfluxWriteOptions, camelCase);
+
+const serviceState = new ServiceStateManager({
+  lightship: transformObjectKeys(configLightship, camelCase),
+});
 
 const logger = new Logger('influxdb-storer:App');
 
@@ -64,20 +71,26 @@ class App {
   async init() {
     logger.info('init: Initializing the influxdb-storer ...');
     try {
+      serviceState.registerService('kafka');
+      serviceState.registerService('influxdb');
       this.createHealthCheckers();
       this.defineShutdown();
 
-      // initializes kafka consumer
-      await this.kafkaConsumer.init();
-
-      const kafkaIsConnected = await this.kafkaConsumer.isConnected();
-      if (!kafkaIsConnected) {
-        throw new Error('Kafka is not ready');
-      }
       const influxIsReady = await this.influxState.isReady();
       if (!influxIsReady) {
         throw new Error('Influxdb is not ready');
       }
+
+      serviceState.signalReady('influxdb');
+
+      // initializes kafka consumer
+      await this.kafkaConsumer.init();
+
+      // const kafkaIsConnected = await this.kafkaConsumer.isConnected();
+      // if (!kafkaIsConnected) {
+      //   throw new Error('Kafka is not ready');
+      // }
+      // serviceState.signalReady('kafka');
 
       // create the initial org, user and bucket
       await this.influxOrgs.initOnboarding();
@@ -85,14 +98,9 @@ class App {
       // associate by callback kafka consumers and influxdb actions
       this.initCallbacksTenantToCreateAndDelOrgs();
       this.initCallbacksDevicesCreateAndDelData();
-
-      // Signals to the health check service that the service is ready.
-      logger.debug('Init: Signaling that the service is ready...');
-      ServiceState.signalReady();
-      logger.debug('Init: ...signaled.');
     } catch (e) {
       logger.error('init:', e);
-      await ServiceState.shutdown();
+      throw e;
     }
     logger.info('init: ... service initialized.');
   }
@@ -108,10 +116,15 @@ class App {
       logger.debug(`callbackWriteData: tenant=${tenant}`);
       logger.debug(`callbackWriteData: deviceid=${deviceid}`);
       logger.debug(`callbackWriteData: timestamp=${timestamp}`);
+      logger.debug(`callbackWriteData: attrs=${JSON.stringify(attrs)}`);
       try {
         await boundInfluxWriter(tenant, deviceid, attrs, timestamp);
       } catch (e) {
-        logger.error('callbackWriteData:', e);
+        // TODO: We need to think in a strategy when something like this happen.
+        // One possibility would be to report some statistics like ratio of
+        // dropped messages, other possibility would be to send the
+        // unhandled messages or error notifications to a new topic of the Kafka.
+        logger.error(`callbackWriteData: tenant=${tenant} deviceid=${deviceid} timestamp=${timestamp} attrs=${JSON.stringify(attrs)}`, e);
       }
     };
 
@@ -125,15 +138,19 @@ class App {
       try {
         await boundInfluxMeasurementDelete(tenant, deviceid);
       } catch (e) {
-        logger.error('callbackDeleteMeasurement:', e);
+        // TODO: We need to think in a strategy when something like this happen.
+        // One possibility would be to report some statistics like ratio of
+        // dropped messages, other possibility would be to send the
+        // unhandled messages or error notifications to a new topic of the Kafka.
+        logger.error(`callbackDeleteMeasurement: tenant=${tenant} deviceid=${deviceid}`, e);
       }
     };
 
-    this.kafkaConsumer.registerCallbackDeviceData(
+    this.kafkaConsumer.registerCallbacksForDeviceDataEvents(
       callbackWriteData,
     );
 
-    this.kafkaConsumer.registerCallbackDeviceManager(
+    this.kafkaConsumer.registerCallbacksForDeviceMgmtEvents(
       callbackWriteData,
       configDelete['device.data.enable'] ? callbackDeleteMeasurement : null,
     );
@@ -152,7 +169,11 @@ class App {
       try {
         await boundCreateOrgWithBucket(tenant);
       } catch (e) {
-        logger.error('callbackCreateTenant:', e);
+        // TODO: We need to think in a strategy when something like this happen.
+        // One possibility would be to report some statistics like ratio of
+        // dropped messages, other possibility would be to send the
+        // unhandled messages or error notifications to a new topic of the Kafka.
+        logger.error(`callbackCreateTenant: tenant=${tenant}`, e);
       }
     };
 
@@ -168,11 +189,15 @@ class App {
         await boundDeleteOrgWithBucket(tenant);
         await boundWriterCloseOrg(tenant);
       } catch (e) {
-        logger.error('callbackDeleteTenant:', e);
+        // TODO: We need to think in a strategy when something like this happen.
+        // One possibility would be to report some statistics like ratio of
+        // dropped messages, other possibility would be to send the
+        // unhandled messages or error notifications to a new topic of the Kafka.
+        logger.error(`callbackDeleteTenant: tenant=${tenant}`, e);
       }
     };
 
-    this.kafkaConsumer.registerCallbackTenants(
+    this.kafkaConsumer.registerCallbackForTenantEvents(
       callbackCreateTenant,
       configDelete['tenant.data.enable'] ? callbackDeleteTenant : null,
     );
@@ -182,21 +207,29 @@ class App {
   * Defines the behaver for the shutdown
   */
   defineShutdown() {
-    const boundWriterCloseAll = this.influxWriter
+    const boundInfluxWriterCloseAll = this.influxWriter
       .closeAll.bind(this.influxWriter);
 
-    const boundUnregisterCallbacks = this.kafkaConsumer
+    const boundKafkaUnregisterCallbacks = this.kafkaConsumer
       .unregisterCallbacks.bind(this.kafkaConsumer);
+
+    const boundKafkaFinish = this.kafkaConsumer
+      .finish.bind(this.kafkaConsumer);
+
     const shutdownFunc = async () => {
       logger.warn('ShutdownHandler: Closing the influxdb-storer...');
       try {
         logger.debug('ShutdownHandler: Trying close all writer...');
-        await boundWriterCloseAll();
+        await boundInfluxWriterCloseAll();
         logger.debug('ShutdownHandler: Closed all writer.');
 
         logger.debug('ShutdownHandler: Trying Unregister Callback for kafka consumer...');
-        await boundUnregisterCallbacks();
+        await boundKafkaUnregisterCallbacks();
         logger.debug('ShutdownHandler: Unregistered callback for kafka consumer.');
+
+        logger.debug('ShutdownHandler: Trying finish kafka consumer...');
+        await boundKafkaFinish();
+        logger.debug('ShutdownHandler: Finished kafka consumer.');
 
         logger.info('ShutdownHandler: the service was gracefully shutdown');
       } catch (e) {
@@ -204,7 +237,7 @@ class App {
         throw e;
       }
     };
-    ServiceState.registerShutdown(shutdownFunc);
+    serviceState.registerShutdownHandler(shutdownFunc);
   }
 
   /**
@@ -214,9 +247,6 @@ class App {
   createHealthCheckers() {
     const boundIsHealthInflux = this.influxState
       .isHealth.bind(this.influxState);
-
-    const boundIsConnectedKafka = this.kafkaConsumer
-      .isConnected.bind(this.kafkaConsumer);
 
     const influxdbHealthChecker = async (signalReady, signalNotReady) => {
       const isHealth = await boundIsHealthInflux();
@@ -228,7 +258,11 @@ class App {
         signalNotReady();
       }
     };
-    ServiceState.addHealthChecker(influxdbHealthChecker, configInflux['heathcheck.ms']);
+    serviceState.addHealthChecker('influxdb', influxdbHealthChecker, configInflux['heathcheck.ms']);
+
+
+    const boundIsConnectedKafka = this.kafkaConsumer
+      .isConnected.bind(this.kafkaConsumer);
 
     const kafkaHealthChecker = async (signalReady, signalNotReady) => {
       const isConnected = await boundIsConnectedKafka();
@@ -240,7 +274,7 @@ class App {
         signalNotReady();
       }
     };
-    ServiceState.addHealthChecker(kafkaHealthChecker, configInflux['heathcheck.ms']);
+    serviceState.addHealthChecker('kafka', kafkaHealthChecker, configInflux['heathcheck.ms']);
   }
 }
 

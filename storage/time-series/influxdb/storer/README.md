@@ -2,6 +2,7 @@
 
 The **InfluxDB Storer** is responsible for consuming dojot's messages from Apache Kafka and creating device data series at InfluxDB.
 
+
 ## **Table of Contents**
 
 1. [Overview](#overview)
@@ -19,6 +20,7 @@ The **InfluxDB Storer** is responsible for consuming dojot's messages from Apach
             1. [Main object](#main-object)
             2. [kafka.consumer object](#kafkaconsumer-object)
             3. [kafka.topic object](#kafkatopic-object)
+        4. [Service State Manager](#service-state-manager)
    2. [How to run](#how-to-run)
 4. [Documentation](#documentation)
 5. [Issues and help](#issues-and-help)
@@ -27,7 +29,7 @@ The **InfluxDB Storer** is responsible for consuming dojot's messages from Apach
 
 ### Dojot's messages from Kafka topics
 
-The **InfluxDB-Storer** consuming dojot's messages from kafka topics  with the suffixes below and can handle the messages described below in each topic.
+The **InfluxDB-Storer** consumes dojot's messages from kafka topics with the suffixes below and can handle the messages described below in each topic.
 
 - `*.dojot.tenancy` (Messages related to tenants' life cycle)
   - `CREATE` (Tenant was created):
@@ -55,7 +57,7 @@ The **InfluxDB-Storer** consuming dojot's messages from kafka topics  with the s
         "metadata": {
             "deviceid": <string:device ID>,
             "tenant": <string: tenant>,
-            "timestamp": <integer: unix timestamp ms> | <string: restricted ISO 8601>,
+            "timestamp": <integer: unix timestamp ms> | <string: Date-time RFC3339>,
             "shouldPersist": <boolean, is optional>
         },
         "attrs":{
@@ -74,7 +76,7 @@ The **InfluxDB-Storer** consuming dojot's messages from kafka topics  with the s
         {
             "event": "configure",
             "meta": {
-                "timestamp": <integer: unix timestamp ms> | <string: restricted ISO 8601>
+                "timestamp": <integer: unix timestamp ms> | <string: Date-time RFC3339>
                 "service": <string: tenant>,
                 "shouldPersist": <boolean, is optional>
             },
@@ -112,8 +114,10 @@ Whereas that:
   - an array
   - a boolean
   - null
-- `restricted ISO 8601` means:
-  - A string described in ISO8601 with formatting: YYYY-MM-DDThh:mm:ss.fffffffffZ the fractional part (.fffffffff) being optional.
+- [`Date-time RFC3339`](https://tools.ietf.org/html/rfc3339#section-5.6) means:
+  - A string described in RFC3339. Example: YYYY-MM-DDThh:mm:ss.fffffffffZ.
+  - It can handle up to nanosecond precision  in the *time-secfrac* part.
+  - It can handle accurately up to nanoseconds, the rest will be discarded.
 - The key`shouldPersist` in attrs (is optional) means:
   - if this key does not exist or its value is `true`:  the message attributes will be persisted.
   - its value is `false` :  the message attributes will not be persisted.
@@ -138,7 +142,7 @@ __NOTE THAT__ When service starts will be created a default Organization with a 
 
 The services dependencies are listed in the next topics.
 
-- Dojot Services: They are dojot services
+- Dojot Services
 - Others Services: They are external services;
 
 ### Dojot Services
@@ -204,9 +208,9 @@ You can pass any configuration available at https://influxdata.github.io/influxd
 | Key | Purpose | Default Value | Valid Values | Environment variable
 | --- | ------- | ------------- | ------------ | --------------------
 | influx.write.options.batch.size | Maximum number of records to send in a batch | 10000 | integer  | STORER_INFLUX_WRITE_OPTIONS_BATCH_SIZE
-| influx.write.options.flush.interval | Maximum time in milliseconds to keep points in an unflushed batch (0 means don't periodically flush, only when service is down)  | 0.5 | float  | STORER_INFLUX_WRITE_OPTIONS_FLUSH_INTERVAL
+| influx.write.options.flush.interval | Maximum time in milliseconds to keep points in an unflushed batch (0 means don't periodically flush, only when service is down)  | 1 | integer  | STORER_INFLUX_WRITE_OPTIONS_FLUSH_INTERVAL
 | influx.write.options.max.retries | Maximum number of retries follow an exponential backoff strategy | 3  | integer  | STORER_INFLUX_WRITE_OPTIONS_MAX_RETRIES
-| influx.write.options.max.retry.delay | Maximum delay between retries in milliseconds | 15000  | integer | STORER_INFLUX_WRITE_OPTIONS_MIN_RETRY_DELAY
+| influx.write.options.max.retry.delay | Maximum delay between retries in milliseconds | 15000  | integer | STORER_INFLUX_WRITE_OPTIONS_MAX_RETRY_DELAY
 | influx.write.options.min.retry.delay | Minimum delay between retries in milliseconds | 1000  | integer  | STORER_INFLUX_WRITE_OPTIONS_MIN_RETRY_DELAY
 
 #### SDK Consumer
@@ -240,6 +244,16 @@ consumer.topic.metadata.refresh.interval.ms | 30000 | milliseconds (integer) | S
 | Key | Default Value | Valid Values | Environment variable
 | --- | ------------- | ------------ | --------------------
 | topic.auto.offset.reset | earliest | smallest, earliest, beginning, largest, latest, end, error | STORER_TOPIC_AUTO_OFFSET_RESET
+
+#### Service State Manager
+
+These parameters are passed directly to the SDK ServiceStateManager. Check the
+[official repository](https://github.com/dojot/dojot-microservice-sdk-js) for more info on the
+values.
+
+| Key | Default Value | Valid Values | Environment variable
+| --- | ------------- | ------------ | --------------------
+| lightship.detect.kubernetes | false | boolean | STORER_LIGHTSHIP_DETECT_KUBERNETES
 
 ### How to run
 

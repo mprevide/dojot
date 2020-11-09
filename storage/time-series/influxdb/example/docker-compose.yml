@@ -34,7 +34,7 @@ services:
     image: dojot/confluentinc-cp-kafkacat:5.0.4-1
     depends_on:
       - kafka
-    restart: "no"
+    restart: always
     command: /bin/bash -c "/kafkacat-producer.sh"
     volumes:
       - ./kafkacat-producer.sh:/kafkacat-producer.sh:Z
@@ -43,18 +43,38 @@ services:
       options:
         max-size: 100m
 
+  influxdb-retriever:
+    build:
+      context: ./../retriever/
+      dockerfile: ./Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - influxdb
+    environment:
+      RETRIEVER_LOG_VERBOSE: "true"
+      RETRIEVER_LOG_CONSOLE_LEVEL: "debug"
+    restart: always
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m
+    #volumes:
+    # - ../retriever/app/:/opt/influxdb-retriever/app/:Z
+    #command: ["npm", "run", "dev"]
+
   influxdb-storer:
     build:
       context: ./../storer/
       dockerfile: ./Dockerfile
-    ports:
-      - "9000:9000"
     depends_on:
       - kafka
       - influxdb
       - kafkacat-producer
     environment:
       STORER_INFLUX_RETENTION_HRS: 0
+      STORER_LOG_VERBOSE: "true"
+      STORER_LOG_CONSOLE_LEVEL: "debug"
     restart: always
     logging:
       driver: json-file
@@ -68,6 +88,9 @@ services:
     image: quay.io/influxdb/influxdb:2.0.0-rc
     command: influxd --log-level=debug --reporting-disabled
     restart: always
+    volumes:
+      - influxdata:/var/lib/influxdb
+      - influxdata-config:/root/.influxdbv2
     ports:
       - "8086:8086"
     healthcheck:
@@ -76,3 +99,7 @@ services:
       driver: json-file
       options:
         max-size: 100m
+
+volumes:
+  influxdata:
+  influxdata-config:

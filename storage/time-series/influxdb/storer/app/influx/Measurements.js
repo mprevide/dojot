@@ -32,7 +32,7 @@ class Measurements {
    *
    * @see {@link https://github.com/influxdata/influxdb-client-js/issues/278}
    *
-   * Delete all infomations from a measurement in a org
+   * Delete all information from a measurement in a org
    *
    * @param {String} org Organization name
    * @param {String} measurement Measurement name

@@ -1,6 +1,6 @@
 FROM node:12.18-alpine AS base
 
-WORKDIR /opt/influxdb-storer
+WORKDIR /opt/influxdb-retriever
 
 RUN apk --no-cache add \
     bash \
@@ -27,12 +27,14 @@ COPY package-lock.json package-lock.json
 RUN npm install
 
 COPY app ./app
+COPY api ./api
+COPY docs ./docs
 COPY config ./config
 COPY index.js ./index.js
 
 FROM node:12.18-alpine
 
-WORKDIR /opt/influxdb-storer
+WORKDIR /opt/influxdb-retriever
 
 RUN apk --no-cache add \
     libsasl \
@@ -41,12 +43,12 @@ RUN apk --no-cache add \
     tini \
     curl
 
-COPY --from=base /opt/influxdb-storer /opt/influxdb-storer
+COPY --from=base /opt/influxdb-retriever /opt/influxdb-retriever
 
 
 ENTRYPOINT ["/sbin/tini", "--"]
 
-CMD ["npm", "run", "influxdb-storer"]
+CMD ["npm", "run", "influxdb-retriever"]
 
 HEALTHCHECK --start-period=2m --interval=30s --timeout=10s --retries=3 \
     CMD curl -f http://localhost:9000/health || exit 1

@@ -9,15 +9,15 @@ const config = ConfigManager.getConfig('STORER');
 const logger = new Logger('influxdb-storer:kafka/DojotConsumer');
 
 /**
- * This class handle messages from dojot topics on kafka
+ * This class handles messages from dojot topics on kafka
  * @class
  */
 class DojotConsumer {
   /**
-   * Create a instance
+   * Create an instance
    */
   constructor() {
-    logger.debug('constructor: Instance Kafka Consumer for Dojot');
+    logger.debug('constructor: Instantiating a Kafka Consumer for Dojot');
 
     this.consumer = new Consumer({
       ...config.sdk,
@@ -46,45 +46,45 @@ class DojotConsumer {
   }
 
   /**
-   * Register callbacks to handle with tenants  events for create and delete
+   * Registers callbacks to handle tenant events (creation and removal)
    *
-   * @param {async function(string)} callbackCreate Receive the tenant name created
-   * @param {async function(string)} callbackDelete Receive the tenant name deleted
+   * @param {async function(string)} handleTenantCreateEvent Receive the tenant name created
+   * @param {async function(string)} handleTenantDeleteEvent Receive the tenant name deleted
    */
-  registerCallbackTenants(callbackCreate, callbackDelete = null) {
+  registerCallbackForTenantEvents(handleTenantCreateEvent, handleTenantDeleteEvent = null) {
     const topicSuffix = config.subscribe['topics.suffix.tenants'];
-    logger.debug(`registerCallbackTenants: Register Callbacks for topics with suffix ${topicSuffix}`);
+    logger.debug(`registerCallbackForTenantEvents: Register Callbacks for topics with suffix ${topicSuffix}`);
     const topic = new RegExp(`^.+${topicSuffix.replace(/\./g, '\\.')}`);
     const callback = async (data) => {
       try {
         const { value: payload } = data;
-        logger.debug(`registerCallbackTenants: Receiving data ${payload.toString()}`);
+        logger.debug(`registerCallbackForTenantEvents: Receiving data ${payload.toString()}`);
         const payloadObj = JSON.parse(payload);
         const { type, tenant } = payloadObj;
         switch (type) {
           case 'CREATE':
             if (!tenant) {
-              logger.warn('registerCallbackTenants: CREATE missing tenant');
+              logger.warn('registerCallbackForTenantEvents: CREATE missing tenant');
             } else {
-              await callbackCreate(tenant);
+              await handleTenantCreateEvent(tenant);
             }
             break;
           case 'DELETE':
-            if (callbackDelete) {
+            if (handleTenantDeleteEvent) {
               if (!tenant) {
-                logger.warn('registerCallbackTenants: CREATE missing tenant');
+                logger.warn('registerCallbackForTenantEvents: CREATE missing tenant');
               } else {
-                await callbackDelete(tenant);
+                await handleTenantDeleteEvent(tenant);
               }
             } else {
-              logger.debug('registerCallbackTenants: callbackDelete not enable');
+              logger.debug('registerCallbackForTenantEvents: callbackDelete not enable');
             }
             break;
           default:
-            logger.debug('registerCallbackTenants: event was discarded ');
+            logger.debug('registerCallbackForTenantEvents: event was discarded ');
         }
       } catch (e) {
-        logger.error('registerCallbackTenants:', e);
+        logger.error('registerCallbackForTenantEvents:', e);
       }
     };
     this.idCallbackTenant = this.consumer.registerCallback(topic, callback);
@@ -92,25 +92,26 @@ class DojotConsumer {
   }
 
   /**
-   * Register callbacks to handle with device manager events for configure
-   * (when send data from dojot to a device) and when remove a device from dojot
+   * Registers callbacks to handle device management events (removal and configuration).
    *
-   * @param {async function(string, string, number|string, object)} callbackConfig
-   *                              Receive tenant, deviceid, timestamp (unix timestamp ms
-   *                              or a string restricted ISO 8601 (YYYY-MM-DDThh:mm:ss.fffffffffZ),
+   * @param {async function(string, string, number|string, object)} handleDeviceConfigurationEvent
+   *                              Receive tenant, deviceid, date-time (unix timestamp ms
+   *                              or RFC3339,
    *                              attrs (key:value)
-   * @param {async function(string, string)} callbackDeleteDevice Receive tenant,
+   * @param {async function(string, string)} handleDeviceRemoveEvent Receive tenant,
    *                                         deviceid (default = null)
    */
-  registerCallbackDeviceManager(callbackConfig, callbackDeleteDevice = null) {
+  registerCallbacksForDeviceMgmtEvents(
+    handleDeviceConfigurationEvent, handleDeviceRemoveEvent = null,
+  ) {
     const topicSuffix = config.subscribe['topics.suffix.device.manager'];
-    logger.debug(`registerCallbackDeviceManager: Register Callback for topics with suffix ${topicSuffix}`);
+    logger.debug(`registerCallbacksForDeviceMgmtEvents: Register Callback for topics with suffix ${topicSuffix}`);
     const topic = new RegExp(`^.+${topicSuffix.replace(/\./g, '\\.')}`);
 
     const callback = async (data) => {
       try {
         const { value: payload } = data;
-        logger.debug(`registerCallbackDeviceManager: Receiving data ${payload.toString()}`);
+        logger.debug(`registerCallbacksForDeviceMgmtEvents: Receiving data ${payload.toString()}`);
         const {
           event,
           meta: { service: tenant, timestamp },
@@ -118,85 +119,83 @@ class DojotConsumer {
         } = JSON.parse(payload);
         switch (event) {
           case 'configure':
-            if (!deviceid) {
-              logger.warn('registerCallbackDeviceManager: configure missing deviceid');
-            } else if (!tenant) {
-              logger.warn('registerCallbackDeviceManager: configure missing tenant');
-            } else if (!attrs) {
-              logger.warn('registerCallbackDeviceManager: configure missing attrs');
-            } else if (DojotConsumer.checkIfShouldPersist(attrs)) {
-              await callbackConfig(tenant, deviceid, timestamp, attrs);
-            } else {
-              logger.debug('registerCallbackDeviceManager: shouldPersist is false');
-            }
+            await DojotConsumer.handleData(
+              deviceid,
+              tenant,
+              timestamp,
+              attrs,
+              handleDeviceConfigurationEvent,
+            );
             break;
           case 'remove':
             if (!deviceid) {
-              logger.warn('registerCallbackDeviceManager: remove missing deviceid');
+              logger.warn('registerCallbacksForDeviceMgmtEvents: remove missing deviceid');
             } else if (!tenant) {
-              logger.warn('registerCallbackDeviceManager: remove missing tenant');
-            } else if (callbackDeleteDevice) {
-              await callbackDeleteDevice(tenant, deviceid);
+              logger.warn('registerCallbacksForDeviceMgmtEvents: remove missing tenant');
+            } else if (handleDeviceRemoveEvent) {
+              await handleDeviceRemoveEvent(tenant, deviceid);
             } else {
-              logger.debug('registerCallbackDeviceManager: callbackDelete not enable');
+              logger.debug('registerCallbacksForDeviceMgmtEvents: callbackDelete not enable');
             }
             break;
           default:
-            logger.debug(`registerCallbackDeviceManager: ${event} event was discarded `);
+            logger.debug(`registerCallbacksForDeviceMgmtEvents: ${event} event was discarded `);
         }
       } catch (e) {
-        logger.error('registerCallbackDeviceManager:', e);
+        logger.error('registerCallbacksForDeviceMgmtEvents:', e);
       }
     };
     this.idCallbackDeviceManager = this.consumer.registerCallback(topic, callback);
-    logger.debug('registerCallbackDeviceManager: Registered Callback');
+    logger.debug('registerCallbacksForDeviceMgmtEvents: Registered Callback');
   }
 
   /**
-   * Register callbacks to handle with device data events
+   * Registers callbacks to handle device data events.
    *
-   * @param {async function(string, string, date??, object)} callbackDeviceData
-   *                              Receive tenant, deviceid, timestamp, attrs
+   * @param {async function(string, string, number|string, object)} handleDeviceData
+   *                              Receive tenant, deviceid,  date-time (unix timestamp ms
+   *                              or RFC3339, attrs
    *
    */
-  registerCallbackDeviceData(callbackDeviceData) {
+  registerCallbacksForDeviceDataEvents(handleDeviceData) {
     const topicSuffix = config.subscribe['topics.suffix.device.data'];
-    logger.debug(`registerCallbackDeviceData: Register Callback for topic with suffix ${topicSuffix}`);
+    logger.debug(`registerCallbacksForDeviceDataEvents: Register Callback for topic with suffix ${topicSuffix}`);
     const topic = new RegExp(`^.+${topicSuffix.replace(/\./g, '\\.')}`);
 
     const callback = async (data) => {
       try {
         const { value: payload } = data;
-        logger.debug(`registerCallbackDeviceData: Receiving data ${payload.toString()}`);
+        logger.debug(`registerCallbacksForDeviceDataEvents: Receiving data ${payload.toString()}`);
         const {
           metadata:
           { deviceid, tenant, timestamp },
           attrs,
         } = JSON.parse(payload);
-        if (!deviceid) {
-          logger.warn('registerCallbackDeviceData: missing deviceid');
-        } else if (!tenant) {
-          logger.warn('registerCallbackDeviceData: missing tenant');
-        } else if (!attrs) {
-          logger.warn('registerCallbackDeviceData: missing attrs');
-        } else if (DojotConsumer.checkIfShouldPersist(attrs)) {
-          await callbackDeviceData(tenant, deviceid, timestamp, attrs);
-        } else {
-          logger.debug('registerCallbackDeviceData: shouldPersist is false');
-        }
+        await DojotConsumer.handleData(deviceid, tenant, timestamp, attrs, handleDeviceData);
+        // if (!deviceid) {
+        //   logger.warn('registerCallbacksForDeviceDataEvents: missing deviceid');
+        // } else if (!tenant) {
+        //   logger.warn('registerCallbacksForDeviceDataEvents: missing tenant');
+        // } else if (!attrs) {
+        //   logger.warn('registerCallbacksForDeviceDataEvents: missing attrs');
+        // } else if (DojotConsumer.checkIfShouldPersist(attrs)) {
+        //   await callbackDeviceData(tenant, deviceid, timestamp, attrs);
+        // } else {
+        //   logger.debug('registerCallbacksForDeviceDataEvents: shouldPersist is false');
+        // }
       } catch (e) {
-        logger.error('registerCallbackDeviceData:', e);
+        logger.error('registerCallbacksForDeviceDataEvents:', e);
       }
     };
     this.idCallbackDeviceData = this.consumer.registerCallback(topic, callback);
-    logger.debug('registerCallbackDeviceData: Registered Callback');
+    logger.debug('registerCallbacksForDeviceDataEvents: Registered Callback');
   }
 
   /**
    * Check if `attrs` has a key shouldPersist and if exist if its value is true
    *
    * @param {object} attrs  Object key:value
-   * @returns {boolean} If should persist
+   * @returns {boolean} false if should persists exists and its value is false and true otherwise.
    */
   static checkIfShouldPersist(attrs) {
     return !Object.prototype.hasOwnProperty.call(attrs, 'shouldPersist')
@@ -204,19 +203,67 @@ class DojotConsumer {
   }
 
   /**
+   *
+   * Checks if deviceId, tenant, attrs are not null,
+   * if these attributes should persist and remove shouldPersist from attrs,
+   * if all checks are ok call the promise handleData.
+   *
+   * @param {string} deviceid the deviceid that issued the event
+   * @param {string} tenant the tenant that issued the event
+   * @param {string|number} timestamp date-time (unix timestamp ms or RFC3339,
+   * @param {Object} attrs Object of type key value (key:value)
+   * @param {async function(string, string, number|string, object)} handleData
+   *                              Receive tenant, deviceid, date-time (unix timestamp ms
+   *                              or RFC3339,
+   *                              attrs (key:value)
+   */
+  static async handleData(deviceid, tenant, timestamp, attrs, handleData) {
+    const attrsCopy = { ...attrs };
+    if (!deviceid) {
+      logger.warn('registerCallbacksForDeviceMgmtEvents: configure missing deviceid');
+    } else if (!tenant) {
+      logger.warn('registerCallbacksForDeviceMgmtEvents: configure missing tenant');
+    } else if (!attrs) {
+      logger.warn('registerCallbacksForDeviceMgmtEvents: configure missing attrs');
+    } else if (DojotConsumer.checkIfShouldPersist(attrsCopy)) {
+      delete attrsCopy.shouldPersist;
+      await handleData(tenant, deviceid, timestamp, attrsCopy);
+    } else {
+      logger.debug('registerCallbacksForDeviceMgmtEvents: shouldPersist is false');
+    }
+  }
+
+  /**
  * A function to get if kafka is connected
- * @param {*} timeout Timeout to get the status (optional)
+ *
+ * @returns {Promise<boolean>} if kafka is connect
  */
-  isConnected(timeout = 3000) {
-    return new Promise((resolve) => {
-      this.consumer.consumer.getMetadata({ timeout }, (err) => {
-        if (err) {
-          resolve(false);
-        } else {
-          resolve(true);
-        }
-      });
-    });
+  async isConnected() {
+    try {
+      const { connected } = await this.consumer.getStatus();
+      if (connected) {
+        return true;
+      }
+      return false;
+    } catch (e) {
+      logger.error('isConnected:', e);
+      return false;
+    }
+  }
+
+  /**
+   * Finish kafka consumer
+   *
+   *  @throws If Cannot finish
+   */
+  async finish() {
+    this.logger.warn('Finishing Kafka...');
+    try {
+      await this.consumer.finish();
+    } catch (e) {
+      logger.error('finish:', e);
+      throw new Error('Cannot finish');
+    }
   }
 
   /**

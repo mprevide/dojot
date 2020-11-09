@@ -3,7 +3,7 @@ const { HealthAPI, ReadyAPI } = require('@influxdata/influxdb-client-apis');
 const { Logger } = require('@dojot/microservice-sdk');
 
 
-const logger = new Logger('influxdb:influx/State');
+const logger = new Logger('influxdb-retriever:influx/State');
 
 /**
  * This class handles with State (ready and heath) from InfluxDB

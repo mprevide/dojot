@@ -13,7 +13,7 @@ class Organizations {
    *
    * @param {string} url  Url to access influxdb
    * @param {string} defaultToken Set up initial token
-   *                              (This token will be permission to write/read
+   *                              (This token must have permission to write/read
    *                              in all organizations)
    * @param {string} defaultUser Set up initial user
    * @param {string} defaultPassword Set up initial password
@@ -48,15 +48,18 @@ class Organizations {
     this.defaultOrg = defaultOrg;
     this.defaultBucket = defaultBucket;
     this.retentionPeriodHrs = retentionPeriodHrs;
+    if (this.retentionPeriodHrs < 0) {
+      this.retentionPeriodHrs = 0;
+    }
   }
 
   /**
-   * Check if some org exist
+   * Check if some org exists
    *
    * @param {String} org Organization Name
-   * @returns {boolean} true if exist
+   * @returns {Promise.<boolean>} true if exist or false otherwise
    *
-   * @throws If  Cannot check if org exist
+   * @throws If it is not possible to check if the organization exists in case an error occurs
    */
   async hasOrg(org) {
     logger.debug(`hasOrg: Has ${org} org?`);
@@ -75,12 +78,12 @@ class Organizations {
   }
 
   /**
-   * Check if the default bucket  exist in a org
+   * Check if the default bucket  exists in a org
    *
    * @param {String} org Organization Name
-   * @returns {boolean} true if exist
+   * @returns  {Promise.<boolean>} true if exist or false otherwise
    *
-   * @throws If Cannot check if default bucket exist in org
+   * @throws If Cannot check if default bucket exists in org
    */
   async hasDefaultBucketInOrg(org) {
     logger.debug(`hasDefaultBucketInOrg: Has default bucket in ${org} org?`);
@@ -107,7 +110,7 @@ class Organizations {
    *
    * @param {String} org Organization Name
    *
-   * @returns {Object} A object with Organization infos
+   * @returns {Promise.<Object>}  A object with Organization infos
    *
    * @throws If Cannot get info about org
    */
@@ -188,9 +191,9 @@ class Organizations {
   /**
    * Create a organization with a default bucket
    *
-   * @param {String} org New Organizations
+   * @param {String} org New organization name
    *
-   * @throws Cannot create a org and a bucket
+   * @throws Cannot create an org and a bucket
    */
   async createOrgWithDefaultBucket(org) {
     logger.debug(`createOrgWithDefaultBucket: Creating the ${org} org...`);
@@ -219,7 +222,7 @@ class Organizations {
   }
 
   /**
-   * Create a the default bucket in a org
+   * Create the default bucket in a org
    *
    * @param {String} orgID Organization id
    *
