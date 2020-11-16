@@ -41,30 +41,11 @@ externalDocs:
   description: Find out more about Dojot
   url: https://dojotdocs.readthedocs.io/
 servers:
-- url: "{protocol}://{domain}:{port}/{basePath}"
+- url: "{url}"
   description: url
   variables:
-    protocol:
-      default: 'http'
-      enum:
-        - 'http'
-        - 'https'
-    domain:
-      default: localhost
-      description: this value is assigned by the service provider, in this example `localhost`
-    port:
-      enum:
-        - '80'
-        - '8443'
-        - '443'
-        - '8000'
-        - '3000'
-      default: '8000'
-    basePath:
-      default: tss/v1
-      enum:
-        - 'tss/v1'
-        - 'api/v1'
+    url:
+      default: 'http://localhost:3000/api/v1/'
 components:
   securitySchemes:
     bearerAuth:
