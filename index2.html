@@ -34,10 +34,15 @@
   <script src="dist/swagger-ui-bundle.js" charset="UTF-8"> </script>
   <script src="dist/swagger-ui-standalone-preset.js" charset="UTF-8"> </script>
   <script>
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
+    const path = urlParams.get('path')
+    const version = urlParams.get('version')
     window.onload = function () {
       // Begin Swagger UI call region
       const ui = SwaggerUIBundle({
-        url: "./storage/test.yaml",
+        // url: "./storage/test.yaml",
+        url: `.{path}/{version}`,
         dom_id: '#swagger-ui',
         deepLinking: true,
         presets: [
