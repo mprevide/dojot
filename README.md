@@ -1,73 +1,144 @@
-# dojot
+# InfluxDB Retriever
 
-[![License badge](https://img.shields.io/badge/license-GPL-blue.svg)](https://opensource.org/licenses/GPL-3.0)
+The **InfluxDB Retriever** is responsible for data recovery from device data series at InfluxDB.
 
-dojot was conceived with the goal of developing and demonstrating technologies for smart cities. Initially focusing on the pillars of public safety, urban mobility and health. It intends to build a multidisciplinary ecosystem in these areas.
+## **Table of Contents**
 
-dojot is a Brazilian IoT Platform that came up with an open source proposal in order to facilitate the development of solutions and the IoT ecosystem with local content focused on Brazilian needs.
+1. [Overview](#overview)
+    1. [Reading data from InfluxDB](#reading-data-from-influxdb)
+2. [Dependencies](#dependencies)
+   1. [Dojot Services](#dojot-services)
+   2. [Others Services](#others-services)
+3. [Running the service](#running-the-service)
+   1. [Configurations](#configurations)
+        1. [General Configurations](#general-configurations)
+        2. [Server Configurations](#server-configurations)
+        3. [InfluxDB Configurations](#influxdb-configurations)
+        4. [Service State Manager](#service-state-manager)
+   2. [How to run](#how-to-run)
+4. [Documentation](#documentation)
+5. [Issues and help](#issues-and-help)
 
-The platform is one of the outcomes of the project "Plataforma Aberta para IoT e suas Aplicações", which is supported by FUNTTEL via [Finep](http://www.finep.gov.br/), and led  by [CPqD](https://www.cpqd.com.br/en/), its main executor, in partnership with other science and technology institutions: [Instituto Atlântico](http://www.atlantico.com.br/?lang=en), [Centro de Tecnologia da Informação Renato Archer - CTI](https://www.cti.gov.br/en), and [Fundação de Apoio à Capacitação em Tecnologia da Informação - FACTI](https://facti.com.br/).
+## Overview
 
-## dojot Manifesto
+### Reading device data from InfluxDB
 
-dojot is a derivation of dojo (or dôjo), a Japanese word that, basically, means "the place where Japanese martial arts are trained".
+When using the endpoints of this service it is possible to obtain data for a given device.
+This service maps an influxdb device as follows:
 
-Dojo is not just a simple training area, it is also a place to be respected as the practitioners' home. Therefore, culturally, it is very common to see the practitioner bowing before entering this area, just as they do before entering their homes.
+- *Organization* = **tenant**
+- *measurement* = **deviceid**
+- *bucket* = config default
+- Each `key` from `attrs` will be a *field* with their respective values.
 
-Linking this concept to the digital world and applying it to software development, dojo represents the place of a developer meeting, seeking for good practices and absorbing the vision of software development as an art.
 
-By combining this concept with the Internet of Things, we pursue IoT software development best practices, bringing together multidisciplinary experts to accelerate solution delivery and reduce the risks inherent in innovation.
+## Dependencies
 
-> **dojot** = dojô, IoT, and connectivity.
+The services dependencies are listed in the next topics.
 
-## Repository Overview
+- Dojot Services
+- Others Services: They are external services;
 
-dojot follows a microservice architecture, and until the caratê release, each microservice had been kept in its own repository. In order to make easier the management and versioning of the microservices; from defendu release (planned for the first half of 2020) onwards we will keep all the microservices in this single repository.
+### Dojot Services
 
-> Work in progress!
+none
 
-## Quick Start
+### Others Services
 
-> Work in progress!
+- InfluxDB (tested using InfluxDB version 2.0.0-rc)
 
-## Getting Help
+## Running the service
 
-More documentation can be found [here](https://dojotdocs.readthedocs.io/en/latest/).
+### Configurations
 
-If you cannot find an answer for your doubts or need some clarification, don't hesitate, open an issue at <https://github.com/dojot/dojot/issues> and our team will reply promptly.
+Before running the **InfluxDB Storer** service within your environment, make sure you configure the
+environment variables to match your needs.
 
-If you are interested in taking a course in the dojot Platform, please contact our partner [IWF](https://iwf.com.br).
+You can select the configuration file via the `RETRIEVER_APP_USER_CONFIG_FILE` variable. Its default value
+is `production.conf`. Check the [config directory](./config) for the user configurations that are
+available by default.
 
-## Contributing
+For more information about the usage of the configuration files and environment variables, check the
+__ConfigManager__ module in our [Microservice SDK](https://github.com/dojot/dojot-microservice-sdk-js).
+You can also check the [ConfigManager environment variables documentation](https://github.com/dojot/dojot-microservice-sdk-js/blob/master/lib/configManager/README.md#environment-variables) for more details.
 
-We welcome contributions, but there are just a few small guidelines you need to follow.
+In short, all the parameters in the next sections are mapped to environment variables that begin
+with `RETRIEVER_`. You can either use environment variables or configuration files to change their values.
+You can also create new parameters via environment variables by following the fore mentioned
+convention.
 
-### Bug Reports
+#### General Configurations
 
-Before open a bug report, please search the [issues list](https://github.com/dojot/dojot/issues) to see if it has already been raised.
+| Key | Purpose | Default Value | Valid Values | Environment variable
+| --- | ------- | ------------- | ------------ | --------------------
+| log.console.level | Console logger level | info | info, debug, error, warn | RETRIEVER_LOG_CONSOLE_LEVEL
+| log.file | Enables logging on file (location: /var/log/influxdb-retriever-logs-%DATE%.log) | false | boolean  | RETRIEVER_LOG_FILE
+| log.file.level  | Log level to log on files | debug | string  | RETRIEVER_LOG_LEVEL
+| log.verbose | Whether to enable logger verbosity or not | false | boolean | RETRIEVER_LOG_VERBOSE
+| paginate.default.max.limit |  Sets maximum and default the item numbers on each page  | 256 | integer | RETRIEVER_PAGINATE_DEFAULT_MAX_LIMIT
 
-If the bug is a new one, go ahead and open an issue at <https://github.com/dojot/dojot/issues>.
+#### Server Configurations
 
-If you find a bug and know how to fix it, please don't hesitate to contribute, raise a pull-request with the bug fix!
+| Key | Purpose | Default Value | Valid Values | Environment variable
+| --- | ------- | ------------- | ------------ | --------------------
+| server.ca | File path to list of supplied CAs. if passed enable TLS  | none | path  | RETRIEVER_SERVER_CA
+| server.cert | File path to  certificate.  | none | path| RETRIEVER_SERVER_CERT
+| server.host | Server Hostname | 0.0.0.0 | string  | RETRIEVER_SERVER_HOST
+| server.key | File path to private key certificate. | none | path |  RETRIEVER_SERVER_KEY
+| server.port | Sever Port  | 3000 | integer  | RETRIEVER_SERVER_PORT
+| server.reject.unauthorized | If true, the server certificate is verified against the list of supplied CAs. | none | boolean | RETRIEVER_SERVER_REJECT_UNAUTHORIZED
+| server.request.cert | Whether to authenticate the remote peer by requesting a certificate. Clients always request a server certificate. | none | boolean | RETRIEVER_SERVER_REQUEST_CERT
+| server.trustproxy | Enables reverse proxy support  | true | boolean | RETRIEVER_SERVER_TRUSTPROXY
+| server.cors | Enables Cross-origin Resource Sharing  | true | boolean |  RETRIEVER_SERVER_CORS
 
-### Feature Requests
+#### InfluxDB Configurations
 
-If you are demanding a specific feature, you may open an issue at <https://github.com/dojot/dojot/issues> describing it. Our team will analyse your needs, and it might be added to our Roadmap.
+| Key | Purpose | Default Value | Valid Values | Environment variable
+| --- | ------- | ------------- | ------------ | --------------------
+| influx.default.bucket | Bucket name for all created buckets | devices | string  | RETRIEVER_INFLUX_DEFAULT_BUCKET
+| influx.default.token | Configure a token (this token will be allowed to write/read in all organizations) | dojot@token_default | string  | RETRIEVER_INFLUX_DEFAULT_TOKEN
+| influx.heathcheck.ms | Specific how often it is to check if it is possible to communicate with the *InfluxDB* service in milliseconds.  | 60000 | integer  | RETRIEVER_INFLUX_HEATHCHECK_MS
+| influx.url | Address of the *InfluxDB* service  | http://influxdb:8086 | url | RETRIEVER_INFLUX_URL
 
-You may also develop this feature and raise a pull-request, but before doing this, please open an issue to discuss with the dojot team the best solution. Without a previous discussion, your pull-request might be rejected.
+#### Service State Manager
 
-### Pull-Requests
+These parameters are passed directly to the SDK ServiceStateManager. Check the
+[official repository](https://github.com/dojot/dojot-microservice-sdk-js) for more info on the
+values.
 
-To submit a pull-request, you must follow some steps:
+| Key | Default Value | Valid Values | Environment variable
+| --- | ------------- | ------------ | --------------------
+| lightship.detect.kubernetes | false | boolean | RETRIEVER_LIGHTSHIP_DETECT_KUBERNETES
 
-1. Fork the github repository at <https://github.com/dojot/dojot> if you haven't already.
-2. Clone your fork, create a new branch, push changes to the branch.
-3. Add documentation and unit tests as part of the change if it makes sense.
-4. Check whether your change doesn't break any existing unit tests.
-5. Open a pull request against the development branch.
+### How to run
 
-After raising a pull-request, it will be reviewed by dojot developers and some changes might be requested before merging it.
+Beforehand, you need an already running dojot instance in your machine. Check out the
+[dojot documentation](https://dojotdocs.readthedocs.io)
+for more information on installation methods.
 
-## Copyright and license
+Generate the Docker image:
 
-dojot is **Open Source** and its under [GNU General Public License](https://www.gnu.org/licenses/gpl-3.0.en.html).
+```shell
+docker build -t <username>/influxdb-retriever:<tag> -f  .
+```
+
+Then the image tagged a `<username>/influxdb-retriever:<tag>` will be made available. You can send it to
+your DockerHub registry to made it available for non-local dojot installations:
+
+```shell
+docker push <username>/influxdb-retriever:<tag>
+```
+
+__NOTE THAT__  you can use the official image provided by dojot in its  [DockerHub page](https://hub.docker.com/r/dojot/influxdb-retriever).
+
+## Documentation
+
+Check the documentation for more information:
+
+- [Latest dojot platform documentation](https://dojotdocs.readthedocs.io/en/latest)
+- [Latest api documentation](https:// ) TODO
+
+## Issues and help
+
+If you found a problem or need help, leave an issue in the main
+[dojot repository](https://github.com/dojot/dojot) and we will help you!

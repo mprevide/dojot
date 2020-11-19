@@ -1,7 +1,9 @@
-### Code ###
-.vscode
-.devcontainer
-.idea/*
+
+# Taken from: https://github.com/github/gitignore/blob/master/Node.gitignore
+# Logs
+logs
+*.log
+npm-debug.log*
 
 # Coverage directory used by tools like istanbul
 coverage
@@ -13,5 +15,14 @@ node_modules/
 # Optional npm cache directory
 .npm
 
-# tls
-cert/
+# Optional eslint cache
+.eslintcache
+
+# IDEs
+.vscode
+.vscode-test
+.idea/*
+.devcontainer
+
+# Ignore generate configs
+config/*.json
