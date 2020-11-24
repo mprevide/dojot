@@ -104,12 +104,13 @@ class DataWriter {
         point.timestamp(DataWriter.parseDataToInfluxDB(timestamp));
         Object.entries(attrs).forEach(([key, value]) => {
           logger.debug(`writer: setting key=${key}, value=${value}, type=${typeof value}`);
+          const newKey = `dojot.${key}`;
           if (typeof value === 'number') {
-            point.floatField(key, value);
+            point.floatField(newKey, value);
           } else if (typeof value === 'boolean') {
-            point.booleanField(key, value);
+            point.booleanField(newKey, value);
           } else {
-            point.stringField(key, JSON.stringify(value));
+            point.stringField(newKey, JSON.stringify(value));
           }
         });
         logger.debug(`writer: The point will be write is ${point.toString()} in ${org} org`);

@@ -12,6 +12,8 @@ const { lightship: configLightship } = getConfig('RETRIEVER');
 const serviceState = new ServiceStateManager({
   lightship: transformObjectKeys(configLightship, camelCase),
 });
+serviceState.registerService('server');
+serviceState.registerService('influxdb');
 
 const logger = new Logger('influxdb-retriever:App');
 
@@ -21,7 +23,7 @@ const InfluxDB = require('./influx');
 const express = require('./express');
 const devicesRoutes = require('./express/routes/v1/Devices');
 
-const openApiPath = path.join(__dirname, '../api/swagger.yml');
+const openApiPath = path.join(__dirname, '../api/v1.yml');
 
 
 /**
@@ -56,9 +58,13 @@ class App {
 
       this.influxDB.createInfluxHealthChecker();
 
-      const boundQueryData = this
+      const boundQueryDataByField = this
         .influxDB.getInfluxDataQueryInstance()
         .queryByField.bind(this.influxDB.getInfluxDataQueryInstance());
+
+      const boundQueryDataByMeasurement = this
+        .influxDB.getInfluxDataQueryInstance()
+        .queryByMeasurement.bind(this.influxDB.getInfluxDataQueryInstance());
 
       this.server.registerShutdown();
 
@@ -66,7 +72,8 @@ class App {
         [
           devicesRoutes({
             mountPoint: '/tss/v1',
-            queryData: boundQueryData,
+            queryDataByField: boundQueryDataByField,
+            queryDataByMeasurement: boundQueryDataByMeasurement,
           }),
         ],
         serviceState,
