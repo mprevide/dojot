@@ -2,7 +2,7 @@
   info:
     description: "Dojot device attribute data recovery service"
     version: 0.0.1 #TODO: Change version based in github tag
-    title: "InfluxDB-Retriver:  Dojot Time Series Service"
+    title: "InfluxDB-Retriever:  Dojot Time Series Service"
   tags:
     - name: devices
       description: Device data
