@@ -124,7 +124,7 @@
         in: query
         name: order
         description: |
-          order by time:
+          order by time order:
           * `asc` - Ascending, from oldest to newest
           * `desc` - Descending, from newest to oldest
         schema:
