@@ -16,9 +16,10 @@ paths:
         - bearerAuth: []
       summary: "Retrieve data from attribute on a device"
       description: |
-        Retrieve data from an attribute on a device in the dojot time series service
+        Retrieve data from an attribute on a device in the dojot time series service.
 
-        The date-times on this uses RFC 3339.
+        Any date-time value is RFC3339 compliant.
+
       operationId: findDataFromAttrInDevice
       parameters:
         - $ref: "#/components/parameters/deviceId"
@@ -63,8 +64,9 @@ paths:
         - bearerAuth: []
       summary: "Retrieve data from a device"
       description: |
-        Retrieve data from a device in the dojot time series service
-        The date-times on this uses RFC 3339.
+        Retrieve data from a device in the dojot time series service.
+
+        Any date-time value is RFC3339 compliant.
 
         `NOTE THAT`: We recommend using the endpoint (/tss/v1/devices/{deviceId}/attrs/{attr}/data) to search for data attributes of a device instead of this. It will be more efficient in most cases considering the nature of a time series database.
       operationId: findDataFromDevice
@@ -155,7 +157,7 @@ components:
           value: "2025-10-01T20:40:44.000123456Z"
       schema:
         type: string
-        format: date-time #TODO: Not being properly checked
+        format: date-time
     limit:
       name: limit
       in: query
@@ -166,7 +168,7 @@ components:
       required: false
       schema:
         type: integer
-        minimum: 1 #TODO: Not being properly checked
+        minimum: 1
         default: 256
     page:
       name: page
@@ -175,7 +177,7 @@ components:
       required: false
       schema:
         type: integer
-        minimum: 1 #TODO: Not being properly checked
+        minimum: 1
         default: 1
     order:
       in: query
