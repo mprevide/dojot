@@ -41,7 +41,7 @@ class DataWriter {
     //  returns a Promise to force the API to use it as a result of the flush operation,
     //  void/undefined to continue with default retry mechanism
     this.writeOptions.writeFailed = (error, lines, attempts) => {
-      logger.debug(`writeFailed: lines: ${lines.toString()} attempts:${attempts}`, error);
+      logger.error(`writeFailed: lines: ${lines.toString()} attempts:${attempts}`, error);
     };
 
     // WriteSuccess is informed about successfully written lines.

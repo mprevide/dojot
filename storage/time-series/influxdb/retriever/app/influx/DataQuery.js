@@ -93,6 +93,7 @@ class DataQuery {
       const prefix = this.prefixFields;
       const prefixSize = this.prefixFieldsSize;
 
+      let totalFields = 0;
       return new Promise((resolve, reject) => {
         const result = [];
         queryApi.queryRows(fluxQuery, {
@@ -117,6 +118,7 @@ class DataQuery {
                   label: key.slice(prefixSize),
                   value: JSON.parse(value),
                 });
+                totalFields = totalFields+1;
               }
             });
             result.push(point);
@@ -125,6 +127,7 @@ class DataQuery {
             return reject(DataQuery.commonHandleError(error));
           },
           complete() {
+            logger.info(`totalItems=${result.length} totalFields=${totalFields}`);
             logger.debug(`queryByMeasurement: totalItems=${result.length} result=${JSON.stringify(result, null, 2)}`);
             return resolve({ result, totalItems: result.length });
           },

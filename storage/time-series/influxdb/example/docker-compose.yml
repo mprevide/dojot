@@ -26,7 +26,7 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_LISTENERS: PLAINTEXT://:9092
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_TOPICS: 'tenant1.device-data,tenant2.device-data,dojot-management.dojot.tenancy,dojot-management2.dojot.tenancy,tenant1.dojot.device-manager.device'
+      KAFKA_TOPICS: 'admin.device-data,tenant2.device-data,dojot-management.dojot.tenancy,dojot-management2.dojot.tenancy,tenant1.dojot.device-manager.device'
     logging:
       driver: json-file
       options:
@@ -36,10 +36,11 @@ services:
     image: dojot/confluentinc-cp-kafkacat:5.0.4-1
     depends_on:
       - kafka
-    restart: always
+    restart: "no"
     command: /bin/bash -c "/kafkacat-producer.sh"
     volumes:
-      - ./kafkacat-producer.sh:/kafkacat-producer.sh:Z
+      - ./kafkacat-producer2.sh:/kafkacat-producer.sh:Z
+      - ./6835-m-admin-pre.txt:/file.txt:Z
     logging:
       driver: json-file
       options:
@@ -54,8 +55,9 @@ services:
     depends_on:
       - influxdb
     environment:
-      RETRIEVER_LOG_VERBOSE: "true"
-      RETRIEVER_LOG_CONSOLE_LEVEL: "debug"
+      RETRIEVER_LOG_VERBOSE: "false"
+      RETRIEVER_LOG_CONSOLE_LEVEL: "info"
+      RETRIEVER_PAGINATE_DEFAULT_MAX_LIMIT: 60000
     restart: always
     logging:
       driver: json-file
@@ -76,7 +78,7 @@ services:
     environment:
       STORER_INFLUX_RETENTION_HRS: 0
       STORER_LOG_VERBOSE: "true"
-      STORER_LOG_CONSOLE_LEVEL: "debug"
+      STORER_LOG_CONSOLE_LEVEL: "warn"
       STORER_DELETE_DEVICE_DATA_ENABLE: "true"
     restart: always
     logging:
