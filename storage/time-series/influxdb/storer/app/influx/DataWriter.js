@@ -122,7 +122,7 @@ class DataWriter {
           const newKey = `${this.prefixFields}${key}`;
           logger.debug(`writer: setting key=${newKey}, value=${value}, type=${typeof value}`);
           point.stringField(newKey, JSON.stringify(value));
-          point.tag(newKey+'.tag', 1);
+          point.tag(`tag.${newKey}`, 1);
         });
         logger.debug(`writer: The point will be write is ${point.toString()} in ${org} org`);
         this.getWriteAPI(org).writePoint(point);
