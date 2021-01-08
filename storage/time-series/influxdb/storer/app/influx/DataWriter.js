@@ -124,7 +124,7 @@ class DataWriter {
           logger.debug(`writer: setting key=${newKey}, value=${value}, type=${typeof value}`);
           point.stringField(newKey, JSON.stringify(value));
           test++;
-          point.tag(newKey,1)
+          point.tag('attr'+test, newKey)
         });
         logger.debug(`writer: The point will be write is ${point.toString()} in ${org} org`);
         this.getWriteAPI(org).writePoint(point);
