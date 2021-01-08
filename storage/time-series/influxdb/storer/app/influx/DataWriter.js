@@ -118,10 +118,13 @@ class DataWriter {
       try {
         const point = new Point(measurement);
         point.timestamp(DataWriter.parseDataToInfluxDB(timestamp));
+        let test = 0;
         Object.entries(attrs).forEach(([key, value]) => {
           const newKey = `${this.prefixFields}${key}`;
           logger.debug(`writer: setting key=${newKey}, value=${value}, type=${typeof value}`);
           point.stringField(newKey, JSON.stringify(value));
+          test++;
+          point.tag(newKey,1)
         });
         logger.debug(`writer: The point will be write is ${point.toString()} in ${org} org`);
         this.getWriteAPI(org).writePoint(point);
