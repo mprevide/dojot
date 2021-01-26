@@ -22,6 +22,7 @@ services:
       KEYCLOAK_LOGLEVEL: INFO
       ROOT_LOGLEVEL: INFO
       PROXY_ADDRESS_FORWARDING: "true"
+      # KEYCLOAK_FRONTEND_URL: http://keycloak:8080/auth
       # PROXY_ADDRESS_FORWARDING: "true" # When running Keycloak behind a proxy, you will need to enable proxy address forwarding
       # KEYCLOAK_STATISTICS: all
       # DEBUG: "true"
@@ -189,6 +190,7 @@ services:
       KONG_PG_DATABASE: kong
       KONG_PG_PASSWORD: kong
       KONG_LOG_LEVEL: info
+      KONG_CLIENT_ID: "" #get client id from keycloak
       # To enable HTTPs external, it is necessary to configure public certificates
       # issued by a public CA, such as lets encrypt in KONG_SSL_CERT.
       # KONG_SSL_CERT_KEY: /certs/example-external.key
@@ -301,14 +303,18 @@ services:
 
   influxdb-setup:
     image: quay.io/influxdb/influxdb:v2.0.2
-    restart: on-failure
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
     volumes:
       - influxdb-volume:/root/.influxdbv2/
       - ./influxdb/init-influx.sh:/init-influx.sh:Z
     entrypoint:
       - /init-influx.sh
     depends_on:
-      - influxdb
+      influxdb:
+        condition: service_healthy
     logging:
       driver: json-file
       options:
