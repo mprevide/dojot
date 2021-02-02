@@ -1,0 +1,160 @@
+keycloak_1            | 00:21:57,637 DEBUG [io.undertow.request] (default I/O-6) Matched prefix path /auth for path /auth/realms/admin/protocol/openid-connect/token
+keycloak_1            | 00:21:57,638 DEBUG [io.undertow.request.security] (default task-9) Attempting to authenticate /auth/realms/admin/protocol/openid-connect/token, authentication required: false
+keycloak_1            | 00:21:57,638 DEBUG [io.undertow.request.security] (default task-9) Authentication outcome was NOT_ATTEMPTED with method io.undertow.security.impl.CachedAuthenticatedSessionMechanism@115de55e for /auth/realms/admin/protocol/openid-connect/token
+keycloak_1            | 00:21:57,638 DEBUG [io.undertow.request.security] (default task-9) Authentication result was ATTEMPTED for /auth/realms/admin/protocol/openid-connect/token
+keycloak_1            | 00:21:57,638 DEBUG [org.keycloak.transaction.JtaTransactionWrapper] (default task-9) new JtaTransactionWrapper
+keycloak_1            | 00:21:57,638 DEBUG [org.keycloak.transaction.JtaTransactionWrapper] (default task-9) was existing? false
+keycloak_1            | 00:21:57,638 DEBUG [org.jboss.resteasy.resteasy_jaxrs.i18n] (default task-9) RESTEASY002315: PathInfo: /realms/admin/protocol/openid-connect/token
+keycloak_1            | 00:21:57,641 DEBUG [org.hibernate.resource.transaction.backend.jta.internal.JtaTransactionCoordinatorImpl] (default task-9) Hibernate RegisteredSynchronization successfully registered with JTA platform
+keycloak_1            | 00:21:57,641 DEBUG [org.hibernate.SQL] (default task-9) 
+keycloak_1            |     select
+keycloak_1            |         userentity0_.ID as ID1_74_,
+keycloak_1            |         userentity0_.CREATED_TIMESTAMP as CREATED_2_74_,
+keycloak_1            |         userentity0_.EMAIL as EMAIL3_74_,
+keycloak_1            |         userentity0_.EMAIL_CONSTRAINT as EMAIL_CO4_74_,
+keycloak_1            |         userentity0_.EMAIL_VERIFIED as EMAIL_VE5_74_,
+keycloak_1            |         userentity0_.ENABLED as ENABLED6_74_,
+keycloak_1            |         userentity0_.FEDERATION_LINK as FEDERATI7_74_,
+keycloak_1            |         userentity0_.FIRST_NAME as FIRST_NA8_74_,
+keycloak_1            |         userentity0_.LAST_NAME as LAST_NAM9_74_,
+keycloak_1            |         userentity0_.NOT_BEFORE as NOT_BEF10_74_,
+keycloak_1            |         userentity0_.REALM_ID as REALM_I11_74_,
+keycloak_1            |         userentity0_.SERVICE_ACCOUNT_CLIENT_LINK as SERVICE12_74_,
+keycloak_1            |         userentity0_.USERNAME as USERNAM13_74_ 
+keycloak_1            |     from
+keycloak_1            |         public.USER_ENTITY userentity0_ 
+keycloak_1            |     where
+keycloak_1            |         userentity0_.SERVICE_ACCOUNT_CLIENT_LINK=? 
+keycloak_1            |         and userentity0_.REALM_ID=?
+keycloak_1            | 00:21:57,641 DEBUG [org.jboss.jca.core.connectionmanager.pool.strategy.OnePool] (default task-9) KeycloakDS: getConnection(null, WrappedConnectionRequestInfo@7e9e91d2[userName=keycloak]) [0/20]
+keycloak_1            | 00:21:57,641 FINE  [org.postgresql.jdbc.PgConnection] (default task-9)   setAutoCommit = false
+keycloak_1            | 00:21:57,642 DEBUG [org.hibernate.resource.jdbc.internal.LogicalConnectionManagedImpl] (default task-9) Initiating JDBC connection release from afterStatement
+keycloak_1            | 00:21:57,642 DEBUG [org.hibernate.SQL] (default task-9) 
+keycloak_1            |     select
+keycloak_1            |         userentity0_.ID as ID1_74_,
+keycloak_1            |         userentity0_.CREATED_TIMESTAMP as CREATED_2_74_,
+keycloak_1            |         userentity0_.EMAIL as EMAIL3_74_,
+keycloak_1            |         userentity0_.EMAIL_CONSTRAINT as EMAIL_CO4_74_,
+keycloak_1            |         userentity0_.EMAIL_VERIFIED as EMAIL_VE5_74_,
+keycloak_1            |         userentity0_.ENABLED as ENABLED6_74_,
+keycloak_1            |         userentity0_.FEDERATION_LINK as FEDERATI7_74_,
+keycloak_1            |         userentity0_.FIRST_NAME as FIRST_NA8_74_,
+keycloak_1            |         userentity0_.LAST_NAME as LAST_NAM9_74_,
+keycloak_1            |         userentity0_.NOT_BEFORE as NOT_BEF10_74_,
+keycloak_1            |         userentity0_.REALM_ID as REALM_I11_74_,
+keycloak_1            |         userentity0_.SERVICE_ACCOUNT_CLIENT_LINK as SERVICE12_74_,
+keycloak_1            |         userentity0_.USERNAME as USERNAM13_74_ 
+keycloak_1            |     from
+keycloak_1            |         public.USER_ENTITY userentity0_ 
+keycloak_1            |     where
+keycloak_1            |         userentity0_.SERVICE_ACCOUNT_CLIENT_LINK=? 
+keycloak_1            |         and userentity0_.REALM_ID=?
+keycloak_1            | 00:21:57,642 DEBUG [org.hibernate.resource.jdbc.internal.LogicalConnectionManagedImpl] (default task-9) Initiating JDBC connection release from afterStatement
+keycloak_1            | 00:21:57,642 DEBUG [org.keycloak.authorization.authorization.AuthorizationTokenService] (default task-9) Error while evaluating permissions: org.keycloak.services.CorsErrorResponseException: HTTP 500 Internal Server Error
+keycloak_1            | 	at org.keycloak.keycloak-services@12.0.2//org.keycloak.authorization.authorization.AuthorizationTokenService.authorize(AuthorizationTokenService.java:236)
+keycloak_1            | 	at org.keycloak.keycloak-services@12.0.2//org.keycloak.protocol.oidc.endpoints.TokenEndpoint.permissionGrant(TokenEndpoint.java:1342)
+keycloak_1            | 	at org.keycloak.keycloak-services@12.0.2//org.keycloak.protocol.oidc.endpoints.TokenEndpoint.processGrantRequest(TokenEndpoint.java:229)
+keycloak_1            | 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+keycloak_1            | 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+keycloak_1            | 	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+keycloak_1            | 	at java.base/java.lang.reflect.Method.invoke(Method.java:566)
+keycloak_1            | 	at org.jboss.resteasy.resteasy-jaxrs@3.13.2.Final//org.jboss.resteasy.core.MethodInjectorImpl.invoke(MethodInjectorImpl.java:138)
+keycloak_1            | 	at org.jboss.resteasy.resteasy-jaxrs@3.13.2.Final//org.jboss.resteasy.core.ResourceMethodInvoker.internalInvokeOnTarget(ResourceMethodInvoker.java:543)
+keycloak_1            | 	at org.jboss.resteasy.resteasy-jaxrs@3.13.2.Final//org.jboss.resteasy.core.ResourceMethodInvoker.invokeOnTargetAfterFilter(ResourceMethodInvoker.java:432)
+keycloak_1            | 	at org.jboss.resteasy.resteasy-jaxrs@3.13.2.Final//org.jboss.resteasy.core.ResourceMethodInvoker.lambda$invokeOnTarget$0(ResourceMethodInvoker.java:393)
+keycloak_1            | 	at org.jboss.resteasy.resteasy-jaxrs@3.13.2.Final//org.jboss.resteasy.core.interception.PreMatchContainerRequestContext.filter(PreMatchContainerRequestContext.java:358)
+keycloak_1            | 	at org.jboss.resteasy.resteasy-jaxrs@3.13.2.Final//org.jboss.resteasy.core.ResourceMethodInvoker.invokeOnTarget(ResourceMethodInvoker.java:395)
+keycloak_1            | 	at org.jboss.resteasy.resteasy-jaxrs@3.13.2.Final//org.jboss.resteasy.core.ResourceMethodInvoker.invoke(ResourceMethodInvoker.java:364)
+keycloak_1            | 	at org.jboss.resteasy.resteasy-jaxrs@3.13.2.Final//org.jboss.resteasy.core.ResourceLocatorInvoker.invokeOnTargetObject(ResourceLocatorInvoker.java:150)
+keycloak_1            | 	at org.jboss.resteasy.resteasy-jaxrs@3.13.2.Final//org.jboss.resteasy.core.ResourceLocatorInvoker.invoke(ResourceLocatorInvoker.java:110)
+keycloak_1            | 	at org.jboss.resteasy.resteasy-jaxrs@3.13.2.Final//org.jboss.resteasy.core.ResourceLocatorInvoker.invokeOnTargetObject(ResourceLocatorInvoker.java:141)
+keycloak_1            | 	at org.jboss.resteasy.resteasy-jaxrs@3.13.2.Final//org.jboss.resteasy.core.ResourceLocatorInvoker.invoke(ResourceLocatorInvoker.java:104)
+keycloak_1            | 	at org.jboss.resteasy.resteasy-jaxrs@3.13.2.Final//org.jboss.resteasy.core.SynchronousDispatcher.invoke(SynchronousDispatcher.java:440)
+keycloak_1            | 	at org.jboss.resteasy.resteasy-jaxrs@3.13.2.Final//org.jboss.resteasy.core.SynchronousDispatcher.lambda$invoke$4(SynchronousDispatcher.java:229)
+keycloak_1            | 	at org.jboss.resteasy.resteasy-jaxrs@3.13.2.Final//org.jboss.resteasy.core.SynchronousDispatcher.lambda$preprocess$0(SynchronousDispatcher.java:135)
+keycloak_1            | 	at org.jboss.resteasy.resteasy-jaxrs@3.13.2.Final//org.jboss.resteasy.core.interception.PreMatchContainerRequestContext.filter(PreMatchContainerRequestContext.java:358)
+keycloak_1            | 	at org.jboss.resteasy.resteasy-jaxrs@3.13.2.Final//org.jboss.resteasy.core.SynchronousDispatcher.preprocess(SynchronousDispatcher.java:138)
+keycloak_1            | 	at org.jboss.resteasy.resteasy-jaxrs@3.13.2.Final//org.jboss.resteasy.core.SynchronousDispatcher.invoke(SynchronousDispatcher.java:215)
+keycloak_1            | 	at org.jboss.resteasy.resteasy-jaxrs@3.13.2.Final//org.jboss.resteasy.plugins.server.servlet.ServletContainerDispatcher.service(ServletContainerDispatcher.java:245)
+keycloak_1            | 	at org.jboss.resteasy.resteasy-jaxrs@3.13.2.Final//org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher.service(HttpServletDispatcher.java:61)
+keycloak_1            | 	at org.jboss.resteasy.resteasy-jaxrs@3.13.2.Final//org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher.service(HttpServletDispatcher.java:56)
+keycloak_1            | 	at javax.servlet.api@2.0.0.Final//javax.servlet.http.HttpServlet.service(HttpServlet.java:590)
+keycloak_1            | 	at io.undertow.servlet@2.2.2.Final//io.undertow.servlet.handlers.ServletHandler.handleRequest(ServletHandler.java:74)
+keycloak_1            | 	at io.undertow.servlet@2.2.2.Final//io.undertow.servlet.handlers.FilterHandler$FilterChainImpl.doFilter(FilterHandler.java:129)
+keycloak_1            | 	at org.keycloak.keycloak-wildfly-extensions@12.0.2//org.keycloak.provider.wildfly.WildFlyRequestFilter.lambda$doFilter$0(WildFlyRequestFilter.java:41)
+keycloak_1            | 	at org.keycloak.keycloak-services@12.0.2//org.keycloak.services.filters.AbstractRequestFilter.filter(AbstractRequestFilter.java:43)
+keycloak_1            | 	at org.keycloak.keycloak-wildfly-extensions@12.0.2//org.keycloak.provider.wildfly.WildFlyRequestFilter.doFilter(WildFlyRequestFilter.java:39)
+keycloak_1            | 	at io.undertow.servlet@2.2.2.Final//io.undertow.servlet.core.ManagedFilter.doFilter(ManagedFilter.java:61)
+keycloak_1            | 	at io.undertow.servlet@2.2.2.Final//io.undertow.servlet.handlers.FilterHandler$FilterChainImpl.doFilter(FilterHandler.java:131)
+keycloak_1            | 	at io.undertow.servlet@2.2.2.Final//io.undertow.servlet.handlers.FilterHandler.handleRequest(FilterHandler.java:84)
+keycloak_1            | 	at io.undertow.servlet@2.2.2.Final//io.undertow.servlet.handlers.security.ServletSecurityRoleHandler.handleRequest(ServletSecurityRoleHandler.java:62)
+keycloak_1            | 	at io.undertow.servlet@2.2.2.Final//io.undertow.servlet.handlers.ServletChain$1.handleRequest(ServletChain.java:68)
+keycloak_1            | 	at io.undertow.servlet@2.2.2.Final//io.undertow.servlet.handlers.ServletDispatchingHandler.handleRequest(ServletDispatchingHandler.java:36)
+keycloak_1            | 	at org.wildfly.extension.undertow@21.0.2.Final//org.wildfly.extension.undertow.security.SecurityContextAssociationHandler.handleRequest(SecurityContextAssociationHandler.java:78)
+keycloak_1            | 	at io.undertow.core@2.2.2.Final//io.undertow.server.handlers.PredicateHandler.handleRequest(PredicateHandler.java:43)
+keycloak_1            | 	at io.undertow.servlet@2.2.2.Final//io.undertow.servlet.handlers.RedirectDirHandler.handleRequest(RedirectDirHandler.java:68)
+keycloak_1            | 	at io.undertow.servlet@2.2.2.Final//io.undertow.servlet.handlers.security.SSLInformationAssociationHandler.handleRequest(SSLInformationAssociationHandler.java:132)
+keycloak_1            | 	at io.undertow.servlet@2.2.2.Final//io.undertow.servlet.handlers.security.ServletAuthenticationCallHandler.handleRequest(ServletAuthenticationCallHandler.java:57)
+keycloak_1            | 	at io.undertow.core@2.2.2.Final//io.undertow.server.handlers.PredicateHandler.handleRequest(PredicateHandler.java:43)
+keycloak_1            | 	at io.undertow.core@2.2.2.Final//io.undertow.security.handlers.AbstractConfidentialityHandler.handleRequest(AbstractConfidentialityHandler.java:46)
+keycloak_1            | 	at io.undertow.servlet@2.2.2.Final//io.undertow.servlet.handlers.security.ServletConfidentialityConstraintHandler.handleRequest(ServletConfidentialityConstraintHandler.java:64)
+keycloak_1            | 	at io.undertow.core@2.2.2.Final//io.undertow.security.handlers.AuthenticationMechanismsHandler.handleRequest(AuthenticationMechanismsHandler.java:60)
+keycloak_1            | 	at io.undertow.servlet@2.2.2.Final//io.undertow.servlet.handlers.security.CachedAuthenticatedSessionHandler.handleRequest(CachedAuthenticatedSessionHandler.java:77)
+keycloak_1            | 	at io.undertow.core@2.2.2.Final//io.undertow.security.handlers.NotificationReceiverHandler.handleRequest(NotificationReceiverHandler.java:50)
+keycloak_1            | 	at io.undertow.core@2.2.2.Final//io.undertow.security.handlers.AbstractSecurityContextAssociationHandler.handleRequest(AbstractSecurityContextAssociationHandler.java:43)
+keycloak_1            | 	at io.undertow.core@2.2.2.Final//io.undertow.server.handlers.PredicateHandler.handleRequest(PredicateHandler.java:43)
+keycloak_1            | 	at org.wildfly.extension.undertow@21.0.2.Final//org.wildfly.extension.undertow.security.jacc.JACCContextIdHandler.handleRequest(JACCContextIdHandler.java:61)
+keycloak_1            | 	at io.undertow.core@2.2.2.Final//io.undertow.server.handlers.PredicateHandler.handleRequest(PredicateHandler.java:43)
+keycloak_1            | 	at org.wildfly.extension.undertow@21.0.2.Final//org.wildfly.extension.undertow.deployment.GlobalRequestControllerHandler.handleRequest(GlobalRequestControllerHandler.java:68)
+keycloak_1            | 	at io.undertow.servlet@2.2.2.Final//io.undertow.servlet.handlers.SendErrorPageHandler.handleRequest(SendErrorPageHandler.java:52)
+keycloak_1            | 	at io.undertow.core@2.2.2.Final//io.undertow.server.handlers.PredicateHandler.handleRequest(PredicateHandler.java:43)
+keycloak_1            | 	at io.undertow.servlet@2.2.2.Final//io.undertow.servlet.handlers.ServletInitialHandler.handleFirstRequest(ServletInitialHandler.java:269)
+keycloak_1            | 	at io.undertow.servlet@2.2.2.Final//io.undertow.servlet.handlers.ServletInitialHandler.access$100(ServletInitialHandler.java:78)
+keycloak_1            | 	at io.undertow.servlet@2.2.2.Final//io.undertow.servlet.handlers.ServletInitialHandler$2.call(ServletInitialHandler.java:133)
+keycloak_1            | 	at io.undertow.servlet@2.2.2.Final//io.undertow.servlet.handlers.ServletInitialHandler$2.call(ServletInitialHandler.java:130)
+keycloak_1            | 	at io.undertow.servlet@2.2.2.Final//io.undertow.servlet.core.ServletRequestContextThreadSetupAction$1.call(ServletRequestContextThreadSetupAction.java:48)
+keycloak_1            | 	at io.undertow.servlet@2.2.2.Final//io.undertow.servlet.core.ContextClassLoaderSetupAction$1.call(ContextClassLoaderSetupAction.java:43)
+keycloak_1            | 	at org.wildfly.extension.undertow@21.0.2.Final//org.wildfly.extension.undertow.security.SecurityContextThreadSetupAction.lambda$create$0(SecurityContextThreadSetupAction.java:105)
+keycloak_1            | 	at org.wildfly.extension.undertow@21.0.2.Final//org.wildfly.extension.undertow.deployment.UndertowDeploymentInfoService$UndertowThreadSetupAction.lambda$create$0(UndertowDeploymentInfoService.java:1530)
+keycloak_1            | 	at org.wildfly.extension.undertow@21.0.2.Final//org.wildfly.extension.undertow.deployment.UndertowDeploymentInfoService$UndertowThreadSetupAction.lambda$create$0(UndertowDeploymentInfoService.java:1530)
+keycloak_1            | 	at org.wildfly.extension.undertow@21.0.2.Final//org.wildfly.extension.undertow.deployment.UndertowDeploymentInfoService$UndertowThreadSetupAction.lambda$create$0(UndertowDeploymentInfoService.java:1530)
+keycloak_1            | 	at org.wildfly.extension.undertow@21.0.2.Final//org.wildfly.extension.undertow.deployment.UndertowDeploymentInfoService$UndertowThreadSetupAction.lambda$create$0(UndertowDeploymentInfoService.java:1530)
+keycloak_1            | 	at io.undertow.servlet@2.2.2.Final//io.undertow.servlet.handlers.ServletInitialHandler.dispatchRequest(ServletInitialHandler.java:249)
+keycloak_1            | 	at io.undertow.servlet@2.2.2.Final//io.undertow.servlet.handlers.ServletInitialHandler.access$000(ServletInitialHandler.java:78)
+keycloak_1            | 	at io.undertow.servlet@2.2.2.Final//io.undertow.servlet.handlers.ServletInitialHandler$1.handleRequest(ServletInitialHandler.java:99)
+keycloak_1            | 	at io.undertow.core@2.2.2.Final//io.undertow.server.Connectors.executeRootHandler(Connectors.java:387)
+keycloak_1            | 	at io.undertow.core@2.2.2.Final//io.undertow.server.HttpServerExchange$1.run(HttpServerExchange.java:841)
+keycloak_1            | 	at org.jboss.threads@2.4.0.Final//org.jboss.threads.ContextClassLoaderSavingRunnable.run(ContextClassLoaderSavingRunnable.java:35)
+keycloak_1            | 	at org.jboss.threads@2.4.0.Final//org.jboss.threads.EnhancedQueueExecutor.safeRun(EnhancedQueueExecutor.java:1990)
+keycloak_1            | 	at org.jboss.threads@2.4.0.Final//org.jboss.threads.EnhancedQueueExecutor$ThreadBody.doRunTask(EnhancedQueueExecutor.java:1486)
+keycloak_1            | 	at org.jboss.threads@2.4.0.Final//org.jboss.threads.EnhancedQueueExecutor$ThreadBody.run(EnhancedQueueExecutor.java:1377)
+keycloak_1            | 	at org.jboss.xnio@3.8.2.Final//org.xnio.XnioWorker$WorkerThreadFactory$1$1.run(XnioWorker.java:1280)
+keycloak_1            | 	at java.base/java.lang.Thread.run(Thread.java:834)
+keycloak_1            | 
+keycloak_1            | 00:21:57,643 DEBUG [org.jboss.resteasy.resteasy_jaxrs.i18n] (default task-9) MessageBodyWriter: org.jboss.resteasy.spi.ResteasyProviderFactory$SortedKey
+keycloak_1            | 00:21:57,643 DEBUG [org.jboss.resteasy.resteasy_jaxrs.i18n] (default task-9) MessageBodyWriter: org.jboss.resteasy.plugins.providers.jackson.ResteasyJackson2Provider
+keycloak_1            | 00:21:57,643 DEBUG [org.jboss.resteasy.resteasy_jaxrs.i18n] (default task-9) MessageBodyWriter: org.jboss.resteasy.plugins.providers.jackson.ResteasyJackson2Provider
+keycloak_1            | 00:21:57,643 DEBUG [org.jboss.resteasy.resteasy_jaxrs.i18n] (default task-9) Interceptor Context: org.jboss.resteasy.core.interception.ServerWriterInterceptorContext,  Method : proceed
+keycloak_1            | 00:21:57,643 DEBUG [org.jboss.resteasy.resteasy_jaxrs.i18n] (default task-9) WriterInterceptor: org.jboss.resteasy.security.doseta.DigitalSigningInterceptor
+keycloak_1            | 00:21:57,643 DEBUG [org.jboss.resteasy.security.doseta.i18n] (default task-9) Interceptor : org.jboss.resteasy.security.doseta.DigitalSigningInterceptor,  Method : aroundWriteTo
+keycloak_1            | 00:21:57,643 DEBUG [org.jboss.resteasy.resteasy_jaxrs.i18n] (default task-9) Interceptor Context: org.jboss.resteasy.core.interception.ServerWriterInterceptorContext,  Method : proceed
+keycloak_1            | 00:21:57,643 DEBUG [org.jboss.resteasy.resteasy_jaxrs.i18n] (default task-9) MessageBodyWriter: org.jboss.resteasy.spi.ResteasyProviderFactory$SortedKey
+keycloak_1            | 00:21:57,643 DEBUG [org.jboss.resteasy.resteasy_jaxrs.i18n] (default task-9) MessageBodyWriter: org.jboss.resteasy.plugins.providers.jackson.ResteasyJackson2Provider
+keycloak_1            | 00:21:57,643 DEBUG [org.jboss.resteasy.resteasy_jaxrs.i18n] (default task-9) Provider : org.jboss.resteasy.plugins.providers.jackson.ResteasyJackson2Provider,  Method : writeTo
+keycloak_1            | 00:21:57,643 DEBUG [org.keycloak.transaction.JtaTransactionWrapper] (default task-9) JtaTransactionWrapper  commit
+keycloak_1            | 00:21:57,643 DEBUG [org.hibernate.engine.transaction.internal.TransactionImpl] (default task-9) On TransactionImpl creation, JpaCompliance#isJpaTransactionComplianceEnabled == false
+keycloak_1            | 00:21:57,643 DEBUG [org.jboss.jca.core.connectionmanager.pool.strategy.OnePool] (default task-9) KeycloakDS: returnConnection(2f597ac2, false) [0/20]
+keycloak_1            | 00:21:57,643 DEBUG [org.hibernate.resource.jdbc.internal.LogicalConnectionManagedImpl] (default task-9) Initiating JDBC connection release from afterTransaction
+keycloak_1            | 00:21:57,644 DEBUG [org.keycloak.transaction.JtaTransactionWrapper] (default task-9) JtaTransactionWrapper end
+keycloak_1            | 00:21:59,917 DEBUG [org.keycloak.transaction.JtaTransactionWrapper] (Timer-2) new JtaTransactionWrapper
+keycloak_1            | 00:21:59,917 DEBUG [org.keycloak.transaction.JtaTransactionWrapper] (Timer-2) was existing? false
+keycloak_1            | 00:21:59,917 DEBUG [org.keycloak.models.sessions.infinispan.changes.sessions.PersisterLastSessionRefreshStore] (Timer-2) Updating 0 userSessions with lastSessionRefresh: 1611793259
+keycloak_1            | 00:21:59,917 DEBUG [org.hibernate.resource.transaction.backend.jta.internal.JtaTransactionCoordinatorImpl] (Timer-2) Hibernate RegisteredSynchronization successfully registered with JTA platform
+keycloak_1            | 00:21:59,917 DEBUG [org.keycloak.transaction.JtaTransactionWrapper] (Timer-2) JtaTransactionWrapper  commit
+keycloak_1            | 00:21:59,917 DEBUG [org.hibernate.engine.transaction.internal.TransactionImpl] (Timer-2) On TransactionImpl creation, JpaCompliance#isJpaTransactionComplianceEnabled == false
+keycloak_1            | 00:21:59,917 DEBUG [org.hibernate.resource.jdbc.internal.LogicalConnectionManagedImpl] (Timer-2) Initiating JDBC connection release from afterTransaction
+keycloak_1            | 00:21:59,917 DEBUG [org.keycloak.transaction.JtaTransactionWrapper] (Timer-2) JtaTransactionWrapper end
+keycloak_1            | 00:21:59,917 DEBUG [org.keycloak.services.scheduled.ScheduledTaskRunner] (Timer-2) Executed scheduled task AbstractLastSessionRefreshStoreFactory$$Lambda$2024/0x0000000841705440
+^Z^CERROR: Aborting.
+mariane@mari-ubuntu ~/proj/dojot/dojot/iam/keycloak/examples (crate_deploy_kong_keycloak) $ 
+
