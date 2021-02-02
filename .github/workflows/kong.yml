@@ -31,7 +31,7 @@ jobs:
     #     docker build -t pepkong -f tests/unit_tests/Dockerfile ../.. && docker container run pepkong
 
     - name: Build and Push
-      uses: elgohr/Publish-Docker-Github-Action@3
+      uses: elgohr/Publish-Docker-Github-Action@3.02
       with:
         name: ${{ steps.get_owner.outputs.owner }}/kong
         username: ${{ secrets.DOCKER_USERNAME }}
