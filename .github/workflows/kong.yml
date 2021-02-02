@@ -31,11 +31,11 @@ jobs:
     #     docker build -t pepkong -f tests/unit_tests/Dockerfile ../.. && docker container run pepkong
 
     - name: Build and Push
-      uses: elgohr/Publish-Docker-Github-Action@2.16
+      uses: elgohr/Publish-Docker-Github-Action@3
       with:
         name: ${{ steps.get_owner.outputs.owner }}/kong
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
         workdir: api-gateway/kong/
-        buildoptions: " --label 'commit_sha'='${{ github.sha }}' " # label with commit that built image
+        buildoptions: ' --label "commit_sha=${{ github.sha }}" ' # label with commit that built image
         tag_names: true # tag will be based in branch name or tag name
