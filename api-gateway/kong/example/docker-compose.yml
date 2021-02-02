@@ -53,7 +53,7 @@ services:
   apigw:
     # build:
     #   context: ../
-    image: mprevide/kong:add_kong
+    image: mprevide/kong:add_kong2
     depends_on:
       postgres:
         condition: service_healthy
