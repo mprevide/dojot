@@ -8,7 +8,21 @@ on:
       - 'api-gateway/kong/**'
 
 jobs:
+
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@v2
+    - name: Running tests #needs improvement like checking if has error
+      run: |
+        cd api-gateway/kong/plugins/pepkong
+        docker build -t pepkong -f tests/unit_tests/Dockerfile ../..
+        docker container run pepkong
+
   docker-hub:
+    needs: unit-tests
     name: Build  and Publish image with plugins to DockerHUb
     runs-on: ubuntu-latest
     # If this is a PR or commit with msg ci skip, it won't run
@@ -23,12 +37,7 @@ jobs:
         echo ::set-output name=owner::$OWNER
 
     - name: Checkout
-      uses: actions/checkout@v1
-
-    # - name: Running tests
-    #   run: |
-    #     cd api-gateway/kong/pepkong/
-    #     docker build -t pepkong -f tests/unit_tests/Dockerfile ../.. && docker container run pepkong
+      uses: actions/checkout@v2
 
     - name: Build and Push
       uses: elgohr/Publish-Docker-Github-Action@3.02
