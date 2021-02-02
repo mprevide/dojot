@@ -53,7 +53,7 @@ services:
   apigw:
     # build:
     #   context: ../
-    image: mprevide/kong:add_kong
+    image: mprevide/kong:add_kong2
     depends_on:
       postgres:
         condition: service_healthy
@@ -99,7 +99,7 @@ services:
         max-file: '5'
 
   kong-config:
-    image: dojot/appropriate-curl
+    image: appropriate/curl:3.1
     entrypoint: /opt/kong.config.sh
     restart: on-failure
     depends_on:
@@ -113,7 +113,7 @@ services:
         max-file: '5'
 
   konga:
-    image: dojot/pantsel_konga:0.14.7
+    image: pantsel/konga:0.14.7
     depends_on:
       - apigw
       - mongodb
@@ -161,13 +161,11 @@ services:
       KEYCLOAK_LOGLEVEL: DEBUG
       ROOT_LOGLEVEL: DEBUG
       PROXY_ADDRESS_FORWARDING: "true"
-      # KEYCLOAK_USER_FILE: admin123
-      # #KEYCLOAK_USER_FILE
-      # KEYCLOAK_PASSWORD: admin123
+      #KEYCLOAK_USER_FILE
       #KEYCLOAK_PASSWORD_FILE
       KEYCLOAK_IMPORT: /tmp/example-realm.json
       # KEYCLOAK_FRONTEND_URL: http://keycloak:8080/auth
-      # PROXY_ADDRESS_FORWARDING: "true" # When running Keycloak behind a proxy, you will need to enable proxy address forwarding
+      PROXY_ADDRESS_FORWARDING: "true" # When running Keycloak behind a proxy, you will need to enable proxy address forwarding
       # KEYCLOAK_STATISTICS: all
       # DEBUG: "true"
       # DEBUG_PORT: "*:8787"
@@ -185,7 +183,7 @@ services:
         max-file: '5'
 
   postgres:
-    image: dojot/postgres:9.5.21-alpine
+    image: postgres:9.5.21-alpine
     environment:
       POSTGRES_DB: postgres
       POSTGRES_USER: postgres
@@ -277,7 +275,7 @@ services:
         max-file: '5'
 
   mongodb:
-    image: dojot/mongo:3.2
+    image: mongo:3.2
     restart: always
     user: "mongodb"
     healthcheck:
