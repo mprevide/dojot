@@ -22,7 +22,8 @@ echo "- addAuthToEndpoint: ServiceName=${1}"
 
 curl -X POST ${kong}/services/"${1}"/plugins \
   --data "name=jwt-keycloak" \
-  --data "config.allowed_iss=http://localhost:8000/auth/realms/.+"
+  --data "config.allowed_iss=http://localhost:8000/auth/realms/(.*)"
+  # --data "config.allowed_iss=http://localhost:8000/auth/realms/.+"
 
 curl  -sS  -X POST \
 --url ${kong}/services/"${1}"/plugins/ \

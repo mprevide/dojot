@@ -36,11 +36,11 @@
 - não é possível na importação criar usuários?
 
 ```
-docker exec -it fd30e1498a7e /opt/jboss/keycloak/bin/standalone.sh -Dkeycloak.migration.action=export -Dkeycloak.migration.provider=singleFile -Dkeycloak.migration.file=/tmp/realm2.json -Dkeycloak.migration.usersExportStrategy=SAME_FILE
+docker exec -it 9faa25a36205 /opt/jboss/keycloak/bin/standalone.sh -Dkeycloak.migration.action=export -Dkeycloak.migration.provider=singleFile -Dkeycloak.migration.file=/tmp/realm3.json -Dkeycloak.migration.usersExportStrategy=SAME_FILE
 
-docker exec -it fd30e1498a7e /opt/jboss/keycloak/bin/standalone.sh -Djboss.socket.binding.port-offset=100 -Dkeycloak.migration.action=export -Dkeycloak.migration.provider=singleFile -Dkeycloak.migration.realmName=admin -Dkeycloak.migration.usersExportStrategy=REALM_FILE -Dkeycloak.migration.file=/tmp/my_realm2.json
+docker exec -it 9faa25a36205 /opt/jboss/keycloak/bin/standalone.sh -Djboss.socket.binding.port-offset=100 -Dkeycloak.migration.action=export -Dkeycloak.migration.provider=singleFile -Dkeycloak.migration.realmName=admin1 -Dkeycloak.migration.usersExportStrategy=REALM_FILE -Dkeycloak.migration.file=/tmp/my_realm2.json
 
-docker cp fd30e1498a7e:/tmp/my_realm2.json my_realm.json
+docker cp 9faa25a36205:/tmp/my_realm2.json my_realm3.json
 
 - configurar smtp
 

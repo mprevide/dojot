@@ -23,6 +23,7 @@ RUN luarocks make && luarocks pack kong-plugin-jwt-keycloak
 
 ## Create image
 FROM kong:2.0.4-alpine
+#kong:2.2-alpine
 
 # copy default config
 COPY kong.conf /etc/kong/
@@ -38,12 +39,6 @@ COPY ./plugins/pepkong /custom-plugins/pepkong
 RUN luarocks make
 
 USER kong
-
-# healthcheck:
-#   test: ["CMD", "kong", "health"]
-#   interval: 10s
-#   timeout: 10s
-#   retries: 10
 
 HEALTHCHECK --start-period=2m --interval=30s --timeout=10s --retries=3 \
     CMD kong health || exit 1
