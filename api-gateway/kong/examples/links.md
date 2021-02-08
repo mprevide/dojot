@@ -63,14 +63,37 @@ curl -s -X POST \
 
 
 curl -s -X POST \
-        -H "Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJhcEdiVUVXM2VLb0U4aWpTMGY1UjNuTXhhRVEydzRuVWN6dER6X2xJem5zIn0.eyJleHAiOjE2MTE3OTYxNTQsImlhdCI6MTYxMTc5NTg1NCwianRpIjoiZGU0N2FkZGMtZTNhMC00NmM2LThiMTAtMGJlMDI1NmQyNDI5IiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo4MDAwL2F1dGgvcmVhbG1zL2FkbWluIiwic3ViIjoiNDhiMTdmYmQtNjc2OS00MTU1LTg4YWUtOTJhYzI4ZTVkZjU0IiwidHlwIjoiQmVhcmVyIiwiYXpwIjoiYWRtaW4tY2xpIiwic2Vzc2lvbl9zdGF0ZSI6IjBiMTRiN2VhLTNkNWItNGRmMi1iYTc1LTNjYTg1YWI0Mzk2OSIsImFjciI6IjEiLCJzY29wZSI6InByb2ZpbGUgZW1haWwiLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwicHJlZmVycmVkX3VzZXJuYW1lIjoiZGVtb3VzZXIifQ.UIaexgda4ZWy00-UccP8E8hGfkob5Y0Go8P50jbEoPWTO5V2gOBgFaQpjRpaqU7LwGi_FWMgLITNAQUimOvsb52vmcDGb7Qohbr1J05pGCzd0AZu13I6ELcf1J7jlxaOtDdcgP7389nUL1Q80shijWa0ADPc8BWcSKijXTGqX-xB1k8zI-30HcrKKb4WhzGV3UwTnGsLEhJqb_0Mq2qKAYFjcbMIA9FFhrgGgeRtA82JXgZSA4ETUfEFyYnoSFaHBECW2_elVwcAT-M93PmGOBmNRFHk9UYokl0JxfiF6B3KbLVTMHN0HRQxfjhqdm3EJOxB2aPGd-W1FIYv-DI1Zg" \
+        -H "Authorization: Bearer ${JWT}" \
         -H "Content-Type: application/x-www-form-urlencoded" \
         -d "grant_type=urn:ietf:params:oauth:grant-type:uma-ticket" \
         -d "audience=kong" \
         -d 'permission=device-manager#view' \
         -d 'response_mode=decision' \
-        http://localhost:8000/auth/realms/admin/protocol/openid-connect/token
+        http://localhost:8080/auth/realms/admin/protocol/openid-connect/token
 
+
+JWT=$(curl --location --request POST localhost:8000/auth/realms/admin/protocol/openid-connect/token \
+--data-urlencode 'username=user' \
+--data-urlencode 'password=user' \
+--data-urlencode 'client_id=admin-cli' \
+--data-urlencode 'scope=openid' \
+--data-urlencode 'audience=kong' \
+--data-urlencode 'grant_type=password' 2>/dev/null | jq -r '.access_token')
+
+JWT=$(curl --location --request POST localhost:8000/auth/realms/admin/protocol/openid-connect/token \
+--data-urlencode 'username=user' \
+--data-urlencode 'password=user' \
+--data-urlencode 'client_id=gui' \
+--data-urlencode 'grant_type=password' 2>/dev/null | jq -r '.access_token')
+
+
+curl -X POST \
+  http://localhost:8000/auth/realms/admin/protocol/openid-connect/token \
+  -H "Authorization: Bearer ${JWT}" \
+  --data "grant_type=urn:ietf:params:oauth:grant-type:uma-ticket" \
+  --data "audience=kong" \
+  --data "response_mode=permissions" \
+  --data "permission=device-manager#view"
 
 
 curl -s -X POST \

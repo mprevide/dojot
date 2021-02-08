@@ -58,6 +58,9 @@ local function do_authorization(conf)
     local params = build_form_params(conf.resource, conf.scopes[kong.request.get_method()])
     local token_endpoint = jwt.claims.iss .. "/protocol/openid-connect/token"
 
+    kong.log.debug('Invoke PDP/Keycloak in endpoint: ', token_endpoint)
+    kong.log.debug('Invoke PDP/Keycloak with params: ', params)
+
     local response = {}
     local body, code, headers, status = http.request {
         method = "POST",

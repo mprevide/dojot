@@ -54,7 +54,7 @@ To test Kafka integration follow these instructions:
 - Get an admin token:
 ```
 
-ADMIN_JWT=$(curl --location --request POST localhost:8000/auth/realms/admin/protocol/openid-connect/token \
+ADMIN_JWT=$(curl --location --request POST localhost:8080/auth/realms/admin/protocol/openid-connect/token \
 --data-urlencode 'username=admin' \
 --data-urlencode 'password=admin' \
 --data-urlencode 'client_id=admin-cli' \

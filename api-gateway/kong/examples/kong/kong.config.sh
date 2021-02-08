@@ -4,6 +4,7 @@ kong="http://apigw:8001"
 
 # check if kong is started
 if curl --output /dev/null --silent --head --fail "$kong"; then
+  echo ""
   echo "Kong is started."
 else
   echo "Kong isn't started."
@@ -21,7 +22,7 @@ echo "- addAuthToEndpoint: ServiceName=${1}"
 
 curl -X POST ${kong}/services/"${1}"/plugins \
   --data "name=jwt-keycloak" \
-  --data "config.allowed_iss=http://localhost:8000/auth/realms/admin" #http://keycloak:8080??
+  --data "config.allowed_iss=http://localhost:8000/auth/realms/.+"
 
 curl  -sS  -X POST \
 --url ${kong}/services/"${1}"/plugins/ \
@@ -79,11 +80,10 @@ createService "${1}" "${2}"
 createRoute "${1}" "${1}_route" "${3}" "${4}"
 }
 
-createEndpoint "server-api-example-sec" "http://server-api-example:8888/secure"  '"/secure"' "true"
+createEndpoint "server-api-example-sec" "http://server-api-example:8888"  '"/secure"' "false"
 addAuthToEndpoint "server-api-example-sec"
 
-createEndpoint "server-api-example-insec" "http://server-api-example:8888/insecure"  '"/insecure"' "true"
-
+createEndpoint "server-api-example-insec" "http://server-api-example:8888"  '"/insecure"' "false"
 
 createEndpoint "keycloak" "http://keycloak:8080/auth"  '"/auth"' "true"
 
@@ -96,6 +96,4 @@ createEndpoint "keycloak" "http://keycloak:8080/auth"  '"/auth"' "true"
 # --data "config.minute=5" \
 # --data "config.hour=40" \
 # --data "config.policy=local"
-
-
 

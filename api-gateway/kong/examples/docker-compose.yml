@@ -51,9 +51,8 @@ services:
         max-file: '5'
 
   apigw:
-    # build:
-    #   context: ../
-    image: mprevide/kong:add_kong2
+    build:
+      context: ../
     depends_on:
       postgres:
         condition: service_healthy
@@ -143,8 +142,9 @@ services:
       - kafka
       - postgres
     restart: always
-    volumes:
-      - ./keycloak/admin-12.json:/tmp/example-realm.json:Z
+    # volumes:
+    #   - ./keycloak/admin-12.json:/tmp/example-realm.json:Z
+      #- ./keycloak/admin.json:/tmp/example-realm.json:Z
     environment:
       JAVA_OPTS_APPEND: "-Dkeycloak.profile.feature.impersonation=disabled"
       KEYCLOAK_USER: admin
@@ -158,13 +158,13 @@ services:
       DB_DATABASE: keycloak
       DB_USER: keycloak
       DB_PASSWORD: keycloak
-      KEYCLOAK_LOGLEVEL: DEBUG
-      ROOT_LOGLEVEL: DEBUG
+      KEYCLOAK_LOGLEVEL: INFO
+      ROOT_LOGLEVEL: INFO
       PROXY_ADDRESS_FORWARDING: "true"
       #KEYCLOAK_USER_FILE
       #KEYCLOAK_PASSWORD_FILE
-      KEYCLOAK_IMPORT: /tmp/example-realm.json
-      # KEYCLOAK_FRONTEND_URL: http://keycloak:8080/auth
+      # KEYCLOAK_IMPORT: /tmp/example-realm.json
+      # KEYCLOAK_FRONTEND_URL: http://localhost:8000/auth
       PROXY_ADDRESS_FORWARDING: "true" # When running Keycloak behind a proxy, you will need to enable proxy address forwarding
       # KEYCLOAK_STATISTICS: all
       # DEBUG: "true"
@@ -302,6 +302,7 @@ services:
       options:
         max-size: 20m
         max-file: '5'
+
 
 volumes:
   postgres-volume:
