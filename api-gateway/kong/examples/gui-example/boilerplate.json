@@ -1,0 +1,12 @@
+{
+    "package-name": "react-boilerplate",
+    "templates": [],
+    "identifier": "node",
+    "version": "17.0.1.1",
+    "excluded": [
+        "node_modules",
+        "build",
+        "LICENSE.txt",
+        ".DS_Store"
+    ]
+}

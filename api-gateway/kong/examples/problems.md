@@ -1,17 +1,10 @@
+# p
 
 - Criação de tentants
    - Como configurar os realms?
    - Receber eventos do kafka e fazer chamadas em api ou cli para configurações ou chamada de import????
-   -  deixar aquivo disponivel???
-
-   java - json - publica kafka - cliend id client secret
-
-
-- E o kong?
- - Adicionar apenas na lista global o iss do plugin? Funciona? NÃO
-      E pelo visto não há como simplesmente adicionar um na lista, tenho q ter a lista para dar up e o id do plugin
- - escutar eventos de tenants?
- - criar serviço pra subtituir o sh e escutar eventos
+   - deixar aquivo disponivel???
+   - java - json - publica kafka - cliend id client secret
 
 - Há como colocar nova key no payload?
 
@@ -35,12 +28,14 @@
 
 - não é possível na importação criar usuários?
 
+- nao da pra importar facilmente por causa dos ids pra um tenant diferente
+
 ```
-docker exec -it 9faa25a36205 /opt/jboss/keycloak/bin/standalone.sh -Dkeycloak.migration.action=export -Dkeycloak.migration.provider=singleFile -Dkeycloak.migration.file=/tmp/realm3.json -Dkeycloak.migration.usersExportStrategy=SAME_FILE
+docker exec -it 8583938d6fb4 /opt/jboss/keycloak/bin/standalone.sh -Dkeycloak.migration.action=export -Dkeycloak.migration.provider=singleFile -Dkeycloak.migration.file=/tmp/realm5.json -Dkeycloak.migration.usersExportStrategy=SAME_FILE
 
-docker exec -it 9faa25a36205 /opt/jboss/keycloak/bin/standalone.sh -Djboss.socket.binding.port-offset=100 -Dkeycloak.migration.action=export -Dkeycloak.migration.provider=singleFile -Dkeycloak.migration.realmName=admin1 -Dkeycloak.migration.usersExportStrategy=REALM_FILE -Dkeycloak.migration.file=/tmp/my_realm2.json
+docker exec -it examples_keycloak_1 /opt/jboss/keycloak/bin/standalone.sh -Djboss.socket.binding.port-offset=100 -Dkeycloak.migration.action=export -Dkeycloak.migration.provider=singleFile -Dkeycloak.migration.realmName=admin1 -Dkeycloak.migration.usersExportStrategy=REALM_FILE -Dkeycloak.migration.file=/tmp/admin_simple_new.json
 
-docker cp 9faa25a36205:/tmp/my_realm2.json my_realm3.json
+docker cp 8583938d6fb4:/tmp/admin_simple_new.json admin_simple_new.json
 
 - configurar smtp
 

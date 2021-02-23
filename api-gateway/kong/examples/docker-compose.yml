@@ -134,9 +134,9 @@ services:
       - postgres
     restart: always
     # volumes:
-    #   - ./keycloak/admin.json:/tmp/example-realm.json:Z
+    #   - ./keycloak/mini-user2.json:/tmp/example-realm.json:Z
     environment:
-      JAVA_OPTS_APPEND: "-Dkeycloak.profile.feature.impersonation=disabled"
+      JAVA_OPTS_APPEND: "-Dkeycloak.profile.feature.impersonation=disabled -Dkeycloak.profile.feature.upload_scripts=enabled"
       KEYCLOAK_USER: admin
       KEYCLOAK_PASSWORD: admin
       KAFKA_SERVERS: kafka:9092
@@ -293,6 +293,17 @@ services:
         max-size: 20m
         max-file: '5'
 
+  gui-example:
+    build:
+      context: ./gui-example
+      dockerfile: ./Dockerfile
+    ports:
+     - "8001:80"
+    volumes:
+      - ".:/gui-example/app:rw"
+    # There is currently a bug: https://github.com/facebook/create-react-app/issues/8688#issuecomment-602149917
+    tty: true
+    command: npm start
 
 volumes:
   postgres-volume:

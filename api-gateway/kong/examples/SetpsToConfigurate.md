@@ -112,5 +112,9 @@ curl -X GET "http://localhost:8000/secure" -H  "Authorization: Bearer ${JWT}"
 ```
 
 ```sh
+curl -X DELETE "http://localhost:8000/secure" -H  "Authorization: Bearer ${JWT}"
+```
+
+```sh
 curl -X GET "http://localhost:8000/insecure"
 ```

@@ -15,7 +15,7 @@ jobs:
     steps:
     - name: checkout
       uses: actions/checkout@v2
-    - name: Running tests #needs improvement like checking if has error
+    - name: Running tests
       run: |
         cd api-gateway/kong/plugins/pepkong
         docker build -t pepkong -f tests/unit_tests/Dockerfile ../..
