@@ -67,11 +67,17 @@ Crie um novo realm chamado `admin`
         - Clique em save
     - Dentro de `Authorization` selecione a aba `Permissions`
       - Em `Create Permission` selecione `Scope-based`
-      - Defina um `name` significativo como neste caso `All Server Api Example with  security`
-      - Em `resource` defina `server-api-example-sec`
-      - Em `scopes` defina os valores `create`, `delete`, `update` e  `view`
-      - Em `Apply Policy` defina `Should be user`
-      - Em `Decision Strategy`  deixe `Unanomous`
+        - Defina um `name` significativo como neste caso `Modifications Server Api Example with security`
+        - Em `resource` defina `server-api-example-sec`
+        - Em `scopes` defina os valores `create`, `delete`  e `update`
+        - Em `Apply Policy` defina `Should be admin`
+        - Em `Decision Strategy`  deixe `Unanomous`
+      - Em `Create Permission` selecione `Scope-based`
+        - Defina um `name` significativo como neste caso `View Server Api Example with  security`
+        - Em `resource` defina `server-api-example-sec`
+        - Em `scopes` defina os valores `view`
+        - Em `Apply Policy` defina `Should be user`
+        - Em `Decision Strategy`  deixe `Unanomous`
 
 - Crie um novo `cli`com o *Client ID* como `kong`
   - Habilite a opção `Enable` caso não esteja habilitada
@@ -89,7 +95,7 @@ Crie um novo realm chamado `admin`
 JWT=$(curl --location --request POST http://localhost:8000/auth/realms/admin/protocol/openid-connect/token \
 --data-urlencode 'username=user' \
 --data-urlencode 'password=user' \
---data-urlencode 'client_id=cli' \
+--data-urlencode 'client_id=gui' \
 --data-urlencode 'grant_type=password' 2>/dev/null | jq -r '.access_token')
 ```
 

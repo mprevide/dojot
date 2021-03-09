@@ -51,7 +51,14 @@ try {
   });
 
   app.get('/secure', (req, res) =>  {
-    res.send('GET - secure route, tenant:' + req.tenant + '\n')
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify(
+                      {
+                            route: "GET - secure",
+                            tenant: req.tenant
+                      }
+                    ));
+    // res.send('GET - secure route, tenant:' + req.tenant + '\n')
   });
 
   app.post('/secure', (req, res) =>  {

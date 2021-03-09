@@ -88,6 +88,10 @@ createEndpoint "server-api-example-insec" "http://server-api-example:8888"  '"/i
 
 createEndpoint "keycloak" "http://keycloak:8080/auth"  '"/auth"' "true"
 
+createEndpoint "gui-example" "http://gui-example:80"  '"/"' "false"
+
+createEndpoint "backstage-example" "http://backstage-example:8887"  '"/pkce", "/internal-test"' "false"
+
 # echo ""
 # echo ""
 # echo "- add plugin rate-limiting in keycloak"

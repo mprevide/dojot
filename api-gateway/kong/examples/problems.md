@@ -40,3 +40,9 @@ docker cp 8583938d6fb4:/tmp/admin_simple_new.json admin_simple_new.json
 - configurar smtp
 
 - usar clinentid cli?
+
+
+-----
+- problema 1
+  - usuários não são por realm
+  -onde guardar o code-chalenge?
