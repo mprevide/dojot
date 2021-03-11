@@ -5,6 +5,8 @@ import axios from 'axios';
 const KEYCLOAK_URL="http://localhost:8000/auth";
 const REDIRECT_URL = "http://localhost:8000/?";
 
+const LOGOUT_URL = "http://localhost:8000/pkce/logout";
+
 const urlLogoutKeycloack = (realm) =>{
   const redirect_uri = encodeURIComponent(REDIRECT_URL)
   return KEYCLOAK_URL+
@@ -19,34 +21,14 @@ export default function ReturnLogin(props) {
 
   useEffect(() => {
     async function newFunction() {
-      console.log('useEffect');
-      const parsedHash = QueryString.parse(props.location.hash);
-      const { code: authorizationCode, session_state: sessionState, state } = parsedHash;
-
-      console.log('authorizationCode', authorizationCode);
-      console.log('sessionState', sessionState);
-      console.log('state', state);
-
-      try{
-        const result = await axios.post('http://localhost:8000/pkce/return', {
-          authorizationCode,
-          sessionState,
-          state,
-        });
-        console.log('result', result);
-      }catch(e){
-        console.log(e);
-      }
-
-      try{
+    try{
       const result2 = await axios.get('http://localhost:8000/internal-test');
       console.log('result2', result2);
       setData(result2.data);
     }catch(e){
       console.log(e);
     }
-
-    }
+  }
     newFunction();
   },[props]);
 
@@ -54,11 +36,11 @@ export default function ReturnLogin(props) {
 
   const handleLogout  = async (evt) => {
 
-    const url = urlLogoutKeycloack(realm)
+    // const url = urlLogoutKeycloack(realm)
 
-    console.log('RedirectLogin|','Redirecting to ',url);
-
-    window.location.href = url;
+    // console.log('RedirectLogin|','Redirecting to ',url);
+// /pkce/logout
+    window.location.href = LOGOUT_URL;
   }
 
   return (

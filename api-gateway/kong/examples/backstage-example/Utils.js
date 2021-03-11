@@ -32,12 +32,9 @@ const generatePKCEChallenge = (hash = "sha256", length=43)=>{
 const  loggingErrorsAxios = (error) =>  {
     if (error.response) {
       // Request made and server responded
-      // console.log(error.response.data);
-      // console.log(error.response.status);
-      // console.log(error.response.headers);
-      console.log(error.request);
-      // console.log('Error', error.message);
-      // console.log('Error', error.stack);
+      console.log(error.response.data);
+      console.log(error.response.status);
+      console.log(error.response.headers);
     } else if (error.request) {
       // The request was made but no response was received
       console.log(error.request);
@@ -47,4 +44,40 @@ const  loggingErrorsAxios = (error) =>  {
     }
   }
 
-module.exports = { generatePKCEChallenge, loggingErrorsAxios };
+const extractTenantByIssuer = (iss) => {
+  return iss.match(/(realms\/)(\w+)/)[2];
+};
+
+const middlewareJWTExtract = (accessToken) => {
+  const rawToken = accessToken;
+
+  if (rawToken === undefined) {
+    console.error('Missing JWT token');
+    return null;
+  }
+
+  const token = rawToken.split('.');
+  if (token.length !== 3) {
+    console.error('Invalid JWT token', rawToken);
+    return null;
+  }
+
+  const tokenData = JSON.parse(b64decode(rawToken.split('.')[1]));
+  const { iss, exp, auth_time } = tokenData;
+
+  const tokenInformation = {
+    token: rawToken,
+    realm: extractTenantByIssuer(iss),
+    iss,
+    exp, //Expiration time (Seconds since unix time)
+    iat, //Issued at (Seconds since unix time)
+    auth_time, //Time when auth occurred
+  }
+
+  console.log('tokenInformation', tokenInformation);
+
+  return tokenInformation;
+};
+
+
+module.exports = { generatePKCEChallenge, loggingErrorsAxios, middlewareJWTExtract };

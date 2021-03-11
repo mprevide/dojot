@@ -150,11 +150,11 @@ services:
       DB_PASSWORD: keycloak
       KEYCLOAK_LOGLEVEL: INFO
       ROOT_LOGLEVEL: INFO
-      KEYCLOAK_HOSTNAME: keycloak
+      KEYCLOAK_HOSTNAME: localhost
       #KEYCLOAK_USER_FILE
       #KEYCLOAK_PASSWORD_FILE
       # KEYCLOAK_IMPORT: /tmp/example-realm.json
-      KEYCLOAK_FRONTEND_URL: http://keycloak:8080/auth
+      KEYCLOAK_FRONTEND_URL: http://localhost:8080/auth
       PROXY_ADDRESS_FORWARDING: "true" # When running Keycloak behind a proxy, you will need to enable proxy address forwarding
       # KEYCLOAK_STATISTICS: all
       # DEBUG: "true"

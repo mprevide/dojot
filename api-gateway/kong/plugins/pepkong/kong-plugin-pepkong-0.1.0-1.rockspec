@@ -9,7 +9,7 @@ local pluginName = package:match("^kong%-plugin%-(.+)$")
 
 supported_platforms = {"linux", "macosx"}
 source = {
-  url = "https://github.com/dojot/kong.git"
+  url = "https://github.com/dojot/dojot.git"
 }
 
 description = {

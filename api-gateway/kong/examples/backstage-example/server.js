@@ -3,17 +3,21 @@ const session = require('express-session');
 const helmet = require('helmet');
 
 const { default: axios } = require('axios');
+const config = require('./Config');
 
-const { generatePKCEChallenge } = require('./Utils');
-const { getTokenByAuthorizationCode, getPermissionsByToken } = require('./KeycloackAPi.js');
+const { generatePKCEChallenge,
+        middlewareJWTExtract
+} = require('./Utils');
+
+const {
+  getTokenByAuthorizationCode,
+  getPermissionsByToken,
+  urlLoginKeycloack,
+  urlLogoutKeycloack
+} = require('./KeycloackAPi.js');
 const bodyParser = require('body-parser');
 
-// const APIGW_URL = 'http://apigw:8000';
-// const KEYCLOAK_URL="http://apigw:8000/auth";
 const INTERNAL_TEST_URL="http://apigw:8000/secure";
-
-const SECRET = 'keyboard cat';
-const HASH_LIB = 'S256';
 
 
 
@@ -31,7 +35,6 @@ const  loggingErrorsAxios = (error) =>  {
     console.log('Error', error.message);
   }
 }
-
 
 function errorHandler(err, req, res, next) {
   res.status(500);
@@ -56,7 +59,7 @@ app.use(session({
   // genid: function(req) {
   //   return genuuid() // use UUIDs for session IDs
   // },
-  secret: SECRET,
+  secret: config.SECRET,
   resave: false,
   saveUninitialized: true,
   cookie: {
@@ -70,31 +73,29 @@ app.use(session({
 
 app.use(helmet());
 
+
 try {
   app.get('/pkce', function(req, res) {
       res.setHeader('Content-Type', 'application/json');
       const {codeVerifier, codeChallenge} = generatePKCEChallenge();
-      console.log("codeChallenge", codeChallenge);
+      const url = urlLoginKeycloack('admin', codeChallenge, config.HASH_LIB)
+      // console.log("codeChallenge", codeChallenge);
       req.session.codeChallenge = codeChallenge;
       req.session.codeVerifier = codeVerifier;
-      res.status(200).json({
-        codeChallenge,
-        codeChallengeMethod: HASH_LIB,
-      });
+      // console.log('url', url)
+      return res.redirect(303,url);
   });
 
-  app.post('/pkce/return', async (req, res) =>  {
+  app.get('/pkce/return', async (req, res) =>  {
 
     //reponder com login, e permisoes?
     try {
     res.setHeader('Content-Type', 'application/json');
-    console.log('Got body:', req.body);
-    console.log('Got session:', req.session);
     const {
-      authorizationCode,
-      sessionState,
       state,
-    } = req.body;
+      session_state: sessionState,
+      code: authorizationCode} = req.query;
+
     const {
       accessToken,
       expiresIn,
@@ -108,18 +109,54 @@ try {
 
     console.log('accessToken', accessToken)
     req.session.accessToken = accessToken;
+    req.session.expiresIn = expiresIn;
+    req.session.refreshExpiresIn = refreshExpiresIn;
+    req.session.refreshToken = refreshToken;
 
     const arr = await getPermissionsByToken('admin', accessToken);
+    console.log('arr', arr);
 
-    res.status(200).json(arr);
+    return res.redirect(303,'http://localhost:8000/flow_auth?');
+
+    // res.status(200).json({});
   } catch(error) {
     console.error('/pkce/return', error);
     res.status(500).send({error: error.message})
   }
 
+
+
   })
 
-  app.get('/internal-test', async function(req, res) {
+  app.get('/pkce/logout', async (req, res) =>  {
+
+    //reponder com login, e permisoes?
+    try {
+    res.setHeader('Content-Type', 'application/json');
+
+     req.session.destroy(function(err) {
+        console.log(err);
+      })
+
+    console.log('req.session', req.session)
+
+    urlLogoutKeycloack('admin')
+
+
+    return res.redirect(303,urlLogoutKeycloack('admin'));
+    // return res.redirect(303,'http://localhost:8000/');
+
+    // res.status(200).json({});
+  } catch(error) {
+    console.error('/pkce/return', error);
+    res.status(500).send({error: error.message})
+  }
+
+
+
+  })
+
+  app.get('/internal-test',  async function(req, res) {
 
     console.log('internal-test');
     console.log(req.session);
@@ -134,7 +171,6 @@ try {
           { 'content-type': 'application/json',
         'Authorization': 'Bearer ' + req.session.accessToken
         }}
-        
         ,
 
       );
@@ -146,6 +182,8 @@ try {
     }
 
       res.end();
+    }else{
+      res.status(403).send({error: "Please, login"})
     }
   })
 

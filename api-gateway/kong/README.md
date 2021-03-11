@@ -17,3 +17,6 @@ PEPKong is a dojot plugin responsible for validations using Role-based access co
 ### Examples
 
 There is an example of how to use kong with Keycloak and some explanations in the folder [./examples](./examples).
+
+
+#https://tools.ietf.org/id/draft-ietf-oauth-browser-based-apps-07.html#section-6.2
