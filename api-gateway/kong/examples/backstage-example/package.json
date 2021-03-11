@@ -2,9 +2,9 @@
   "name": "backstage-example",
   "version": "0.0.1",
   "description": "",
-  "main": "server.js",
+  "main": "src/Server.js",
   "scripts": {
-    "start": "node --unhandled-rejections=strict server.js"
+    "start": "node --unhandled-rejections=strict src/Server.js"
   },
   "author": "",
   "dependencies": {

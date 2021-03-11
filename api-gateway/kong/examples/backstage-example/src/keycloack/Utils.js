@@ -24,7 +24,7 @@ const urlLoginKeycloack = (clientId,
               "&redirect_uri="+REDIRECT_URL_ENCODE+
               "&state="+state+
               "&response_type=code"+
-              "&scope=openid profile"+
+              "&scope=openid"+
               "&code_challenge="+codeChallenge+
               "&code_challenge_method="+codeChallengeMethod;
 };

@@ -29,7 +29,7 @@ const generatePKCEChallenge = (hash = "sha256", length=43)=>{
     }
 };
 
-const handleCatchAxios = (error) => {
+const handleErrorAxios = (error) => {
   if (error.response && error.response.status && error.response.data) {
       throw new Error(error.response.status + ': ' + JSON.stringify(error.response.data));
   }
@@ -37,5 +37,5 @@ const handleCatchAxios = (error) => {
 }
 
 module.exports = {  generatePKCEChallenge,
-                    handleCatchAxios,
+                    handleErrorAxios,
                   };

@@ -1,6 +1,6 @@
 const { default: axios } = require('axios');
 const querystring = require('querystring');
-const { handleCatchAxios } = require('../Utils');
+const { handleErrorAxios } = require('../Utils');
 const {
     pathKeycloakToken,
     pathKeycloakInfo,
