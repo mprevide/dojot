@@ -93,8 +93,8 @@ Crie um novo realm chamado `admin`
 
 ```sh
 JWT=$(curl --location --request POST http://localhost:8000/auth/realms/admin/protocol/openid-connect/token \
---data-urlencode 'username=user' \
---data-urlencode 'password=user' \
+--data-urlencode 'username=admin' \
+--data-urlencode 'password=admin' \
 --data-urlencode 'client_id=gui' \
 --data-urlencode 'grant_type=password' 2>/dev/null | jq -r '.access_token')
 ```

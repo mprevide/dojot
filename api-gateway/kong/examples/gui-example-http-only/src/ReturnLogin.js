@@ -7,14 +7,6 @@ const REDIRECT_URL = "http://localhost:8000/?";
 
 const LOGOUT_URL = "http://localhost:8000/pkce/logout";
 
-const urlLogoutKeycloack = (realm) =>{
-  const redirect_uri = encodeURIComponent(REDIRECT_URL)
-  return KEYCLOAK_URL+
-              "/realms/"
-              +realm+"/protocol/openid-connect/logout?"+
-              "&redirect_uri="+redirect_uri;
-}
-
 export default function ReturnLogin(props) {
   console.log('RedirectLogin.js');
   const [data, setData] = useState({});
@@ -23,11 +15,15 @@ export default function ReturnLogin(props) {
     async function newFunction() {
     try{
       const result2 = await axios.get('http://localhost:8000/internal-test');
-      console.log('result2', result2);
-      setData(result2.data);
+      const result3 = await axios.get('http://localhost:8000/pkce/userInfo');
+      const result = { ...result2.data , ...result3.data}; 
+      console.log('result', result );
+
+      setData(result);
     }catch(e){
       console.log(e);
     }
+
   }
     newFunction();
   },[props]);

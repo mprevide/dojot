@@ -5,20 +5,24 @@ const helmet = require('helmet');
 const { default: axios } = require('axios');
 const config = require('./Config');
 
-const { generatePKCEChallenge,
-        middlewareJWTExtract
+const { 
+  generatePKCEChallenge,
+  handleCatchAxios
 } = require('./Utils');
+
+const {
+  urlLoginKeycloack,
+  urlLogoutKeycloack,
+} = require('./keycloack/Utils');
 
 const {
   getTokenByAuthorizationCode,
   getPermissionsByToken,
-  urlLoginKeycloack,
-  urlLogoutKeycloack
-} = require('./KeycloackAPi.js');
+  getUserInfoByToken
+} = require('./keycloack/Api');
+
 const bodyParser = require('body-parser');
-
 const INTERNAL_TEST_URL="http://apigw:8000/secure";
-
 
 
 const  loggingErrorsAxios = (error) =>  {
@@ -36,23 +40,23 @@ const  loggingErrorsAxios = (error) =>  {
   }
 }
 
-function errorHandler(err, req, res, next) {
-  res.status(500);
-  res.render('error', { error: err });
-}
+// function errorHandler(err, req, res, next) {
+//   res.status(500);
+//   res.render('error', { error: err });
+// }
 
-function logErrors(err, req, res, next) {
-  console.error(err.stack);
-  next(err);
-}
+// function logErrors(err, req, res, next) {
+//   console.error(err.stack);
+//   next(err);
+// }
 
 
 const app = express();
 
 app.use(bodyParser.json()); // support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
-app.use(logErrors);
-app.use(errorHandler);
+// app.use(logErrors);
+// app.use(errorHandler);
 app.set('trust proxy', 1) // trust first proxy
 //app.disable('x-powered-by');
 app.use(session({
@@ -78,7 +82,9 @@ try {
   app.get('/pkce', function(req, res) {
       res.setHeader('Content-Type', 'application/json');
       const {codeVerifier, codeChallenge} = generatePKCEChallenge();
-      const url = urlLoginKeycloack('admin', codeChallenge, config.HASH_LIB)
+      const clientId = 'gui'
+      const state='125f9cf4-f643-4856-b4df-b8da56878b2d';
+      const url = urlLoginKeycloack(clientId, state, 'admin', codeChallenge, config.HASH_LIB)
       // console.log("codeChallenge", codeChallenge);
       req.session.codeChallenge = codeChallenge;
       req.session.codeVerifier = codeVerifier;
@@ -113,18 +119,18 @@ try {
     req.session.refreshExpiresIn = refreshExpiresIn;
     req.session.refreshToken = refreshToken;
 
-    const arr = await getPermissionsByToken('admin', accessToken);
-    console.log('arr', arr);
+    const permissionsArr = await getPermissionsByToken('admin', accessToken);
+    const userInfoObj = await getUserInfoByToken('admin', accessToken);
 
-    return res.redirect(303,'http://localhost:8000/flow_auth?');
+    req.session.permissions = permissionsArr;
+    req.session.userInfo = userInfoObj;
 
-    // res.status(200).json({});
+    return res.redirect(303,config.REDIRECT_URL_FRONT);
+
   } catch(error) {
     console.error('/pkce/return', error);
     res.status(500).send({error: error.message})
   }
-
-
 
   })
 
@@ -156,14 +162,41 @@ try {
 
   })
 
+  app.get('/pkce/userInfo',  async function(req, res) {
+
+    console.log('pkce/userInfo', 'init');
+    //curl -X GET "http://localhost:8000/secure" -H  "Authorization: Bearer ${JWT}"
+    res.setHeader('Content-Type', 'application/json');
+   
+
+  try{
+    if (req.session.accessToken) {
+      const { permissions, userInfo} = req.session;
+
+      const result = {
+        permissions: permissions,
+        ... userInfo
+      }
+      console.log("result", result);
+      res.status(200).json(result);
+    }else{
+      res.status(403).send({error: "Please, login"})
+    }
+    } catch(error) {
+      res.status(500).send({error: error.message})
+    }
+
+  })
+
+
   app.get('/internal-test',  async function(req, res) {
 
     console.log('internal-test');
-    console.log(req.session);
-    //curl -X GET "http://localhost:8000/secure" -H  "Authorization: Bearer ${JWT}"
+    // console.log(req.session);
+    // //curl -X GET "http://localhost:8000/secure" -H  "Authorization: Bearer ${JWT}"
     res.setHeader('Content-Type', 'application/json');
-    if (req.session.accessToken) {
-
+try{
+  if (req.session.accessToken) {
   try{
       const  result = await axios.get(
         INTERNAL_TEST_URL,
@@ -177,13 +210,15 @@ try {
       console.log("result.data", result.data);
       res.status(200).json(result.data);
     } catch(error) {
-      loggingErrorsAxios(error);
-      res.status(500).send({error: error.message})
+      handleCatchAxios(error);
     }
 
       res.end();
     }else{
       res.status(403).send({error: "Please, login"})
+    }
+  }catch (error) {
+      res.status(500).send({error: error.message})
     }
   })
 

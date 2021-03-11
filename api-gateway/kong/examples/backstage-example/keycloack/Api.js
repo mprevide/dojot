@@ -1,35 +1,11 @@
 const { default: axios } = require('axios');
 const querystring = require('querystring');
-const { loggingErrorsAxios } = require('./Utils');
-const config = require('./Config');
-
-const REDIRECT_URL_ENCODE = encodeURIComponent(config.REDIRECT_URL);
-
-const pathKeycloakToken = (realm) =>{
-    return "/realms/"+realm+"/protocol/openid-connect/token"
-}
-
-const urlLoginKeycloack = (realm, codeChallenge, codeChallengeMethod) =>{
-  const clientId = 'gui'
-  const state='125f9cf4-f643-4856-b4df-b8da56878b2d';
-  return config.KEYCLOAK_URL_EXTERNAL+
-              "/realms/"
-              +realm+"/protocol/openid-connect/auth?"+
-              "client_id="+clientId+
-              "&redirect_uri="+REDIRECT_URL_ENCODE+
-              "&state="+state+
-              "&response_type=code"+
-              "&scope=openid"+
-              "&code_challenge="+codeChallenge+
-              "&code_challenge_method="+codeChallengeMethod;
-}
-
-const urlLogoutKeycloack = (realm) =>{
-  return config.KEYCLOAK_URL_EXTERNAL+
-              "/realms/"
-              +realm+"/protocol/openid-connect/logout?"+
-              "&redirect_uri="+'http://localhost:8000/';
-}
+const { handleCatchAxios } = require('../Utils');
+const {
+    pathKeycloakToken,
+    pathKeycloakInfo,
+  } = require('./Utils');
+const config = require('../Config');
 
 const axiosKeyCloack = axios.create({
     baseURL: config.KEYCLOAK_URL,
@@ -46,7 +22,7 @@ try{
       pathKeycloakToken(realm),
       querystring.stringify({
             grant_type: 'authorization_code',
-            redirect_uri: 'http://localhost:8000/pkce/return',
+            redirect_uri: config.REDIRECT_URL_BACK,
             client_id: 'gui',
             code_verifier: codeVerifier,
             code: authorizationCode
@@ -82,12 +58,7 @@ try{
     };
   }
   }catch(error){
-    console.log('getTokenByAuthorizationCode catch' );
-    loggingErrorsAxios(error);
-    if (error.response && error.response.status && error.response.data){
-      throw new Error(error.response.status+': '+ JSON.stringify(error.response.data));
-    }
-    throw error;
+    handleCatchAxios(error);
   }
 };
 
@@ -118,10 +89,11 @@ try{
 
   if(result.status===200){
     const permissionsArrF = result.data.reduce((filtered, value)=>{
-      if(value.rsname!=='Default Resource'){
+     const {rsname, scopes} = value;
+      if(rsname!=='Default Resource'){
         filtered.push({
-          resourceName: value.rsname,
-          permissions: value.scopes
+          resourceName: rsname,
+          scopes
       });
       }
       return filtered;
@@ -130,17 +102,55 @@ try{
     return permissionsArrF;
   }
   }catch(error){
-    // loggingErrorsAxios(error);
-    if (error.response && error.response.status && error.response.data){
-      throw new Error(error.response.status+': '+ JSON.stringify(error.response.data));
-    }
-    throw error;
+    handleCatchAxios(error);
+
   }
 };
+
+
+/**
+ *
+ * @param {*} realm
+ * @param {*} accessToken
+ * @returns
+ */
+ const getUserInfoByToken = async (realm, accessToken) => {
+    try{
+      console.log("realm, accessToken", realm, accessToken);
+      const result = await axiosKeyCloack.get(
+        pathKeycloakInfo(realm),
+        {
+          headers:{ Authorization: 'Bearer ' + accessToken ,
+                   'content-type': 'application/x-www-form-urlencoded'}
+        }
+      );
+
+    //   {"sub":"5ab62ce2-5a3f-43f4-97af-528f56b75db0",
+    //   "email_verified":true,
+    //   "name":"Mariane Previde",
+    //   "preferred_username":"admin",
+    //   "given_name":"Mariane","
+    //   family_name":"Previde","email":
+    //   "mari.prev@gmail.com"}
+
+      if(result.status===200){
+        return {
+            name: result.data.name,
+            username: result.data.preferred_username,
+            email: result.data.email,
+            email_verified: result.data.email_verified,
+            realm: realm
+        };
+      }
+      }catch(error){
+        handleCatchAxios(error);
+      }
+    };
 
 module.exports = {
   getTokenByAuthorizationCode,
   getPermissionsByToken,
-  urlLoginKeycloack,
-  urlLogoutKeycloack
+  getUserInfoByToken
 };
+
+
