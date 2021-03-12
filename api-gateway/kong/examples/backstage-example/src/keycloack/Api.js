@@ -1,6 +1,7 @@
 const { default: axios } = require('axios');
 const querystring = require('querystring');
 const { handleErrorAxios } = require('../Utils');
+
 const {
     pathKeycloakToken,
     pathKeycloakInfo,
@@ -26,11 +27,10 @@ try{
             client_id: 'gui',
             code_verifier: codeVerifier,
             code: authorizationCode
-      })
-      // ,
-      // {
-      //   maxRedirects: 0,
-      // }
+      }),
+      {
+        maxRedirects: 0,
+      }
     );
 
   if(result.status===200){
@@ -46,10 +46,6 @@ try{
       'not-before-policy': notBeforePolicy
     } = result.data;
 
-    console.log(result.status);
-    console.log(result.data);
-    console.log(result.statusText);
-
     return {
       accessToken,
       expiresIn,
@@ -58,7 +54,7 @@ try{
     };
   }
   }catch(error){
-    handleCatchAxios(error);
+    handleErrorAxios(error);
   }
 };
 
@@ -70,8 +66,6 @@ try{
  */
 const getPermissionsByToken = async (realm, accessToken) => {
 try{
-  console.log("realm, accessToken", realm, accessToken);
-
   const axiosPromise = axiosKeyCloack.post(
     pathKeycloakToken(realm),
     querystring.stringify({
@@ -88,7 +82,7 @@ try{
   const result = await axiosPromise;
 
   if(result.status===200){
-    const permissionsArrF = result.data.reduce((filtered, value)=>{
+    const permissionsArr = result.data.reduce((filtered, value)=>{
      const {rsname, scopes} = value;
       if(rsname!=='Default Resource'){
         filtered.push({
@@ -99,11 +93,10 @@ try{
       return filtered;
     }, []);
 
-    return permissionsArrF;
+    return permissionsArr;
   }
   }catch(error){
-    handleCatchAxios(error);
-
+    handleErrorAxios(error);
   }
 };
 
@@ -125,17 +118,9 @@ try{
         }
       );
 
-    //   {"sub":"5ab62ce2-5a3f-43f4-97af-528f56b75db0",
-    //   "email_verified":true,
-    //   "name":"Mariane Previde",
-    //   "preferred_username":"admin",
-    //   "given_name":"Mariane","
-    //   family_name":"Previde","email":
-    //   "mari.prev@gmail.com"}
-
       if(result.status===200){
         return {
-            name: result.data.name,
+            name: result.data.name ? result.data.name : '',
             username: result.data.preferred_username,
             email: result.data.email,
             email_verified: result.data.email_verified,

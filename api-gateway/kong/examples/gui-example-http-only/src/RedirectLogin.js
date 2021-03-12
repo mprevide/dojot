@@ -1,23 +1,32 @@
-import React from "react";
+import React, { useState } from "react";
 import { Redirect } from "react-router-dom";
+import Config from './Config.js'
 
-const PKCE_URL="http://localhost:8000/pkce";
+export default function RedirectLogin() {
 
-
-export default function RedirectLogin(props) {
-
-  // const realm = props.tenant;
-  const realm = 'admin';
+  const [realm, setRealm] = useState('admin');
+  const state = 'login-gui';
 
   const handleRedirectLogin = async (evt) => {
-    window.location.href = PKCE_URL+'?realm='+realm;
+    console.log('HandleRedirectLogin/Realm:', realm);
+    window.location.href = Config.PKCE_URL+'?realm='+realm+'&state='+state;
   }
 
   return (
+    <div>
+      <label>
+        Realm
+          <input
+            type="text"
+            value={realm}
+            onChange={e => setRealm(e.target.value)}
+          />
+      </label>
       <button
-      onClick={handleRedirectLogin}>
+        onClick={handleRedirectLogin}>
         Login
       </button>
+    </div>
   );
 }
 

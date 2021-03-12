@@ -309,6 +309,16 @@ services:
         max-size: 20m
         max-file: '5'
 
+  redis:
+    image: dojot/redis:6.0.4-alpine3.11
+    restart: always
+    ports:
+      - 6379:6379 #For tests running externally
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m
+
   gui-example:
     build:
       context: ./gui-example-http-only

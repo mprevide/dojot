@@ -27,14 +27,11 @@ const INTERNAL_TEST_URL="http://apigw:8000/secure";
 
 const app = express();
 
-app.use(bodyParser.json()); // support json encoded bodies
-app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true })); 
 app.set('trust proxy', 1) // trust first proxy
 //app.disable('x-powered-by');
 app.use(session({
-  // genid: function(req) {
-  //   return genuuid() // use UUIDs for session IDs
-  // },
   secret: config.SECRET,
   resave: false,
   saveUninitialized: true,
@@ -55,41 +52,57 @@ app.use(function (req, res, next) {
 
 try {
   app.get('/pkce', function(req, res) {
-      const {codeVerifier, codeChallenge} = generatePKCEChallenge();
-      const url = urlLoginKeycloack(config.PUBLIC_CLIENT_ID,
-                  'login-gui',
-                  'admin',
-                  codeChallenge,
-                  config.HASH_LIB)
-      req.session.codeChallenge = codeChallenge;
-      req.session.codeVerifier = codeVerifier;
-      return res.redirect(303,url);
+      const { realm, state } =  req.query;
+      const newState = state ? 'login-state': state;
+
+      if (realm){
+        const {codeVerifier, codeChallenge} = generatePKCEChallenge();
+        const url = urlLoginKeycloack(
+          config.PUBLIC_CLIENT_ID,
+          newState,
+          realm,
+          codeChallenge,
+          config.HASH_LIB);
+        req.session.codeChallenge = codeChallenge;
+        req.session.codeVerifier = codeVerifier;
+        req.session.realm = realm;
+
+        return res.redirect(303,url);
+      }
+
+      return res.status(401).send({error: 'Missing attribute realm in query.'})
   });
 
   app.get('/pkce/return', async (req, res) =>  {
-    try {
-    const {
-      state,
-      session_state: sessionState,
-      code: authorizationCode} = req.query;
 
     const {
-      accessToken,
-      expiresIn,
-      refreshExpiresIn,
-      refreshToken
-    } = await getTokenByAuthorizationCode(
-      'admin',
-      authorizationCode,
-      req.session.codeVerifier);
+            realm,
+            codeVerifier
+          } = req.session ;
+
+    try {
+      const {
+        state,
+        session_state: sessionState,
+        code: authorizationCode} = req.query;
+
+      const {
+        accessToken,
+        expiresIn,
+        refreshExpiresIn,
+        refreshToken
+      } = await getTokenByAuthorizationCode(
+        realm,
+        authorizationCode,
+        codeVerifier);
 
     req.session.accessToken = accessToken;
     req.session.expiresIn = expiresIn;
     req.session.refreshExpiresIn = refreshExpiresIn;
     req.session.refreshToken = refreshToken;
 
-    const permissionsArr = await getPermissionsByToken('admin', accessToken);
-    const userInfoObj = await getUserInfoByToken('admin', accessToken);
+    const permissionsArr = await getPermissionsByToken(realm, accessToken);
+    const userInfoObj = await getUserInfoByToken(realm, accessToken);
 
     req.session.permissions = permissionsArr;
     req.session.userInfo = userInfoObj;
@@ -98,7 +111,7 @@ try {
 
   } catch(error) {
     console.error('/pkce/return', error);
-    res.status(500).send({error: error.message})
+    res.status(500).send({error: error.message});
   }
 
   })
@@ -106,81 +119,69 @@ try {
   app.get('/pkce/logout', async (req, res) =>  {
 
     try {
-    res.setHeader('Content-Type', 'application/json');
 
-     req.session.destroy(function(err) {
-        console.log(err);
+      const { realm } = req.session ;
+
+      req.session.destroy(function(err) {
+          console.log(err);
       })
 
-    console.log('req.session', req.session)
-
-    urlLogoutKeycloack('admin')
-
-
-    return res.redirect(303,urlLogoutKeycloack('admin'));
+      return res.redirect(303,urlLogoutKeycloack(realm));
 
   } catch(error) {
     console.error('/pkce/return', error);
     res.status(500).send({error: error.message})
   }
 
+  });
 
-
-  })
-
-  app.get('/pkce/userInfo',  async function(req, res) {
-
-    console.log('pkce/userInfo', 'init');
-    res.setHeader('Content-Type', 'application/json');
-  try{
-    if (req.session.accessToken) {
-      const { permissions, userInfo} = req.session;
-
-      const result = {
-        permissions: permissions,
-        ... userInfo
+app.get('/pkce/userInfo',  async function(req, res) {
+  console.log('pkce/userInfo', 'init');
+  try {
+      const { permissions, userInfo, accessToken} = req.session;
+      if (accessToken && permissions && userInfo) {
+        const result = {
+          permissions: permissions,
+          ... userInfo
+        }
+        console.log("result", result);
+        res.status(200).json(result);
+      }else{
+        res.status(403).send({error: "Please, login"})
       }
-      console.log("result", result);
-      res.status(200).json(result);
-    }else{
-      res.status(403).send({error: "Please, login"})
-    }
-    } catch(error) {
+  } catch(error) {
       res.status(500).send({error: error.message})
-    }
+  };
 
-  })
+});
 
 
   app.get('/internal-test',  async function(req, res) {
     console.log('internal-test');
-
-    res.setHeader('Content-Type', 'application/json');
-try{
-  if (req.session.accessToken) {
+  try{
+    const { accessToken } = req.session;
+    if (accessToken) {
       try{
-          const  result = await axios.get(
-            INTERNAL_TEST_URL,
-            {headers:
-              { 'content-type': 'application/json',
-            'Authorization': 'Bearer ' + req.session.accessToken
-            }}
-            ,
-
-          );
-          console.log("result.data", result.data);
-          res.status(200).json(result.data);
-        } catch(error) {
-          handleErrorAxios(error);
+        const result = await axios.get(
+              INTERNAL_TEST_URL,
+              { headers: {
+                'content-type': 'application/json',
+                'Authorization': 'Bearer ' + accessToken
+                }
+              },
+            );
+            console.log("result.data", result.data);
+            res.status(200).json(result.data);
+          } catch(error) {
+            handleErrorAxios(error);
+          }
+          res.end();
+        }else{
+          res.status(403).send({error: "Please, login"})
         }
-
-      res.end();
-    }else{
-      res.status(403).send({error: "Please, login"})
-    }
-  }catch (error) {
-      res.status(500).send({error: error.message})
-    }
+      } catch (error) {
+        res.status(500).send({error: error.message})
+      }
   })
 
   app.listen(8887, () => {

@@ -1,48 +1,39 @@
 import React, { useState, useEffect } from "react";
-import QueryString from "query-string";
 import axios from 'axios';
+import Config from './Config.js'
 
-const KEYCLOAK_URL="http://localhost:8000/auth";
-const REDIRECT_URL = "http://localhost:8000/?";
+export default function ReturnLogin() {
 
-const LOGOUT_URL = "http://localhost:8000/pkce/logout";
-
-export default function ReturnLogin(props) {
-  console.log('RedirectLogin.js');
-  const [data, setData] = useState({});
+  const [data, setData] = useState({
+    data: {},
+    userInfo: {}
+  });
 
   useEffect(() => {
-    async function newFunction() {
-    try{
-      const result2 = await axios.get('http://localhost:8000/internal-test');
-      const result3 = await axios.get('http://localhost:8000/pkce/userInfo');
-      const result = { ...result2.data , ...result3.data}; 
-      console.log('result', result );
+    async function call() {
+      try{
+        const { data: resultData } = await axios.get(Config.INTERNAL_DATA_URL);
+        const { data: resultUserInfo } = await axios.get(Config.USER_INFO_URL);
 
-      setData(result);
-    }catch(e){
-      console.log(e);
-    }
-
+        setData({
+          data: resultData,
+          userInfo: resultUserInfo
+        });
+      }catch(e){
+        console.log(e);
+      }
   }
-    newFunction();
-  },[props]);
-
-  const realm = 'admin';
+    call();
+  },[]);
 
   const handleLogout  = async (evt) => {
-
-    // const url = urlLogoutKeycloack(realm)
-
-    // console.log('RedirectLogin|','Redirecting to ',url);
-// /pkce/logout
-    window.location.href = LOGOUT_URL;
+    window.location.href = Config.LOGOUT_URL;
   }
 
   return (
     <div>
-        {JSON.stringify(data)}
-
+     <span>Data: {JSON.stringify(data.data)}</span>
+     <span>User Info: {JSON.stringify(data.userInfo)}</span>
         <button
           onClick={handleLogout}>
           Logout
@@ -50,9 +41,6 @@ export default function ReturnLogin(props) {
     </div>
   );
 }
-
-
-// http://auth-server/auth/realms/{realm-name}/protocol/openid-connect/logout?redirect_uri=encodedRedirectUr
 
   // curl -X POST http://localhost:8000/auth/realms/admin/protocol/openid-connect/token \
   // -d grant_type=authorization_code \
