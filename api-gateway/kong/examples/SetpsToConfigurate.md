@@ -79,7 +79,7 @@ Crie um novo realm chamado `admin`
         - Em `Apply Policy` defina `Should be user`
         - Em `Decision Strategy`  deixe `Unanomous`
 
-- Crie um novo `cli`com o *Client ID* como `kong`
+- Crie um novo `client`com o *Client ID* como `kong`
   - Habilite a opção `Enable` caso não esteja habilitada
   - Defina `Client Protocol` como `openid-connect`
   - Defina `Access Type` como `public`

@@ -10,7 +10,7 @@ const base64url = require("base64url");
  * @returns {{codeChallenge:string,codeVerifier:string}} PKCE challenge pair
  */
 const generatePKCEChallenge = (hash = "sha256", length=43)=>{
-    console.log('generatePKCEChallenge');
+    // console.log('generatePKCEChallenge');
     const codeVerifier = randomString.generate(128);
     const base64Digest = crypto.createHash(hash)
                                 .update(codeVerifier)
@@ -18,10 +18,10 @@ const generatePKCEChallenge = (hash = "sha256", length=43)=>{
 
                                 //base64UrlEncode(
     const codeChallenge = base64url.fromBase64(base64Digest);
-    console.log(codeVerifier);
-    console.log(base64Digest);
+    // console.log(codeVerifier);
+    // console.log(base64Digest);
 
-    console.log(codeChallenge);
+    // console.log(codeChallenge);
 
     return {
         codeChallenge,

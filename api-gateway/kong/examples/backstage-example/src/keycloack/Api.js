@@ -16,9 +16,9 @@ const axiosKeyCloack = axios.create({
 
 const getTokenByAuthorizationCode = async (realm, authorizationCode, codeVerifier) => {
 try{
-  console.log('getTokenByAuthorizationCode ');
-  console.log('authorizationCode ', authorizationCode);
-  console.log('codeVerifier ', codeVerifier);
+  // console.log('getTokenByAuthorizationCode ');
+  // console.log('authorizationCode ', authorizationCode);
+  // console.log('codeVerifier ', codeVerifier);
   const  result = await axiosKeyCloack.post(
       pathKeycloakToken(realm),
       querystring.stringify({
@@ -109,7 +109,7 @@ try{
  */
  const getUserInfoByToken = async (realm, accessToken) => {
     try{
-      console.log("realm, accessToken", realm, accessToken);
+      // console.log("realm, accessToken", realm, accessToken);
       const result = await axiosKeyCloack.get(
         pathKeycloakInfo(realm),
         {

@@ -6,24 +6,28 @@ export default function ReturnLogin() {
 
   const [data, setData] = useState({
     data: {},
-    userInfo: {}
+    userInfo: {},
+    currentSession: {}
   });
 
   useEffect(() => {
     async function call() {
       try{
-        const { data: resultData } = await axios.get(Config.INTERNAL_DATA_URL);
-        const { data: resultUserInfo } = await axios.get(Config.USER_INFO_URL);
+        //const { data: resultData } = await axios.get(Config.INTERNAL_DATA_URL);
+       // const { data: resultUserInfo } = await axios.get(Config.USER_INFO_URL);
+        const { data: resultCurrentSession } = await axios.get(Config.CURRENT_SESSION_URL);
 
         setData({
-          data: resultData,
-          userInfo: resultUserInfo
+          //data: resultData,
+         // userInfo: resultUserInfo,
+          currentSession: resultCurrentSession,
         });
+
       }catch(e){
         console.log(e);
       }
   }
-    call();
+    //call();
   },[]);
 
   const handleLogout  = async (evt) => {
