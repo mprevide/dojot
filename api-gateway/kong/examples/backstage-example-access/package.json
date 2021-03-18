@@ -1,0 +1,30 @@
+{
+  "name": "backstage-example",
+  "version": "0.0.1",
+  "description": "",
+  "main": "src/Server.js",
+  "scripts": {
+    "start": "node --unhandled-rejections=strict src/Server.js",
+    "debug": "DEBUG=express-session node --unhandled-rejections=strict src/Server.js",
+    "dev": "nodemon src/Server.js --ignore ./config -V"
+  },
+  "author": "",
+  "dependencies": {
+    "axios": "^0.21.1",
+    "base64url": "^3.0.1",
+    "body-parser": "^1.19.0",
+    "connect-redis": "^5.1.0",
+    "express": "^4.17.1",
+    "express-http-proxy": "^1.6.2",
+    "express-session": "^1.17.1",
+    "helmet": "^4.4.1",
+    "keycloak-connect": "^12.0.4",
+    "pkce-challenge": "^2.1.0",
+    "querystring": "^0.2.1",
+    "randomstring": "^1.1.5",
+    "redis": "^3.0.2"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.7"
+  }
+}

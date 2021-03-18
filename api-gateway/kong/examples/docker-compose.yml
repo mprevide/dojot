@@ -296,17 +296,35 @@ services:
         max-size: 20m
         max-file: '5'
 
+  backstage-example-access:
+    depends_on:
+      - redis
+    build:
+      context: ./
+      dockerfile: ./backstage-example-access/Dockerfile
+    # ports:
+    #   - 8887:8887
+    restart: always
+    volumes:
+      - ./backstage-example-access/src/:/opt/backstage/src/:Z
+    command: ["npm", "run", "dev"]
+    logging:
+      driver: json-file
+      options:
+        max-size: 20m
+        max-file: '5'
+
   backstage-example:
     depends_on:
       - redis
     build:
       context: ./
-      dockerfile: ./backstage-example/Dockerfile
+      dockerfile: ./backstage-example-2/Dockerfile
     # ports:
     #   - 8887:8887
     restart: always
     volumes:
-      - ./backstage-example/src/:/opt/backstage/src/:Z
+      - ./backstage-example-2/src/:/opt/influxdb-retriever/src/:Z
     command: ["npm", "run", "dev"]
     logging:
       driver: json-file

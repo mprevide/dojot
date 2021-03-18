@@ -87,7 +87,7 @@ try {
         console.log('/pkce will return');
         return res.redirect(303,url);
       }
-
+ 
       return res.status(401).send({error: 'Missing attribute realm in query.'})
   });
 

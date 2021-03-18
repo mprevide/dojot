@@ -90,7 +90,9 @@ createEndpoint "keycloak" "http://keycloak:8080/auth"  '"/auth"' "true"
 
 createEndpoint "gui-example" "http://gui-example:80"  '"/"' "false"
 
-createEndpoint "backstage-example" "http://backstage-example:8887"  '"/pkce", "/internal-test"' "false"
+createEndpoint "backstage-example-access" "http://backstage-example-access:8887"  '"/internal-test"' "false"
+
+createEndpoint "backstage-example-2" "http://backstage-example:3000"  '"/backstage"' "false"
 
 # echo ""
 # echo ""

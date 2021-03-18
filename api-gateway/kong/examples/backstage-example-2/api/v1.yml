@@ -1,4 +1,3 @@
-
 ---
 openapi: 3.0.1
 info:
@@ -40,7 +39,7 @@ paths:
             type: string
           examples:
             admin:
-              summary: Tenant admin 
+              summary: Tenant admin
               value: "admin"
         - name: state
           in: query
@@ -60,7 +59,7 @@ paths:
                 description: TODO
                 example: <base-url>/realms/<tenant>/protocol/openid-connect/auth?client_id=gui&redirect_uri=<base-url>%2Fbackstage%2Fv1%2Fauth%2Freturn&state=<state>&response_type=code&scope=openid"&code_challenge=<code-challenge>&code_challenge_method=<code-challenge-method>
             Set-Cookie:
-              schema: 
+              schema:
                 type: string
                 example: connect.sid=abcde12345; Path=/; Expires=date-time; HttpOnly;SameSite=Strict
         "400":
@@ -116,7 +115,7 @@ paths:
                 type: string
                 example: <url-gui-retorno>?error=<error-message-if-there-is-an-error>
         default:
-          description: Unexpected error                  
+          description: Unexpected error
   /backstage/v1/auth/userinfo:
    get:
       tags:
@@ -139,15 +138,15 @@ paths:
                     type: string
                   email:
                     type: string
-                  email_verified:
+                  emailVerified:
                     type: boolean
-                  tenant: 
+                  tenant:
                     description: the same as tenant
                     type: string
-                  relm: 
+                  relm:
                     description: the same as tenant
                     type: string
-                  permissions: 
+                  permissions:
                     type: array
                     items:
                       type: object
@@ -160,7 +159,7 @@ paths:
                             type: string
                             enum: [view, create, update, delete]
         default:
-          description: Unexpected error                  
+          description: Unexpected error
   /backstage/v1/auth/logout:
     get:
       tags:
