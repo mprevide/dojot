@@ -22,7 +22,7 @@ RUN apk add --no-cache --virtual .build-deps \
     bash
 
 COPY backstage-example-2/package.json package.json
-COPY  backstage-example-2/package-lock.json package-lock.json
+COPY backstage-example-2/package-lock.json package-lock.json
 
 RUN npm install  
 #--only=prod

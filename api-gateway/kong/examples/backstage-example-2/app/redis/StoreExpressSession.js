@@ -29,9 +29,9 @@ module.exports = function (session) {
 
     // Required
     get(sid, cb = noop) {
-      console.log('get');
+      
       const key = this.prefix + sid;
-
+      console.log('get', this.prefix + sid);
       this.client.get(key, (err, data) => {
         if (err) return cb(err);
         if (!data) return cb();
@@ -48,8 +48,8 @@ module.exports = function (session) {
 
     // Required
     set(sid, sess, cb = noop) {
-      console.log('set');
       const args = [this.prefix + sid];
+      console.log('set', this.prefix + sid);
 
       let value;
       try {

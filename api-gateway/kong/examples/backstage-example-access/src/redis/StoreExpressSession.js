@@ -33,7 +33,7 @@ let redisClient = redis.createClient({
 
       //Required
       get(sid, cb = noop) {
-        console.log('get');
+        console.log('get',  this.prefix + sid);
         let key = this.prefix + sid
 
         this.client.get(key, (err, data) => {
@@ -52,7 +52,7 @@ let redisClient = redis.createClient({
   
       //Required
       set(sid, sess, cb = noop) {
-        console.log('set');
+        console.log('set',  this.prefix + sid);
         // let args = [this.prefix + sid]
   
         // let value

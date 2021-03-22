@@ -9,7 +9,7 @@ export default function RedirectLogin() {
 
   const handleRedirectLogin = async (evt) => {
     console.log('HandleRedirectLogin/Realm:', realm);
-    window.location.href = Config.PKCE_URL+'?realm='+realm+'&state='+state;
+    window.location.href = Config.PKCE_URL+'?tenant='+realm+'&state='+state;
   }
 
   return (

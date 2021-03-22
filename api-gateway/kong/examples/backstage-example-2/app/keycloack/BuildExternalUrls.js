@@ -42,7 +42,7 @@ const buildUrlLogin = (clientId,
   url.searchParams.append('state', state);
   url.searchParams.append('code_challenge', codeChallenge);
   url.searchParams.append('code_challenge_method', codeChallengeMethod);
-  url.searchParams.append('redirect_uri', 'http://localhost:3000/backsage/v1/auth/return');
+  url.searchParams.append('redirect_uri', 'http://localhost:8000/backstage/v1/auth/return');
 
   return url.href;
   // myUrlWithParams.searchParams.append("price", "200");

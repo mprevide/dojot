@@ -10,38 +10,62 @@ export default function ReturnLogin() {
     currentSession: {}
   });
 
-  useEffect(() => {
-    async function call() {
-      try{
-        //const { data: resultData } = await axios.get(Config.INTERNAL_DATA_URL);
-       // const { data: resultUserInfo } = await axios.get(Config.USER_INFO_URL);
-        const { data: resultCurrentSession } = await axios.get(Config.CURRENT_SESSION_URL);
+  // useEffect(() => {
+  //   async function call() {
+  //     try{
+  //       const { data: resultUserInfo } = await axios.get(Config.USER_INFO_URL);
+  //       const { data: resultData } = await axios.get(Config.INTERNAL_DATA_URL);
+  //       //const { data: resultCurrentSession } = await axios.get(Config.CURRENT_SESSION_URL);
 
-        setData({
-          //data: resultData,
-         // userInfo: resultUserInfo,
-          currentSession: resultCurrentSession,
-        });
+  //       setData({
+  //        data: resultData,
+  //        userInfo: resultUserInfo,
+  //         //currentSession: resultCurrentSession,
+  //       });
 
-      }catch(e){
-        console.log(e);
-      }
-  }
-    //call();
-  },[]);
+  //     }catch(e){
+  //       console.log(e);
+  //     }
+  // }
+  //   //call();
+  // },[]);
 
   const handleLogout  = async (evt) => {
     window.location.href = Config.LOGOUT_URL;
   }
 
+  const handleUserData  = async (evt) => {
+    const { data: resultData } = await axios.get(Config.INTERNAL_DATA_URL);
+
+    setData({
+      data: resultData,
+     });
+  }
+
+  const handleUserInfo  = async (evt) => {
+    const { data: resultUserInfo } = await axios.get(Config.USER_INFO_URL);
+
+    setData({
+      userInfo: resultUserInfo,
+     });
+  }
+
   return (
     <div>
-     <span>Data: {JSON.stringify(data.data)}</span>
-     <span>User Info: {JSON.stringify(data.userInfo)}</span>
-        <button
-          onClick={handleLogout}>
-          Logout
-        </button>
+     <button
+      onClick={handleUserData}>
+      Request Data 
+    </button>
+    <span>Data: {JSON.stringify(data.data)}</span>
+    <button
+    onClick={handleUserInfo}>
+    Request User info
+  </button>
+  <span>User Info: {JSON.stringify(data.userInfo)}</span>
+    <button
+      onClick={handleLogout}>
+      Logout
+    </button>
     </div>
   );
 }

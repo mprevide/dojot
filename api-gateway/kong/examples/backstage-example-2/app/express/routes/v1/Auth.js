@@ -40,8 +40,9 @@ module.exports = ({ mountPoint, keycloack }) => {
         middleware: [
           // checkDateTo,
           async (req, res) => {
-            logger.debug('auth-route.get: req.params=', req.params);
-            logger.debug('auth-route.get: req.query=', req.query);
+            logger.info('auth-route.get: req.params=', req.params);
+            logger.info('auth-route.get: req.query=', req.query);
+            logger.info('auth-route.get: req.sessionID=', req.sessionID);
 
             try {
               // const { tenant, state } = req.query;
@@ -65,14 +66,15 @@ module.exports = ({ mountPoint, keycloack }) => {
                 newState,
                 tenant,
                 codeChallenge,
-                's256', // TODO
+                'S256', // TODO
               );
+
               req.session.codeChallenge = codeChallenge;
               req.session.codeVerifier = codeVerifier;
               req.session.realm = tenant;
               req.session.tenant = tenant;
 
-              console.log('/pkce will return');
+              console.log('/pkce will return', req.session);
               return res.redirect(303, url);
               // }
 
@@ -97,15 +99,15 @@ module.exports = ({ mountPoint, keycloack }) => {
         middleware: [
           // checkDateTo,
           async (req, res) => {
-            logger.debug('auth-return-route: req.params=', req.params);
-            logger.debug('auth-return-route: req.query=', req.query);
+            logger.info('auth-return-route: req.params=', req.params);
+            logger.info('auth-return-route: req.query=', req.query);
 
             // ?error=invalid_request&
             // error_description=Invalid+parameter%3A+code_challenge_method&
             // state=undefined
 
             try {
-              const hour = 20 * 1000; // 3600000
+              const hour = 3600000; // 3600000
               const time = new Date(Date.now() + hour);
               console.log('time', time);
               req.session.cookie.expires = time;
@@ -137,11 +139,12 @@ module.exports = ({ mountPoint, keycloack }) => {
                 req.session.refreshExpiresIn = refreshExpiresIn;
                 req.session.refreshToken = refreshToken;
 
-                console.log(req.session);
+                console.log('session before redirect', req.session);
 
                 // return res.redirect(303,config.REDIRECT_URL_FRONT);
+                return res.redirect(303, 'http://localhost:8000/return');
 
-                res.status(HttpStatus.OK).json({ data: 'x' });
+                // res.status(HttpStatus.OK).json({ data: 'x' });
               }
             } catch (e) {
               logger.error('device-route.get:', e);
@@ -163,7 +166,7 @@ module.exports = ({ mountPoint, keycloack }) => {
         middleware: [
           // checkDateTo,
           async (req, res) => {
-            logger.debug('auth-userinfo-route');
+            logger.info('auth-userinfo-route');
             try {
               // const permissionsArr = await getPermissionsByToken(realm, accessToken);
               // const userInfoObj = await getUserInfoByToken(realm, accessToken);
@@ -189,7 +192,7 @@ module.exports = ({ mountPoint, keycloack }) => {
         middleware: [
           // checkDateTo,
           async (req, res) => {
-            logger.debug('auth-userinfo-route');
+            logger.info('auth-userinfo-route');
             try {
               const { realm } = req.session;
               // if req.session... 

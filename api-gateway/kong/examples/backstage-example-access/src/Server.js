@@ -3,18 +3,6 @@ const express = require('express');
 const session = require('express-session');
 const helmet = require('helmet');
 
-// const RedisSub = require('./redis/Subscribe');
-
-// const redisSub = new RedisSub();
-// redisSub.initSubscribe().then(()=>{
-//   console.log('initSubscribe ok');
-// }).catch((error)=>{
-//   console.error('initSubscribe', error);
-// })
-
-//await this.redisExpirationMgmt.initSubscribe();
-
-
 let RedisStore = require('./redis/StoreExpressSession')(session);
 
 const { default: axios } = require('axios');
@@ -28,25 +16,26 @@ const {
 const bodyParser = require('body-parser');
 const INTERNAL_TEST_URL="http://apigw:8000/secure";
 
-
+//https://www.npmjs.com/package/csurf
 const app = express();
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.set('trust proxy', 1) // trust first proxy
-//app.disable('x-powered-by');
 app.use(session({
-  secret: config.SECRET,
+  secret: 'aabcde ddd',
   store: new RedisStore(),
-  resave: true,
+  // resave: true,
   // saveUninitialized: true,
-  cookie: {
-    path: '/', //Specifies the value for the Path Set-Cookie. By default, this is set to '/', which is the root path of the domain
-    httpOnly: true, //Specifies the boolean value for the HttpOnly Set-Cookie attribute. When truthy, the HttpOnly attribute is set, otherwise it is not. By default, the HttpOnly attribute is set.
-    secure: false, //Assegura que o navegador só envie o cookie por HTTPS.
-    // maxAge: null, //Specifies the number (in milliseconds) to use when calculating the Expires Set-Cookie attribute. This is done by taking the current server time and adding maxAge milliseconds to the value to calculate an Expires datetime. By default, no maximum age is set.
-    sameSite:  'strict', // Specifies the boolean or string to be the value for the SameSite Set-Cookie attribute.
-  }
+  // cookie: {
+  //   path: '/', //Specifies the value for the Path Set-Cookie. By default, this is set to '/', which is the root path of the domain
+  //   httpOnly: true, //Specifies the boolean value for the HttpOnly Set-Cookie attribute. When truthy, the HttpOnly attribute is set, otherwise it is not. By default, the HttpOnly attribute is set.
+  //   secure: false, //Assegura que o navegador só envie o cookie por HTTPS.
+  //   // maxAge: null, //Specifies the number (in milliseconds) to use when calculating the Expires Set-Cookie attribute. This is done by taking the current server time and adding maxAge milliseconds to the value to calculate an Expires datetime. By default, no maximum age is set.
+  //   //sameSite:  'strict', // Specifies the boolean or string to be the value for the SameSite Set-Cookie attribute.
+  //   //domain?
+  //   domain: 'example.com',
+  // }
 }))
 
 app.use(helmet());
@@ -59,6 +48,7 @@ try {
   app.get('/internal-test',  async function(req, res) {
     console.log('internal-test');
   try{
+    console.log('req.header', req.header);
     console.log('req.session', req.session);
     const { accessToken } = req.session;
     if (accessToken) {

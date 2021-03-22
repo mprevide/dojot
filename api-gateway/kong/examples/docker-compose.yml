@@ -324,7 +324,7 @@ services:
     #   - 8887:8887
     restart: always
     volumes:
-      - ./backstage-example-2/src/:/opt/influxdb-retriever/src/:Z
+      - ./backstage-example-2/app/:/opt/influxdb-retriever/app/:Z
     command: ["npm", "run", "dev"]
     logging:
       driver: json-file

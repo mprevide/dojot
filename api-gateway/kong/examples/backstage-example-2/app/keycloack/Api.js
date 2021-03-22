@@ -29,8 +29,33 @@ class Api {
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
     });
 
+    // const axiosKeyCloack = axios.create({
+    //   baseURL: config.KEYCLOAK_URL,
+    //   headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    // });
+
+
     this.logger = new Logger('cert-sc:x509IdentityMgmt/Client');
   }
+
+  //   const pathKeycloakToken = (realm) =>{
+  //     return config.KEYCLOAK_URL_APIGW +
+  //             "/realms/"+realm+"/protocol/openid-connect/token"
+  // };
+
+  // const result = await axiosKeyCloack.post(
+  //   pathKeycloakToken(realm),
+  //   querystring.stringify({
+  //     grant_type: 'authorization_code',
+  //     redirect_uri: config.REDIRECT_URL_BACK,
+  //     client_id: 'gui',
+  //     code_verifier: codeVerifier,
+  //     code: authorizationCode,
+  //   }),
+  //   {
+  //     maxRedirects: 0,
+  //   },
+  // );
 
   /**
    * Gets the latest CRL released by the root CA.
@@ -40,24 +65,26 @@ class Api {
    * @returns {String|null} PEM encoded CRL
    */
   async getTokenByAuthorizationCode(realm, authorizationCode, codeVerifier) {
-    this.logger.debug('getTokenByAuthorizationCode: Getting the CRL...');
+    this.logger.info('getTokenByAuthorizationCode: Getting the CRL...');
     try {
       const {
         status,
         statusText,
         data,
       } = await this.axiosKeycloak.post(
-        `/realms/${realm}/protocol/openid-connect/token`,
+        `http://apigw:8000/auth/realms/${realm}/protocol/openid-connect/token`,
         querystring.stringify({
           grant_type: 'authorization_code',
-          redirect_uri: 'http://localhost:8000', // TODO  config.REDIRECT_URL_BACK, //
+          redirect_uri: 'http://localhost:8000/backstage/v1/auth/return', // TODO  config.REDIRECT_URL_BACK, //
           client_id: 'gui',
           code_verifier: codeVerifier,
           code: authorizationCode,
         }),
-        {
-          maxRedirects: 0,
-        },
+        // ,
+        // {
+        //   maxRedirects: 0,
+        //   headers: { 'content-type': 'application/x-www-form-urlencoded' },
+        // },
       );
 
       if (status === 200) {
@@ -81,12 +108,16 @@ class Api {
         };
       }
 
-      this.logger.warn('getTokenByAuthorizationCode: Cannot retrieve CRL.  '
+      this.logger.info('getTokenByAuthorizationCode: Cannot retrieve CRL.  '
       + `The API returns: code=${status}; message=${statusText}`);
       return null;
     } catch (error) {
-      this.logger.error('getTokenByAuthorizationCode:', error);
-      throw new Error('Cannot retrieve CRL');
+      // this.logger.error('getTokenByAuthorizationCode:', error);
+      // throw new Error('Cannot retrieve CRL');
+      if (error.response && error.response.status && error.response.data) {
+        throw new Error(`${error.response.status}: ${JSON.stringify(error.response.data)}`);
+      }
+      throw error;
     }
   }
 
