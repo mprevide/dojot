@@ -5,9 +5,9 @@ import Config from './Config.js'
 export default function ReturnLogin() {
 
   const [data, setData] = useState({
-    data: {},
+    dataExample: {},
     userInfo: {},
-    currentSession: {}
+    // currentSession: {}
   });
 
   // useEffect(() => {
@@ -35,54 +35,60 @@ export default function ReturnLogin() {
   }
 
   const handleUserData  = async (evt) => {
-    const { data: resultData } = await axios.get(Config.INTERNAL_DATA_URL);
-
-    setData({
-      data: resultData,
-     });
+    try{
+    const { data: resultData } = await axios.get(Config.EXAMPLE_DATA_URL);
+      setData({
+        ...data,
+        dataExample: resultData,
+      });
+    }catch(error){
+      if (error.response && error.response.status && error.response.data) {
+        console.log(`${error.response.status}: ${JSON.stringify(error.response.data)}`);
+      }else{
+        console.log(error);
+      }
+    }
   }
 
   const handleUserInfo  = async (evt) => {
-    const { data: resultUserInfo } = await axios.get(Config.USER_INFO_URL);
-
-    setData({
-      userInfo: resultUserInfo,
-     });
+    try{
+      const { data: resultUserInfo } = await axios.get(Config.USER_INFO_URL);
+      setData({
+        ...data,
+        userInfo: resultUserInfo,
+      });
+    }catch(error){
+      if (error.response && error.response.status && error.response.data) {
+        console.log(`${error.response.status}: ${JSON.stringify(error.response.data)}`);
+      }else{
+        console.log(error);
+      }
+    }
   }
 
   return (
     <div>
-     <button
-      onClick={handleUserData}>
-      Request Data 
-    </button>
-    <span>Data: {JSON.stringify(data.data)}</span>
-    <button
-    onClick={handleUserInfo}>
-    Request User info
-  </button>
-  <span>User Info: {JSON.stringify(data.userInfo)}</span>
-    <button
-      onClick={handleLogout}>
-      Logout
-    </button>
+      <div>
+        <button
+          onClick={handleUserData}>
+          Request Data Example
+        </button>
+        <span>Data from example: {JSON.stringify(data.dataExample)}</span>
+      </div>
+    <div>
+        <button
+        onClick={handleUserInfo}>
+          Request User info
+        </button>
+        <span>User Info: {JSON.stringify(data.userInfo)}</span>
     </div>
+    <div>
+      <span> Logout? </span>
+      <button
+        onClick={handleLogout}>
+        Yes
+      </button>
+    </div>
+  </div>
   );
 }
-
-  // curl -X POST http://localhost:8000/auth/realms/admin/protocol/openid-connect/token \
-  // -d grant_type=authorization_code \
-  // -d redirect_uri=http://localhost:8000/flow_auth/? \
-  // -d client_id=gui \
-  // -d code_verifier=zo6yP8H9te4I0lk2Uclcry47yPbTT9jRbdnIZPdMUfazH5iD8vkNw \
-  // -d code=b937279f-a7f2-46a9-a032-1eb54d78255f.8a298b41-453a-43b1-9762-6902d312b19e.82c8065d-a51e-413a-9358-98572e74e0d3
-
-  // curl -X POST http://localhost:8000/auth/realms/admin/protocol/openid-connect/token \
-  // -d grant_type=authorization_code \
-  // -d client_id=backstage \
-  // -d redirect_uri=http://localhost:8000/flow_auth/? \
-  // -d client_secret=ba8da2c9-f3fd-4384-aeae-68d933554a60 \
-  // -d code_verifier=zo6yP8H9te4I0lk2Uclcry47yPbTT9jRbdnIZPdMUfazH5iD8vkNw \
-  // -d code=9af621f2-b2b7-4279-b676-474be1d928a7.8a298b41-453a-43b1-9762-6902d312b19e.82c8065d-a51e-413a-9358-98572e74e0d3
-
-

@@ -40,9 +40,10 @@ module.exports = ({ mountPoint, keycloack }) => {
         middleware: [
           // checkDateTo,
           async (req, res) => {
-            logger.info('auth-route.get: req.params=', req.params);
-            logger.info('auth-route.get: req.query=', req.query);
-            logger.info('auth-route.get: req.sessionID=', req.sessionID);
+            logger.info('auth-route');
+            // logger.info('auth-route.get: req.params=', req.params);
+            // logger.info('auth-route.get: req.query=', req.query);
+            // logger.info('auth-route.get: req.sessionID=', req.sessionID);
 
             try {
               // const { tenant, state } = req.query;
@@ -74,7 +75,7 @@ module.exports = ({ mountPoint, keycloack }) => {
               req.session.realm = tenant;
               req.session.tenant = tenant;
 
-              console.log('/pkce will return', req.session);
+              // console.log('/pkce will return', req.session);
               return res.redirect(303, url);
               // }
 
@@ -99,18 +100,15 @@ module.exports = ({ mountPoint, keycloack }) => {
         middleware: [
           // checkDateTo,
           async (req, res) => {
-            logger.info('auth-return-route: req.params=', req.params);
-            logger.info('auth-return-route: req.query=', req.query);
+            logger.info('auth-return-route');
+            // logger.info('auth-return-route: req.params=', req.params);
+            // logger.info('auth-return-route: req.query=', req.query);
 
             // ?error=invalid_request&
             // error_description=Invalid+parameter%3A+code_challenge_method&
             // state=undefined
 
             try {
-              const hour = 3600000; // 3600000
-              const time = new Date(Date.now() + hour);
-              console.log('time', time);
-              req.session.cookie.expires = time;
               const {
                 realm,
                 codeVerifier,
@@ -125,9 +123,11 @@ module.exports = ({ mountPoint, keycloack }) => {
 
                 const {
                   accessToken,
-                  expiresIn,
-                  refreshExpiresIn,
+                  // expiresIn,
+                  // refreshExpiresIn,
                   refreshToken,
+                  refreshExpiresAt,
+                  accessTokenExpiresAt,
                 } = await keycloack.getApi().getTokenByAuthorizationCode(
                   realm,
                   authorizationCode,
@@ -135,11 +135,20 @@ module.exports = ({ mountPoint, keycloack }) => {
                 );
 
                 req.session.accessToken = accessToken;
-                req.session.expiresIn = expiresIn;
-                req.session.refreshExpiresIn = refreshExpiresIn;
+                // req.session.expiresIn = expiresIn;
+                // req.session.refreshExpiresIn = refreshExpiresIn;
                 req.session.refreshToken = refreshToken;
+                req.session.refreshExpiresAt = refreshExpiresAt;
+                req.session.accessTokenExpiresAt = accessTokenExpiresAt;
 
-                console.log('session before redirect', req.session);
+                // console.log('session before redirect', req.session);
+
+                // // set
+                // const hour = 3600000*24; // 3600000=1h , 24h
+                // req.session.cookie.maxAge = hour;
+                // const time = new Date(Date.now() + hour);
+                // console.log('time', time);
+                // req.session.cookie.expires = time;
 
                 // return res.redirect(303,config.REDIRECT_URL_FRONT);
                 return res.redirect(303, 'http://localhost:8000/return');
@@ -195,14 +204,15 @@ module.exports = ({ mountPoint, keycloack }) => {
             logger.info('auth-userinfo-route');
             try {
               const { realm } = req.session;
-              // if req.session... 
-              req.session.destroy(function(err) {
-                  console.log(err);
-              })
-  
+              // if req.session...
+              req.session.destroy((err) => {
+                console.log(err);
+              });
+
               // return res.redirect(303,urlLogoutKeycloack(realm));
 
-              res.status(HttpStatus.OK).json({ data: 'x' });
+              // res.status(HttpStatus.OK).json({ data: 'x' });
+              return res.redirect(303, 'http://localhost:8000/');
             } catch (e) {
               logger.error('device-route.get:', e);
               throw e;

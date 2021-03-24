@@ -19,6 +19,7 @@ const logger = new Logger('influxdb-retriever:App');
 
 const Server = require('./Server');
 const Keycloack = require('./keycloack');
+const Redis = require('./redis');
 const express = require('./express');
 
 const openApiPath = path.join(__dirname, '../api/v1.yml');
@@ -36,6 +37,7 @@ class App {
     try {
       this.server = new Server(serviceState);
       this.keycloack = new Keycloack(serviceState);
+      this.redis = new Redis(serviceState);
     } catch (e) {
       logger.error('constructor:', e);
       throw e;
@@ -50,12 +52,13 @@ class App {
     try {
       this.keycloack.createHealthChecker();
       this.server.registerShutdown();
-
+      this.redis.init();
       this.server.init(express(
         serviceState,
         openApiPath,
         {
           keycloack: this.keycloack,
+          redis: this.redis.getManagementInstance(),
         },
       ));
     } catch (e) {

@@ -32,7 +32,6 @@ const buildUrlLogin = (clientId,
   realm,
   codeChallenge,
   codeChallengeMethod) => {
-
   const url = new URL(`http://localhost:8000/auth/realms/${
     realm}/protocol/openid-connect/auth?`);
 

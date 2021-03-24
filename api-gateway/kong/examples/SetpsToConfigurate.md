@@ -96,7 +96,15 @@ JWT=$(curl --location --request POST http://localhost:8000/auth/realms/admin/pro
 --data-urlencode 'username=admin' \
 --data-urlencode 'password=admin' \
 --data-urlencode 'client_id=gui' \
---data-urlencode 'grant_type=password' 2>/dev/null | jq -r '.access_token')
+--data-urlencode 'grant_type=password' 2>/dev/null | jq -r '.refresh_token')
+```
+
+```sh
+curl -X POST \
+  http://localhost:8000/auth/realms/admin/protocol/openid-connect/token \
+  --data "grant_type=refresh_token" \
+  --data "client_id=gui" \
+  --data "refresh_token=${JWT}"
 ```
 
 ```sh

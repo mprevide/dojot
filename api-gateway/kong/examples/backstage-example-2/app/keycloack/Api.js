@@ -29,33 +29,9 @@ class Api {
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
     });
 
-    // const axiosKeyCloack = axios.create({
-    //   baseURL: config.KEYCLOAK_URL,
-    //   headers: { 'content-type': 'application/x-www-form-urlencoded' },
-    // });
-
 
     this.logger = new Logger('cert-sc:x509IdentityMgmt/Client');
   }
-
-  //   const pathKeycloakToken = (realm) =>{
-  //     return config.KEYCLOAK_URL_APIGW +
-  //             "/realms/"+realm+"/protocol/openid-connect/token"
-  // };
-
-  // const result = await axiosKeyCloack.post(
-  //   pathKeycloakToken(realm),
-  //   querystring.stringify({
-  //     grant_type: 'authorization_code',
-  //     redirect_uri: config.REDIRECT_URL_BACK,
-  //     client_id: 'gui',
-  //     code_verifier: codeVerifier,
-  //     code: authorizationCode,
-  //   }),
-  //   {
-  //     maxRedirects: 0,
-  //   },
-  // );
 
   /**
    * Gets the latest CRL released by the root CA.
@@ -90,7 +66,7 @@ class Api {
       if (status === 200) {
         const {
           access_token: accessToken,
-          expires_in: expiresIn,
+          expires_in: accessTokenExpiresIn,
           refresh_expires_in: refreshExpiresIn,
           refresh_token: refreshToken,
           token_type: tokenType,
@@ -100,15 +76,95 @@ class Api {
           'not-before-policy': notBeforePolicy,
         } = data;
 
+        const refreshExpiresAt = new Date(Date.now() + refreshExpiresIn * 1000);
+        const accessTokenExpiresAt = new Date(Date.now() + accessTokenExpiresIn * 1000);
+
         return {
           accessToken,
-          expiresIn,
-          refreshExpiresIn,
+          accessTokenExpiresAt,
+          // accessTokenExpiresIn,
+          // refreshExpiresIn,
+          refreshExpiresAt,
           refreshToken,
         };
       }
 
       this.logger.info('getTokenByAuthorizationCode: Cannot retrieve CRL.  '
+      + `The API returns: code=${status}; message=${statusText}`);
+      return null;
+    } catch (error) {
+      // this.logger.error('getTokenByAuthorizationCode:', error);
+      // throw new Error('Cannot retrieve CRL');
+      if (error.response && error.response.status && error.response.data) {
+        throw new Error(`${error.response.status}: ${JSON.stringify(error.response.data)}`);
+      }
+      throw error;
+    }
+  }
+
+
+  /**
+   * Gets the latest CRL released by the root CA.
+   *
+   * @throws Will throw an error if cannot retrieve CRL
+   *
+   * @returns {String|null} PEM encoded CRL
+   */
+  async getTokenByRefreshToken(realm, refreshToken) {
+    this.logger.info('getTokenByRefreshToken: Getting the CRL...');
+
+    //     ```sh
+    // curl -X POST \
+    //   http://localhost:8000/auth/realms/admin/protocol/openid-connect/token \
+    //   --data "grant_type=refresh_token" \
+    //   --data "client_id=gui" \
+    //   --data "refresh_token=${JWT}"
+    // ```
+
+    try {
+      const {
+        status,
+        statusText,
+        data,
+      } = await this.axiosKeycloak.post(
+        `http://apigw:8000/auth/realms/${realm}/protocol/openid-connect/token`,
+        querystring.stringify({
+          grant_type: 'refresh_token',
+          client_id: 'gui',
+          refresh_token: refreshToken,
+        }),
+        // ,
+        // {
+        //   maxRedirects: 0,
+        //   headers: { 'content-type': 'application/x-www-form-urlencoded' },
+        // },
+      );
+
+      if (status === 200) {
+        const {
+          access_token: accessToken,
+          expires_in: accessTokenExpiresIn,
+          refresh_expires_in: refreshExpiresIn,
+          refresh_token: refreshToken,
+          token_type: tokenType,
+          id_token: idToken,
+          session_state: sessionState,
+          scope,
+          'not-before-policy': notBeforePolicy,
+        } = data;
+
+        const refreshExpiresAt = new Date(Date.now() + refreshExpiresIn * 1000);
+        const accessTokenExpiresAt = new Date(Date.now() + accessTokenExpiresIn * 1000);
+
+        return {
+          accessToken,
+          accessTokenExpiresAt,
+          refreshExpiresAt,
+          refreshToken,
+        };
+      }
+
+      this.logger.info('getTokenByRefreshToken: Cannot retrieve CRL.  '
       + `The API returns: code=${status}; message=${statusText}`);
       return null;
     } catch (error) {

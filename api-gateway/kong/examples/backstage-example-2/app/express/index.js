@@ -6,6 +6,7 @@ const fs = require('fs');
 
 
 const authRoutes = require('./routes/v1/Auth');
+const exampleRoutes = require('./routes/v1/Example');
 const openApiValidatorInterceptor = require('./interceptors/OpenApiValidator');
 const sessionInterceptor = require('./interceptors/Session');
 
@@ -39,7 +40,7 @@ const {
  *
  * @returns {express}
  */
-module.exports = (serviceState, openApiFilePath, { keycloack }) => {
+module.exports = (serviceState, openApiFilePath, { keycloack, redis }) => {
   let openApiJson = null;
   try {
     // eslint-disable-next-line security/detect-non-literal-fs-filename
@@ -64,8 +65,11 @@ module.exports = (serviceState, openApiFilePath, { keycloack }) => {
         path: '/backstage/v1/api-docs',
         middleware: [swaggerUi.serve, swaggerUi.setup(openApiJson)],
       },
-      openApiValidatorInterceptor({ openApiFilePath }),
-      sessionInterceptor(),
+      // openApiValidatorInterceptor({ openApiFilePath }),
+      sessionInterceptor({
+        keycloack,
+        redis
+      }),
       requestIdInterceptor(),
       beaconInterceptor({
         stateManager: serviceState,
@@ -80,6 +84,9 @@ module.exports = (serviceState, openApiFilePath, { keycloack }) => {
       authRoutes({
         mountPoint: '/backstage/v1',
         keycloack,
+      }),
+      exampleRoutes({
+        mountPoint: '/backstage/v1',
       }),
     ]).flat(),
     logger,

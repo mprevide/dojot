@@ -4,28 +4,29 @@ import Config from './Config.js'
 
 export default function RedirectLogin() {
 
-  const [realm, setRealm] = useState('admin');
+  const [tenant, setTenant] = useState('admin');
   const state = 'login-gui';
 
   const handleRedirectLogin = async (evt) => {
-    console.log('HandleRedirectLogin/Realm:', realm);
-    window.location.href = Config.PKCE_URL+'?tenant='+realm+'&state='+state;
+    window.location.href = Config.LOGIN_URL+'?tenant='+tenant+'&state='+state;
   }
 
   return (
     <div>
       <label>
-        Realm
+      Tenant/Realm:
           <input
             type="text"
-            value={realm}
-            onChange={e => setRealm(e.target.value)}
+            value={tenant}
+            onChange={e => setTenant(e.target.value)}
           />
       </label>
+      <div>
       <button
         onClick={handleRedirectLogin}>
-        Login
+        Go to login page
       </button>
+      </div>
     </div>
   );
 }

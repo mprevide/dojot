@@ -4,8 +4,7 @@ services:
 
   # Prepare database, Bootstrap the database
   kong-migrations:
-    build:
-      context: ../
+    image: mprevide/kong:add_kong
     command: kong migrations bootstrap
     depends_on:
       postgres:
@@ -26,8 +25,7 @@ services:
 
   # Run any new migrations and Finish running any pending migrations after 'up'.
   kong-migrations-up:
-    build:
-      context: ../
+    image: mprevide/kong:add_kong
     command: kong migrations up && kong migrations finish
     depends_on:
       postgres:
@@ -47,8 +45,7 @@ services:
         max-file: '5'
 
   apigw:
-    build:
-      context: ../
+    image: mprevide/kong:add_kong
     depends_on:
       postgres:
         condition: service_healthy
@@ -128,20 +125,16 @@ services:
         max-file: '5'
 
   keycloak:
-    image: mprevide/keycloak:test_1
+    image: jboss/keycloak:12.0.2
     depends_on:
-      - kafka
       - postgres
     restart: always
-    # volumes:
-    #   - ./keycloak/mini-user2.json:/tmp/example-realm.json:Z
+    volumes:
+      - ./keycloak/admin_realm.json:/tmp/example-realm.json:Z
     environment:
       JAVA_OPTS_APPEND: "-Dkeycloak.profile.feature.impersonation=disabled -Dkeycloak.profile.feature.upload_scripts=enabled"
       KEYCLOAK_USER: admin
       KEYCLOAK_PASSWORD: admin
-      KAFKA_SERVERS: kafka:9092
-      KAFKA_CLIENT_ID: keycloak
-      KAFKA_TOPIC: dojot-management.dojot.tenancy
       DB_VENDOR: postgres
       DB_ADDR: postgres
       DB_PORT: 5432
@@ -153,7 +146,7 @@ services:
       KEYCLOAK_HOSTNAME: localhost
       #KEYCLOAK_USER_FILE
       #KEYCLOAK_PASSWORD_FILE
-      # KEYCLOAK_IMPORT: /tmp/example-realm.json
+      KEYCLOAK_IMPORT: /tmp/example-realm.json
       KEYCLOAK_FRONTEND_URL: http://localhost:8080/auth
       PROXY_ADDRESS_FORWARDING: "true" # When running Keycloak behind a proxy, you will need to enable proxy address forwarding
       # KEYCLOAK_STATISTICS: all
@@ -196,77 +189,6 @@ services:
         max-size: 20m
         max-file: '5'
 
-  kafka:
-    image: confluentinc/cp-kafka:5.5.0
-    depends_on:
-      - zookeeper
-    restart: always
-    hostname: "kafka"
-    environment:
-      KAFKA_BROKER_ID: "1"
-      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
-      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://:9092"
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: "1"
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
-      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: "0"
-      KAFKA_LOG_RETENTION_MINUTES: "30"
-      KAFKA_LOG_SEGMENT_BYTES: "262144000"
-      KAFKA_LOG_RETENTION_CHECK_INTERVAL_MS: "30000"
-    volumes:
-      - kafka-volume:/var/lib/kafka/data
-      - kafka-secrets-volume:/etc/kafka/secrets
-    logging:
-      driver: json-file
-      options:
-        max-size: 20m
-        max-file: '5'
-
-  zookeeper:
-    image: "confluentinc/cp-zookeeper:5.5.0"
-    restart: always
-    environment:
-      ZOOKEEPER_REPLICAS: "1"
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_ELECTION_PORT: 3888
-      ZOOKEEPER_SERVER_PORT: 2888
-      ZOOKEEPER_HEAP_SIZE: "2G"
-      ZOOKEEPER_INIT_LIMIT: "5"
-      ZOOKEEPER_LOG_LEVEL: "INFO"
-      ZOOKEEPER_MAX_CLIENT_CNXNS: "100"
-      ZOOKEEPER_MAX_SESSION_TIMEOUT: "40000"
-      ZOOKEEPER_MIN_SESSION_TIMEOUT: "4000"
-      ZOOKEEPER_PURGE_INTERVAL: "0"
-      ZOOKEEPER_SNAP_RETAIN_COUNT: "3"
-      ZOOKEEPER_SYNC_LIMIT: "10"
-      ZOOKEEPER_TICK_TIME: "2000"
-    volumes:
-      - zookeeper-volume:/var/lib/zookeeper/data
-      - zookeeper-log-volume:/var/lib/zookeeper/log
-      - zookeeper-secrets-volume:/etc/zookeeper/secrets
-    logging:
-      driver: json-file
-      options:
-        max-size: 20m
-        max-file: '5'
-
-  kafdrop:
-    image: obsidiandynamics/kafdrop
-    depends_on:
-      - kafka
-    restart: always
-    environment:
-      KAFKA_BROKERCONNECT: kafka:9092
-      JVM_OPTS: "-Xms32M -Xmx64M"
-      SERVER_SERVLET_CONTEXTPATH: "/"
-    ports:
-      - "9090:9000"
-    logging:
-      driver: json-file
-      options:
-        max-size: 20m
-        max-file: '5'
-
   mongodb:
     image: mongo:3.2
     restart: always
@@ -290,24 +212,6 @@ services:
     # ports:
     #   - 8888:8888
     restart: always
-    logging:
-      driver: json-file
-      options:
-        max-size: 20m
-        max-file: '5'
-
-  backstage-example-access:
-    depends_on:
-      - redis
-    build:
-      context: ./
-      dockerfile: ./backstage-example-access/Dockerfile
-    # ports:
-    #   - 8887:8887
-    restart: always
-    volumes:
-      - ./backstage-example-access/src/:/opt/backstage/src/:Z
-    command: ["npm", "run", "dev"]
     logging:
       driver: json-file
       options:
@@ -366,9 +270,4 @@ services:
 
 volumes:
   postgres-volume:
-  kafka-volume:
-  kafka-secrets-volume:
-  zookeeper-volume:
-  zookeeper-log-volume:
-  zookeeper-secrets-volume:
 
