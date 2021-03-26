@@ -46,22 +46,11 @@ module.exports = ({ mountPoint, keycloack }) => {
             // logger.info('auth-route.get: req.sessionID=', req.sessionID);
 
             try {
-              // const { tenant, state } = req.query;
-              // res.status(HttpStatus.OK).json({ data: 'x' });
 
               const { tenant, state } = req.query;
               const newState = state ? 'login-state' : state;
 
-              // if (realm) {
               const { codeVerifier, codeChallenge } = generatePKCEChallenge();
-              // const url = urlLoginKeycloack(
-              //   'gui', // TODO
-              //   newState,
-              //   realm,
-              //   codeChallenge,
-              //   's256', // TODO
-              // );
-
               const url = keycloack.buildUrlLogin(
                 'gui', // TODO
                 newState,
@@ -75,11 +64,8 @@ module.exports = ({ mountPoint, keycloack }) => {
               req.session.realm = tenant;
               req.session.tenant = tenant;
 
-              // console.log('/pkce will return', req.session);
               return res.redirect(303, url);
-              // }
 
-              // return res.status(401).send({ error: 'Missing attribute realm in query.' });
             } catch (e) {
               logger.error('device-route.get:', e);
               throw e;
@@ -120,7 +106,7 @@ module.exports = ({ mountPoint, keycloack }) => {
                   session_state: sessionState,
                   code: authorizationCode,
                 } = req.query;
-
+                try{
                 const {
                   accessToken,
                   // expiresIn,
@@ -141,19 +127,15 @@ module.exports = ({ mountPoint, keycloack }) => {
                 req.session.refreshExpiresAt = refreshExpiresAt;
                 req.session.accessTokenExpiresAt = accessTokenExpiresAt;
 
-                // console.log('session before redirect', req.session);
+                console.log('RETURN TO RETURN');
+                return res.redirect(303, 'http://localhost:8000/return?state='+state);
+                }catch(e){
+                  req.session.destroy((err) => {
+                    console.log(err);
+                  });
 
-                // // set
-                // const hour = 3600000*24; // 3600000=1h , 24h
-                // req.session.cookie.maxAge = hour;
-                // const time = new Date(Date.now() + hour);
-                // console.log('time', time);
-                // req.session.cookie.expires = time;
-
-                // return res.redirect(303,config.REDIRECT_URL_FRONT);
-                return res.redirect(303, 'http://localhost:8000/return');
-
-                // res.status(HttpStatus.OK).json({ data: 'x' });
+                  return res.redirect(303, 'http://localhost:8000/return?error='+e);
+                }
               }
             } catch (e) {
               logger.error('device-route.get:', e);
@@ -181,6 +163,8 @@ module.exports = ({ mountPoint, keycloack }) => {
               // const userInfoObj = await getUserInfoByToken(realm, accessToken);
 
               res.status(HttpStatus.OK).json({ data: 'x' });
+
+              //401
             } catch (e) {
               logger.error('device-route.get:', e);
               throw e;

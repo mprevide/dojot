@@ -1,9 +1,9 @@
-const DOMAIN_URL = "http://localhost:8000";
+const BASE_URL =  window.location.origin;
 const config ={
-    LOGIN_URL: DOMAIN_URL+ "/backstage/v1/auth",
-    LOGOUT_URL: DOMAIN_URL+ "/backstage/v1/auth/logout",
-    EXAMPLE_DATA_URL:  DOMAIN_URL+ "/backstage/v1/example",
-    USER_INFO_URL:  DOMAIN_URL+ "/backstage/v1/auth/userInfo",
+    LOGIN_URI: BASE_URL+"/backstage/v1/auth",
+    LOGOUT_URI: BASE_URL+"/backstage/v1/auth/logout",
+    USER_INFO_URI: BASE_URL+"/backstage/v1/auth/userInfo",
+    EXAMPLE_DATA_URI: BASE_URL+"/backstage/v1/example",
 }
 
 export default config;

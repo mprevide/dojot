@@ -2,93 +2,126 @@ import React, { useState, useEffect } from "react";
 import axios from 'axios';
 import Config from './Config.js'
 
-export default function ReturnLogin() {
+
+export default function ReturnLogin(props) {
 
   const [data, setData] = useState({
     dataExample: {},
+    state: 'none',
     userInfo: {},
-    // currentSession: {}
+    errorMsg: 'none',
   });
 
-  // useEffect(() => {
-  //   async function call() {
-  //     try{
-  //       const { data: resultUserInfo } = await axios.get(Config.USER_INFO_URL);
-  //       const { data: resultData } = await axios.get(Config.INTERNAL_DATA_URL);
-  //       //const { data: resultCurrentSession } = await axios.get(Config.CURRENT_SESSION_URL);
+  // getting the parameter state e error (if it exists) in the query string
+  const paramsQueryString = new URLSearchParams(props.location.search);
+  const stateQueryString = paramsQueryString.get('state') || 'none';
+  const errorQueryString = paramsQueryString.get('error');
 
-  //       setData({
-  //        data: resultData,
-  //        userInfo: resultUserInfo,
-  //         //currentSession: resultCurrentSession,
-  //       });
-
-  //     }catch(e){
-  //       console.log(e);
-  //     }
-  // }
-  //   //call();
-  // },[]);
-
-  const handleLogout  = async (evt) => {
-    window.location.href = Config.LOGOUT_URL;
+  useEffect(() => {
+    async function call() {
+      try{
+        const { data: resultUserInfo,
+          status,
+          statusText,
+         } = await axios.get(Config.USER_INFO_URI);
+         if (status === 200) {
+            setData({
+              ...data,
+              state: stateQueryString,
+              userInfo: resultUserInfo,
+            });
+          }else {
+            throw new Error('Unable to verify an active session');
+          }
+      }catch(error){
+        // redirect to the homepage or do something else
+        // ######
+        // 401 is a known error
+        if (error.response && error.response.status===401){
+          setData({
+            ...data,
+            errorMsg: `${error.response.status}: ${JSON.stringify(error.response.data)}`,
+          });
+        }else{
+          setData({
+            ...data,
+            errorMsg: error.message,
+          });
+        }
+      }
   }
+    // checks if there is an error parameter in the querystring
+    if(!errorQueryString){
+        call();
+      } else {
+        // redirect to the homepage or do something else
+        // ######
+        // passing here means that something went wrong in the login
+        // and an error was answered in the return query string
+        setData({
+          ...data,
+          errorMsg: errorQueryString,
+        });
+      }
 
-  const handleUserData  = async (evt) => {
+  },[]);
+
+  const handleExampleData  = async (evt) => {
     try{
-    const { data: resultData } = await axios.get(Config.EXAMPLE_DATA_URL);
+    const { data: resultData } = await axios.get(Config.EXAMPLE_DATA_URI);
       setData({
         ...data,
         dataExample: resultData,
       });
     }catch(error){
-      if (error.response && error.response.status && error.response.data) {
-        console.log(`${error.response.status}: ${JSON.stringify(error.response.data)}`);
-      }else{
-        console.log(error);
+        // redirect to the homepage or do something else
+        // ######
+        // 401 is a known error
+        if (error.response && error.response.status===401){
+          setData({
+            ...data,
+            errorMsg: `${error.response.status}: ${JSON.stringify(error.response.data)}`,
+          });
+        }else{
+          setData({
+            ...data,
+            errorMsg: error.message,
+          });
+        }
       }
-    }
   }
 
-  const handleUserInfo  = async (evt) => {
-    try{
-      const { data: resultUserInfo } = await axios.get(Config.USER_INFO_URL);
-      setData({
-        ...data,
-        userInfo: resultUserInfo,
-      });
-    }catch(error){
-      if (error.response && error.response.status && error.response.data) {
-        console.log(`${error.response.status}: ${JSON.stringify(error.response.data)}`);
-      }else{
-        console.log(error);
-      }
-    }
+  const handleLogout  = async (evt) => {
+    window.location.href = Config.LOGOUT_URI;
   }
 
   return (
     <div>
       <div>
-        <button
-          onClick={handleUserData}>
-          Request Data Example
-        </button>
-        <span>Data from example: {JSON.stringify(data.dataExample)}</span>
+          <span>User Info: {JSON.stringify(data.userInfo)}</span>
       </div>
-    <div>
+      <div>
+        <span> Logout? </span>
         <button
-        onClick={handleUserInfo}>
-          Request User info
+          onClick={handleLogout}>
+          Yes
         </button>
-        <span>User Info: {JSON.stringify(data.userInfo)}</span>
+      </div>
+      <div>
+        <span>State: {data.state} </span>
+      </div>
+      <div>
+        <span>Error: {data.errorMsg} </span>
+      </div>
+      <div>
+        <div>-----------------</div>
+        <div>Data from example</div>
+        <button
+          onClick={handleExampleData}>
+          Request Data
+        </button>
+        <div>Data: {JSON.stringify(data.dataExample)}</div>
+      </div>
     </div>
-    <div>
-      <span> Logout? </span>
-      <button
-        onClick={handleLogout}>
-        Yes
-      </button>
-    </div>
-  </div>
   );
 }

@@ -96,7 +96,7 @@ class Api {
       // this.logger.error('getTokenByAuthorizationCode:', error);
       // throw new Error('Cannot retrieve CRL');
       if (error.response && error.response.status && error.response.data) {
-        throw new Error(`${error.response.status}: ${JSON.stringify(error.response.data)}`);
+        throw new Error(`${error.response.status}:${JSON.stringify(error.response.data)}`);
       }
       throw error;
     }
