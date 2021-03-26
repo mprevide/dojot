@@ -159,15 +159,20 @@ module.exports = ({ mountPoint, keycloack }) => {
           async (req, res) => {
             logger.info('auth-userinfo-route');
             try {
-              // const permissionsArr = await getPermissionsByToken(realm, accessToken);
-              // const userInfoObj = await getUserInfoByToken(realm, accessToken);
+              const permissionsArr = await  keycloack.getApi().getPermissionsByToken(realm, accessToken);
+              const userInfoObj = await  keycloack.getApi().getUserInfoByToken(realm, accessToken);
 
-              res.status(HttpStatus.OK).json({ data: 'x' });
+              const result = {
+                permissions: permissionsArr,
+                ... userInfoObj
+              }
 
-              //401
+              return res.status(HttpStatus.OK).json(result);
+
             } catch (e) {
               logger.error('device-route.get:', e);
-              throw e;
+              return res.status(HttpStatus.UNAUTHORIZED)
+                    .json({error: 'There is no active session'});
             }
           },
         ],
