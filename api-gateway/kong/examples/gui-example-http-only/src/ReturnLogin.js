@@ -72,6 +72,7 @@ export default function ReturnLogin(props) {
       setData({
         ...data,
         dataExample: resultData,
+        errorMsg:'none',
       });
     }catch(error){
         // redirect to the homepage or do something else
@@ -80,11 +81,13 @@ export default function ReturnLogin(props) {
         if (error.response && error.response.status===401){
           setData({
             ...data,
+            dataExample: {},
             errorMsg: `${error.response.status}: ${JSON.stringify(error.response.data)}`,
           });
         }else{
           setData({
             ...data,
+            dataExample: {},
             errorMsg: error.message,
           });
         }

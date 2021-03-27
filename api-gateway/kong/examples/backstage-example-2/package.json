@@ -9,7 +9,7 @@
     "private": true,
     "main": "index.js",
     "scripts": {
-        "influxdb-retriever": "node index.js",
+        "backstage": "node --unhandled-rejections=strict index.js",
         "dev": "nodemon index.js --ignore ./config -V",
         "debug": "DEBUG=express-session node --unhandled-rejections=strict index.js",
         "test": "jest",

@@ -2,8 +2,8 @@ const { ConfigManager, Logger, WebUtils } = require('@dojot/microservice-sdk');
 const { createHttpTerminator } = require('http-terminator');
 const camelCase = require('lodash.camelcase');
 
-const logger = new Logger('influxdb-retriever:Server');
-const { server: configServer } = ConfigManager.getConfig('RETRIEVER');
+const logger = new Logger('backstage:Server');
+const { server: configServer } = ConfigManager.getConfig('BACKSTAGE');
 const configServerCamelCase = ConfigManager
   .transformObjectKeys(configServer, camelCase);
 

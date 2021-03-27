@@ -26,15 +26,15 @@ const {
 } = require('./Utils');
 
 const {
-  urlLoginKeycloack,
-  urlLogoutKeycloack,
-} = require('./keycloack/Utils');
+  urlLoginKeycloak,
+  urlLogoutKeycloak,
+} = require('./keycloak/Utils');
 
 const {
   getTokenByAuthorizationCode,
   getPermissionsByToken,
   getUserInfoByToken
-} = require('./keycloack/Api');
+} = require('./keycloak/Api');
 
 const bodyParser = require('body-parser');
 const INTERNAL_TEST_URL="http://apigw:8000/secure";
@@ -74,7 +74,7 @@ try {
 
       if (realm){
         const {codeVerifier, codeChallenge} = generatePKCEChallenge();
-        const url = urlLoginKeycloack(
+        const url = urlLoginKeycloak(
           config.PUBLIC_CLIENT_ID,
           newState,
           realm,
@@ -170,7 +170,7 @@ try {
           console.log(err);
       })
 
-      return res.redirect(303,urlLogoutKeycloack(realm));
+      return res.redirect(303,urlLogoutKeycloak(realm));
 
   } catch(error) {
     console.error('/pkce/return', error);

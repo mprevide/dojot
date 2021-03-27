@@ -7,18 +7,18 @@ const path = require('path');
 
 const camelCase = require('lodash.camelcase');
 
-const { lightship: configLightship } = getConfig('RETRIEVER');
+const { lightship: configLightship } = getConfig('BACKSTAGE');
 
 const serviceState = new ServiceStateManager({
   lightship: transformObjectKeys(configLightship, camelCase),
 });
 serviceState.registerService('server');
-serviceState.registerService('keycloack');
+serviceState.registerService('keycloak');
 
-const logger = new Logger('influxdb-retriever:App');
+const logger = new Logger('backstage:App');
 
 const Server = require('./Server');
-const Keycloack = require('./keycloack');
+const Keycloak = require('./keycloak');
 const Redis = require('./redis');
 const express = require('./express');
 
@@ -36,7 +36,9 @@ class App {
     logger.debug('constructor: instantiate app...');
     try {
       this.server = new Server(serviceState);
-      this.keycloack = new Keycloack(serviceState);
+      // TODO singleton??
+      this.keycloak = new Keycloak(serviceState);
+      // TODO singleton??
       this.redis = new Redis(serviceState);
     } catch (e) {
       logger.error('constructor:', e);
@@ -48,16 +50,16 @@ class App {
      * Initialize the server and influxdb
      */
   async init() {
-    logger.info('init: Initializing the influxdb-retriever...');
+    logger.info('init: Initializing the backstage...');
     try {
-      this.keycloack.createHealthChecker();
+      this.keycloak.createHealthChecker();
       this.server.registerShutdown();
       this.redis.init();
       this.server.init(express(
         serviceState,
         openApiPath,
         {
-          keycloack: this.keycloack,
+          keycloak: this.keycloak.getApiInstance(),
           redis: this.redis.getManagementInstance(),
         },
       ));

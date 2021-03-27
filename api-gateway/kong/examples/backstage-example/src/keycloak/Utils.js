@@ -12,7 +12,7 @@ const pathKeycloakInfo = (realm) =>{
             "/realms/"+realm+"/protocol/openid-connect/userinfo"
 };
 
-const urlLoginKeycloack = (clientId,
+const urlLoginKeycloak = (clientId,
                            state,
                            realm,
                            codeChallenge,
@@ -30,14 +30,14 @@ const urlLoginKeycloack = (clientId,
               "&code_challenge_method="+codeChallengeMethod;
 };
 
-const urlLogoutKeycloack = (realm) =>{
+const urlLogoutKeycloak = (realm) =>{
   return config.KEYCLOAK_URL_EXTERNAL+
               "/realms/"
               +realm+"/protocol/openid-connect/logout?"+
               "&redirect_uri="+config.HOME_FRONT;
 };
 
-const urlLoginKeycloack2 = (clientId,
+const urlLoginKeycloak2 = (clientId,
     state,
     realm,
     codeChallenge,
@@ -58,6 +58,6 @@ return config.KEYCLOAK_URL_EXTERNAL+
 module.exports = {
     pathKeycloakToken,
     pathKeycloakInfo,
-    urlLoginKeycloack,
-    urlLogoutKeycloack,
+    urlLoginKeycloak,
+    urlLogoutKeycloak,
 };

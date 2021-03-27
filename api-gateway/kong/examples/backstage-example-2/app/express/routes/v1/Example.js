@@ -1,7 +1,7 @@
 const { Logger } = require('@dojot/microservice-sdk');
 const HttpStatus = require('http-status-codes');
 
-const logger = new Logger('influxdb-retriever:express/routes/v1/Device');
+const logger = new Logger('backstage:express/routes/v1/Device');
 
 const { default: axios } = require('axios');
 
@@ -39,35 +39,19 @@ module.exports = ({ mountPoint }) => {
       {
         method: 'get',
         middleware: [
-          // checkSession,
           async (req, res) => {
-            console.log('internal-test');
-            try {
-              const { accessToken } = req.session;
-              if (accessToken) {
-                try {
-                  const result = await axios.get(
-                    INTERNAL_TEST_URL,
-                    {
-                      headers: {
-                        'content-type': 'application/json',
-                        Authorization: `Bearer ${accessToken}`,
-                      },
-                    },
-                  );
-                  res.status(200).json(result.data);
-                } catch (error) {
-                  if (error.response && error.response.status && error.response.data) {
-                    throw new Error(`${error.response.status}: ${JSON.stringify(error.response.data)}`);
-                  }
-                  throw error;
-                }
-                res.end();
-              } else {
-                res.status(403).send({ error: 'Please, login' });
-              }
-            } catch (error) {
-              res.status(500).send({ error: error.message });
+            const { accessToken } = req.session;
+            if (accessToken) {
+              const result = await axios.get(
+                INTERNAL_TEST_URL,
+                {
+                  headers: {
+                    'content-type': 'application/json',
+                    Authorization: `Bearer ${accessToken}`,
+                  },
+                },
+              );
+              res.status(200).json(result.data);
             }
           },
         ],
@@ -75,6 +59,14 @@ module.exports = ({ mountPoint }) => {
     ],
   };
 
+  //   HTTP/1.1 401 Unauthorized
+  // {"message":"Bad token; invalid JSON"}
+  // HTTP/1.1 403 Forbidden
+  // {"error":"access_denied","error_description":"not_authorized"}
+  // HTTP/1.1 403 Forbidden
+  // {"message":"Invalid algorithm"}
+  // HTTP/1.1 401 Unauthorized
+  // {"message":"Token claims invalid: [\"exp\"]=\"token expired\""}
 
   return [example];
 };

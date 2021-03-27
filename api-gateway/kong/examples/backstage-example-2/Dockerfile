@@ -1,6 +1,6 @@
 FROM node:12.21-alpine AS base
 
-WORKDIR /opt/influxdb-retriever
+WORKDIR /opt/backstage
 
 RUN apk --no-cache add \
     bash \
@@ -24,7 +24,7 @@ RUN apk add --no-cache --virtual .build-deps \
 COPY backstage-example-2/package.json package.json
 COPY backstage-example-2/package-lock.json package-lock.json
 
-RUN npm install  
+RUN npm install
 #--only=prod
 
 COPY  backstage-example-2/app ./app
@@ -34,7 +34,7 @@ COPY  backstage-example-2/index.js ./index.js
 
 FROM node:12.21-alpine
 
-WORKDIR /opt/influxdb-retriever
+WORKDIR /opt/backstage
 
 RUN apk --no-cache add \
     libsasl \
@@ -43,12 +43,12 @@ RUN apk --no-cache add \
     tini \
     curl
 
-COPY --from=base /opt/influxdb-retriever /opt/influxdb-retriever
+COPY --from=base /opt/backstage /opt/backstage
 
 
 ENTRYPOINT ["/sbin/tini", "--"]
 
-CMD ["npm", "run", "influxdb-retriever"]
+CMD ["npm", "run", "backstage"]
 
 HEALTHCHECK --start-period=2m --interval=30s --timeout=10s --retries=3 \
     CMD curl -f http://localhost:9000/health || exit 1

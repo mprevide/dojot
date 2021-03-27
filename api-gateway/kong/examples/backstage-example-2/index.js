@@ -6,9 +6,9 @@ const {
 const util = require('util');
 
 // Creating the configuration
-const userConfigFile = process.env.RETRIEVER_USER_CONFIG_FILE || 'production.conf';
-ConfigManager.loadSettings('RETRIEVER', userConfigFile);
-const config = ConfigManager.getConfig('RETRIEVER');
+const userConfigFile = process.env.BACKSTAGE_CONFIG_FILE || 'production.conf';
+ConfigManager.loadSettings('BACKSTAGE', userConfigFile);
+const config = ConfigManager.getConfig('BACKSTAGE');
 
 const {
   log: configLog,
@@ -24,7 +24,7 @@ if (configLog.file) {
   });
 }
 
-const logger = new Logger('influxdb-retriever:index');
+const logger = new Logger('backstage:index');
 logger.info(`The current configuration is:\n${util.inspect(config, false, 5, true)}`);
 
 const App = require('./app/App');

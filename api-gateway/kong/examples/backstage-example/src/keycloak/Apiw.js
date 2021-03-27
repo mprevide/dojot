@@ -5,7 +5,7 @@ const { handleErrorAxios } = require('../../../backstage-example-2/app/Utils');
 const {
   pathKeycloakToken,
   pathKeycloakInfo,
-} = require('../../../backstage-example-2/app/keycloack/Utils');
+} = require('../../../backstage-example-2/app/keycloak/Utils');
 const config = require('../Config');
 
 const axiosKeyCloack = axios.create({

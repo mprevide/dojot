@@ -1,5 +1,4 @@
 
-
 module.exports = function (session) {
   const { Store } = session;
 
@@ -7,13 +6,13 @@ module.exports = function (session) {
   class RedisStore extends Store {
     constructor(options = {}) {
       super(options);
-      this.sessionRedis = options.redis;
+      this.redisManagement = options.redis;
     }
 
     // Required
     async get(sid, cb = () => {}) {
       try {
-        const data = await this.sessionRedis.get(sid);
+        const data = await this.redisManagement.get(sid);
         return cb(null, data);
       } catch (err) {
         return cb(err);
@@ -24,7 +23,7 @@ module.exports = function (session) {
     async set(sid, sess, cb = () => {}) {
       console.log('RedisStore set data sid sess', sid, sess);
       try {
-        await this.sessionRedis.set(sid, sess);
+        await this.redisManagement.set(sid, sess);
         return cb(null, 'OK');
       } catch (er) {
         return cb(er);
@@ -36,7 +35,7 @@ module.exports = function (session) {
     async destroy(sid, cb = () => {}) {
       console.log('RedisStore destroy sid', sid);
       try {
-        await this.sessionRedis.destroy(sid);
+        await this.redisManagement.destroy(sid);
         return cb(null, 'OK');
       } catch (er) {
         return cb(er);
@@ -46,7 +45,7 @@ module.exports = function (session) {
     async touch(sid, sess, cb = () => {}) {
       console.log('RedisStore touch sid', sid);
       try {
-        const ret = await this.sessionRedis.touch(sid);
+        const ret = await this.redisManagement.restartIdleTTL(sid);
         if (!ret) {
           return cb(null, 'EXPIRED');
         }

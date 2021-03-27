@@ -1,19 +1,23 @@
 const { Logger } = require('@dojot/microservice-sdk');
 const HttpStatus = require('http-status-codes');
 const { generatePKCEChallenge } = require('../../../Utils');
+const {
+  buildUrlLogin,
+  buildUrlLogout,
+} = require('../../../keycloak/Utils.js');
 
-const logger = new Logger('influxdb-retriever:express/routes/v1/Device');
+const baseUrl = 'http://localhost:8000';
+
+const logger = new Logger('backstage:express/routes/v1/Auth');
 
 /**
- * Routes to Devices
+ * Routes to Auth
  *
  * @param {string} mountPoint be used as a route prefix
- * @param {Promise<{result: object, totalItems: number}| error>>} queryDataByField
- *                               A promise that returns a result and a totalItems inside that result
- * @param {Promise<{result: object, totalItems: number}| error>>} queryDataByMeasurement
- *                               A promise that returns a result and a totalItems inside that result
- */
-module.exports = ({ mountPoint, keycloack }) => {
+ * @param {an instance of ../../../keycloak/index} keycloak
+ *          Manages the TODO
+*/
+module.exports = ({ mountPoint, keycloak }) => {
 /**
  * if there is no dateTo, add dateTo to
  * the pagination makes sense even
@@ -27,8 +31,7 @@ module.exports = ({ mountPoint, keycloack }) => {
   // };
 
   /**
-   * This feature returns data for an device with time
-   * filter, pagination and order
+   * TODO
    */
   const auth = {
     mountPoint,
@@ -40,34 +43,29 @@ module.exports = ({ mountPoint, keycloack }) => {
         middleware: [
           // checkDateTo,
           async (req, res) => {
-            logger.info('auth-route');
-            // logger.info('auth-route.get: req.params=', req.params);
-            // logger.info('auth-route.get: req.query=', req.query);
-            // logger.info('auth-route.get: req.sessionID=', req.sessionID);
+            logger.debug('auth-route.get: req.params=', req.params);
+            logger.debug('auth-route.get: req.query=', req.query);
+            logger.debug('auth-route.get: req.sessionID=', req.sessionID);
 
             try {
-
-              const { tenant, state } = req.query;
+              const { tenant: realm, state } = req.query;
               const newState = state ? 'login-state' : state;
 
               const { codeVerifier, codeChallenge } = generatePKCEChallenge();
-              const url = keycloack.buildUrlLogin(
-                'gui', // TODO
+              const url = buildUrlLogin(
+                realm,
                 newState,
-                tenant,
                 codeChallenge,
-                'S256', // TODO
               );
 
               req.session.codeChallenge = codeChallenge;
               req.session.codeVerifier = codeVerifier;
-              req.session.realm = tenant;
-              req.session.tenant = tenant;
+              req.session.realm = realm;
+              req.session.tenant = realm;
 
               return res.redirect(303, url);
-
             } catch (e) {
-              logger.error('device-route.get:', e);
+              logger.error('auth-route.get:', e);
               throw e;
             }
           },
@@ -86,9 +84,9 @@ module.exports = ({ mountPoint, keycloack }) => {
         middleware: [
           // checkDateTo,
           async (req, res) => {
-            logger.info('auth-return-route');
-            // logger.info('auth-return-route: req.params=', req.params);
-            // logger.info('auth-return-route: req.query=', req.query);
+            logger.debug('auth-return-route.get: req.params=', req.params);
+            logger.debug('auth-return-route.get: req.query=', req.query);
+            logger.debug('auth-return-route.get: req.sessionID=', req.sessionID);
 
             // ?error=invalid_request&
             // error_description=Invalid+parameter%3A+code_challenge_method&
@@ -106,39 +104,38 @@ module.exports = ({ mountPoint, keycloack }) => {
                   session_state: sessionState,
                   code: authorizationCode,
                 } = req.query;
-                try{
-                const {
-                  accessToken,
-                  // expiresIn,
-                  // refreshExpiresIn,
-                  refreshToken,
-                  refreshExpiresAt,
-                  accessTokenExpiresAt,
-                } = await keycloack.getApi().getTokenByAuthorizationCode(
-                  realm,
-                  authorizationCode,
-                  codeVerifier,
-                );
+                try {
+                  const {
+                    accessToken,
+                    refreshToken,
+                    refreshExpiresAt,
+                    accessTokenExpiresAt,
+                  } = await keycloak.getTokenByAuthorizationCode(
+                    realm,
+                    authorizationCode,
+                    codeVerifier,
+                  );
 
-                req.session.accessToken = accessToken;
-                // req.session.expiresIn = expiresIn;
-                // req.session.refreshExpiresIn = refreshExpiresIn;
-                req.session.refreshToken = refreshToken;
-                req.session.refreshExpiresAt = refreshExpiresAt;
-                req.session.accessTokenExpiresAt = accessTokenExpiresAt;
+                  req.session.accessToken = accessToken;
+                  req.session.refreshToken = refreshToken;
+                  req.session.refreshExpiresAt = refreshExpiresAt;
+                  req.session.accessTokenExpiresAt = accessTokenExpiresAt;
 
-                console.log('RETURN TO RETURN');
-                return res.redirect(303, 'http://localhost:8000/return?state='+state);
-                }catch(e){
+                  // TODO
+                  // encode URL
+                  return res.redirect(303, `${baseUrl}/return?state=${state}`);
+                } catch (e) {
                   req.session.destroy((err) => {
-                    console.log(err);
+                    logger.error('auth-return-route.get:session-destroy-error:', err);
                   });
-
-                  return res.redirect(303, 'http://localhost:8000/return?error='+e);
+                  // condition for some specific else throw e
+                  // TODO
+                  // encode URL
+                  return res.redirect(303, `${baseUrl}/return?error=${e}`);
                 }
               }
             } catch (e) {
-              logger.error('device-route.get:', e);
+              logger.error('auth-return-route.get:', e);
               throw e;
             }
           },
@@ -149,30 +146,36 @@ module.exports = ({ mountPoint, keycloack }) => {
 
   const authUserInfo = {
     mountPoint,
-    name: 'auth-userinfo-route',
-    path: ['/auth/userinfo'],
+    name: 'auth-user-info-route',
+    path: ['/auth/userInfo'],
     handlers: [
       {
         method: 'get',
         middleware: [
           // checkDateTo,
           async (req, res) => {
-            logger.info('auth-userinfo-route');
+            logger.debug('auth-user-info-route.get: req.params=', req.params);
+            logger.debug('auth-user-info-route.get: req.query=', req.query);
+            logger.debug('auth-user-info-route.get: req.sessionID=', req.sessionID);
+
             try {
-              const permissionsArr = await  keycloack.getApi().getPermissionsByToken(realm, accessToken);
-              const userInfoObj = await  keycloack.getApi().getUserInfoByToken(realm, accessToken);
+              if (req.session && req.session.realm && req.session.accessToken) {
+                const { realm, accessToken } = req.session;
 
-              const result = {
-                permissions: permissionsArr,
-                ... userInfoObj
+                const permissionsArr = await keycloak.getPermissionsByToken(realm, accessToken);
+                const userInfoObj = await keycloak.getUserInfoByToken(realm, accessToken);
+                const result = {
+                  permissions: permissionsArr,
+                  ...userInfoObj,
+                };
+                logger.debug(`auth-user-info-route.get: result=${JSON.stringify(result)}`);
+                return res.status(HttpStatus.OK).json(result);
               }
-
-              return res.status(HttpStatus.OK).json(result);
-
             } catch (e) {
-              logger.error('device-route.get:', e);
+              // TODO condition for some specific else throw e
+              logger.error('device-user-info.get:', e);
               return res.status(HttpStatus.UNAUTHORIZED)
-                    .json({error: 'There is no active session'});
+                .json({ error: 'There is no active session' });
             }
           },
         ],
@@ -182,7 +185,7 @@ module.exports = ({ mountPoint, keycloack }) => {
 
   const authUserLogout = {
     mountPoint,
-    name: 'auth-userinfo-route',
+    name: 'auth-user-logout-route',
     path: ['/auth/logout'],
     handlers: [
       {
@@ -190,20 +193,22 @@ module.exports = ({ mountPoint, keycloack }) => {
         middleware: [
           // checkDateTo,
           async (req, res) => {
-            logger.info('auth-userinfo-route');
+            logger.debug('auth-user-logout-route.get: req.params=', req.params);
+            logger.debug('auth-user-logout-route.get: req.query=', req.query);
+            logger.debug('auth-user-logout-route.get: req.sessionID=', req.sessionID);
+
             try {
-              const { realm } = req.session;
-              // if req.session...
-              req.session.destroy((err) => {
-                console.log(err);
-              });
-
-              // return res.redirect(303,urlLogoutKeycloack(realm));
-
-              // res.status(HttpStatus.OK).json({ data: 'x' });
-              return res.redirect(303, 'http://localhost:8000/');
+              if (req.session && req.session.realm) {
+                const { realm } = req.session;
+                req.session.destroy((err) => {
+                  logger.error(`auth-user-logout-route.get:session-destroy-error:=${JSON.stringify(err)}`);
+                });
+                return res.redirect(303, buildUrlLogout(realm));
+              }
+              // TODO encode URL
+              return res.redirect(303, `${baseUrl}?error=` + 'HouveUmProblema');
             } catch (e) {
-              logger.error('device-route.get:', e);
+              logger.error('auth-user-logout-route.get:', e);
               throw e;
             }
           },
@@ -213,5 +218,8 @@ module.exports = ({ mountPoint, keycloack }) => {
   };
 
 
-  return [auth, authReturn, authUserInfo, authUserLogout];
+  return [auth,
+    authReturn,
+    authUserInfo,
+    authUserLogout];
 };

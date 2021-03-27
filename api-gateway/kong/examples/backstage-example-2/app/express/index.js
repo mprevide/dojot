@@ -9,12 +9,13 @@ const authRoutes = require('./routes/v1/Auth');
 const exampleRoutes = require('./routes/v1/Example');
 const openApiValidatorInterceptor = require('./interceptors/OpenApiValidator');
 const sessionInterceptor = require('./interceptors/Session');
+const handleErrors = require('./interceptors/AxiosForKongAndKeycloackErrorsHandle');
 
-const logger = new Logger('influxdb-retriever:express');
+const logger = new Logger('backstage:express');
 
 const {
   express: configExpress,
-} = ConfigManager.getConfig('RETRIEVER');
+} = ConfigManager.getConfig('BACKSTAGE');
 
 
 /**
@@ -40,7 +41,7 @@ const {
  *
  * @returns {express}
  */
-module.exports = (serviceState, openApiFilePath, { keycloack, redis }) => {
+module.exports = (serviceState, openApiFilePath, { keycloak, redis }) => {
   let openApiJson = null;
   try {
     // eslint-disable-next-line security/detect-non-literal-fs-filename
@@ -50,6 +51,8 @@ module.exports = (serviceState, openApiFilePath, { keycloack, redis }) => {
     logger.error('Some error when try load open api in yaml', e);
     throw e;
   }
+
+  const { defaultErrorHandler } = WebUtils.framework;
 
   const {
     responseCompressInterceptor,
@@ -66,9 +69,11 @@ module.exports = (serviceState, openApiFilePath, { keycloack, redis }) => {
         middleware: [swaggerUi.serve, swaggerUi.setup(openApiJson)],
       },
       // openApiValidatorInterceptor({ openApiFilePath }),
+      // readinessInterceptor
       sessionInterceptor({
-        keycloack,
-        redis
+        keycloak,
+        redis,
+        mountPoint: '/backstage/v1',
       }),
       requestIdInterceptor(),
       beaconInterceptor({
@@ -83,13 +88,21 @@ module.exports = (serviceState, openApiFilePath, { keycloack, redis }) => {
     routes: ([
       authRoutes({
         mountPoint: '/backstage/v1',
-        keycloack,
+        keycloak,
       }),
       exampleRoutes({
         mountPoint: '/backstage/v1',
       }),
     ]).flat(),
+    errorHandlers: [
+      // The order of the error handlers matters
+      handleErrors(),
+      defaultErrorHandler({
+        logger,
+      }),
+    ],
     logger,
     supportTrustProxy: configExpress.trustproxy,
+    catchInvalidRequest: true,
   });
 };

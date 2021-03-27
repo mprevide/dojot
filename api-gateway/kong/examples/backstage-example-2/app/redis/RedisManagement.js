@@ -20,6 +20,7 @@ class RedisSessionMgmt {
     this.redisSubAsync = {
       subscribe: promisify(this.redisSub.subscribe).bind(this.redisSub),
     };
+
     this.db = 0;
     this.maxLifetime = 86400; // One day in seconds.
     this.maxIdle = 1800; // 1800; // 30 minutes in seconds.
@@ -118,7 +119,7 @@ class RedisSessionMgmt {
     }
   }
 
-  async touch(sid) {
+  async restartIdleTTL(sid) {
     console.log('RedisStore touch sid', sid);
     try {
       const ret = await this.redisClientAsync.expire(this.prefixSessionTTL + sid, this.maxIdle);

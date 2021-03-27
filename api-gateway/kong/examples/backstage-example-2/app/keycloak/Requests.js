@@ -1,17 +1,47 @@
 const { Logger, ConfigManager } = require('@dojot/microservice-sdk');
 const { default: axios } = require('axios');
 const querystring = require('querystring');
-// const axiosRetry = require('axios-retry');
 
-// const {
-//   app: configApp,
-// } = ConfigManager.getConfig('CERT_SC');
+const createError = require('http-errors');
+
+const baseInternalUrl = 'http://apigw:8000';
+/**
+ *
+ * @param {*} expiresIn In seconds
+ * @returns
+ */
+const expiresInToExpiresAt = (expiresIn) => new Date(Date.now() + expiresIn * 1000);
 
 /**
- * This class call X509IdentityMgmt api to sign a csr,
- * retrieve ca certificate and crl
+ * Handles error coming from the TODO
+ * @param {Error} error
+ * @returns  {Error}
  */
-class Api {
+const commonHandleError = (error) => {
+  if (error.response && error.response.status && error.response.data) {
+    const {
+      status,
+      data: {
+        error: errorTxt,
+        error_description: errorDesc,
+        message: messageError,
+      },
+    } = error.response;
+    if (errorTxt && !errorDesc) {
+      return createError(status, errorTxt);
+    } if (errorTxt && errorDesc) {
+      return createError(status, `${errorTxt}: ${errorDesc}`);
+    } if (messageError) {
+      return createError(status, messageError);
+    }
+  }
+  return (error);
+};
+
+/**
+ * This class call Keycloak api
+ */
+class Requests {
   /**
    *
    * @param {*} url
@@ -48,7 +78,7 @@ class Api {
         statusText,
         data,
       } = await this.axiosKeycloak.post(
-        `http://apigw:8000/auth/realms/${realm}/protocol/openid-connect/token`,
+        `/realms/${realm}/protocol/openid-connect/token`,
         querystring.stringify({
           grant_type: 'authorization_code',
           redirect_uri: 'http://localhost:8000/backstage/v1/auth/return', // TODO  config.REDIRECT_URL_BACK, //
@@ -76,8 +106,8 @@ class Api {
           'not-before-policy': notBeforePolicy,
         } = data;
 
-        const refreshExpiresAt = new Date(Date.now() + refreshExpiresIn * 1000);
-        const accessTokenExpiresAt = new Date(Date.now() + accessTokenExpiresIn * 1000);
+        const refreshExpiresAt = expiresInToExpiresAt(refreshExpiresIn);
+        const accessTokenExpiresAt = expiresInToExpiresAt(accessTokenExpiresIn);
 
         return {
           accessToken,
@@ -93,12 +123,9 @@ class Api {
       + `The API returns: code=${status}; message=${statusText}`);
       return null;
     } catch (error) {
-      // this.logger.error('getTokenByAuthorizationCode:', error);
-      // throw new Error('Cannot retrieve CRL');
-      if (error.response && error.response.status && error.response.data) {
-        throw new Error(`${error.response.status}:${JSON.stringify(error.response.data)}`);
-      }
-      throw error;
+      const newError = commonHandleError(error);
+      this.logger.error('getTokenByAuthorizationCode:', newError); // TODO VER SE MOSTRA LINHA
+      throw newError;
     }
   }
 
@@ -112,32 +139,18 @@ class Api {
    */
   async getTokenByRefreshToken(realm, refreshToken) {
     this.logger.info('getTokenByRefreshToken: Getting the CRL...');
-
-    //     ```sh
-    // curl -X POST \
-    //   http://localhost:8000/auth/realms/admin/protocol/openid-connect/token \
-    //   --data "grant_type=refresh_token" \
-    //   --data "client_id=gui" \
-    //   --data "refresh_token=${JWT}"
-    // ```
-
     try {
       const {
         status,
         statusText,
         data,
       } = await this.axiosKeycloak.post(
-        `http://apigw:8000/auth/realms/${realm}/protocol/openid-connect/token`,
+        `/realms/${realm}/protocol/openid-connect/token`,
         querystring.stringify({
           grant_type: 'refresh_token',
           client_id: 'gui',
           refresh_token: refreshToken,
         }),
-        // ,
-        // {
-        //   maxRedirects: 0,
-        //   headers: { 'content-type': 'application/x-www-form-urlencoded' },
-        // },
       );
 
       if (status === 200) {
@@ -153,8 +166,8 @@ class Api {
           'not-before-policy': notBeforePolicy,
         } = data;
 
-        const refreshExpiresAt = new Date(Date.now() + refreshExpiresIn * 1000);
-        const accessTokenExpiresAt = new Date(Date.now() + accessTokenExpiresIn * 1000);
+        const refreshExpiresAt = expiresInToExpiresAt(refreshExpiresIn);
+        const accessTokenExpiresAt = expiresInToExpiresAt(accessTokenExpiresIn);
 
         return {
           accessToken,
@@ -168,12 +181,9 @@ class Api {
       + `The API returns: code=${status}; message=${statusText}`);
       return null;
     } catch (error) {
-      // this.logger.error('getTokenByAuthorizationCode:', error);
-      // throw new Error('Cannot retrieve CRL');
-      if (error.response && error.response.status && error.response.data) {
-        throw new Error(`${error.response.status}: ${JSON.stringify(error.response.data)}`);
-      }
-      throw error;
+      const newError = commonHandleError(error);
+      this.logger.error('getTokenByRefreshToken:', newError); // TODO VER SE MOSTRA LINHA
+      throw newError;
     }
   }
 
@@ -185,6 +195,8 @@ class Api {
    * @returns {String|null} PEM encoded CRL
    */
   async getPermissionsByToken(realm, accessToken) {
+    // console.log('realm=', realm);
+    // console.log('accessToken=', accessToken);
     this.logger.debug('getPermissionsByToken: Getting the CRL...');
     try {
       const {
@@ -197,15 +209,17 @@ class Api {
           grant_type: 'urn:ietf:params:oauth:grant-type:uma-ticket',
           audience: 'kong',
           response_mode: 'permissions',
-        },
+        }),
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
             'content-type': 'application/x-www-form-urlencoded',
           },
-        }),
+        },
       );
 
+      // If the authorization request does not map to any permission, a 403 HTTP status code is returned instead.
+      // 401 {"error":"HTTP 401 Unauthorized"}
       if (status === 200) {
         const permissionsArr = data.reduce((filtered, value) => {
           const { rsname, scopes } = value;
@@ -224,8 +238,9 @@ class Api {
         + `The API returns: code=${status}; message=${statusText}`);
       return null;
     } catch (error) {
-      this.logger.error('getPermissionsByToken:', error);
-      throw new Error('Cannot retrieve CRL');
+      const newError = commonHandleError(error);
+      this.logger.error('getPermissionsByToken:', newError); // TODO VER SE MOSTRA LINHA
+      throw newError;
     }
   }
 
@@ -264,12 +279,17 @@ class Api {
         };
       }
 
+      // 401 Unauthorized
+      // 403 Forbidden
+      // 500 Internal Server Error
+
       this.logger.warn('getUserInfoByToken: Cannot retrieve CRL.  '
       + `The API returns: code=${status}; message=${statusText}`);
       return null;
     } catch (error) {
-      this.logger.error('getUserInfoByToken:', error);
-      throw new Error('Cannot retrieve CRL');
+      const newError = commonHandleError(error);
+      this.logger.error('getUserInfoByToken:', newError); // TODO VER SE MOSTRA LINHA
+      throw newError;
     }
   }
 
@@ -304,10 +324,11 @@ class Api {
         connected: false,
       };
     } catch (error) {
-      this.logger.error('getStatus:', error);
-      throw new Error('Cannot retrieve CRL');
+      const newError = commonHandleError(error);
+      this.logger.error('getStatus:', newError); // TODO VER SE MOSTRA LINHA
+      throw newError;
     }
   }
 }
 
-module.exports = Api;
+module.exports = Requests;
