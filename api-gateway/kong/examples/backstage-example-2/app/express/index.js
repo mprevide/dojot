@@ -8,7 +8,7 @@ const fs = require('fs');
 const authRoutes = require('./routes/v1/Auth');
 const exampleRoutes = require('./routes/v1/Example');
 const openApiValidatorInterceptor = require('./interceptors/OpenApiValidator');
-const sessionInterceptor = require('./interceptors/Session');
+const sessionInterceptor = require('./interceptors/session/Session');
 const handleErrors = require('./interceptors/AxiosForKongAndKeycloackErrorsHandle');
 
 const logger = new Logger('backstage:express');
@@ -17,25 +17,16 @@ const {
   express: configExpress,
 } = ConfigManager.getConfig('BACKSTAGE');
 
-
+// https://www.npmjs.com/package/csurf TODO
 /**
- * Creates an express and receives the routes to register
- *
- * @param {object[]} routes Array of object with object
- * @param {string} routes[].mountPoint  Mount Point from routes
- * @param {string} routes[].name Name of route
- * @param {string[]]} routes[].path  Path for route
- * @param {object[]]} routes[].handlers Handles for path
- * @param {string='get','put','post','patch', 'delete', ...]} routes[].handlers.method
- *                                                      Verb http For handlers
- * @param {((req: any, res: any, next: any) => any)[]} routes[].handlers.middleware
- *                                                      Function to handle the verb http
- *
+ * Creates an express instance
  *
  * @param {an instance of @dojot/microservice-sdk.ServiceStateManager} serviceState
  *          Manages the services' states, providing health check and shutdown utilities.
  *
  * @param {string}openApiFilePath FilePath to OpenApi
+ *
+ * @param TODO
  *
  * @throws  Some error when try load open api in yaml
  *
@@ -59,6 +50,7 @@ module.exports = (serviceState, openApiFilePath, { keycloak, redis }) => {
     requestIdInterceptor,
     beaconInterceptor,
     requestLogInterceptor,
+    readinessInterceptor,
   } = WebUtils.framework.interceptors;
 
   return WebUtils.framework.createExpress({
@@ -69,13 +61,16 @@ module.exports = (serviceState, openApiFilePath, { keycloak, redis }) => {
         middleware: [swaggerUi.serve, swaggerUi.setup(openApiJson)],
       },
       // openApiValidatorInterceptor({ openApiFilePath }),
-      // readinessInterceptor
       sessionInterceptor({
         keycloak,
         redis,
         mountPoint: '/backstage/v1',
       }),
       requestIdInterceptor(),
+      readinessInterceptor({
+        stateManager: serviceState,
+        logger,
+      }),
       beaconInterceptor({
         stateManager: serviceState,
         logger,

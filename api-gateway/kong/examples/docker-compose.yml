@@ -220,12 +220,14 @@ services:
 
   backstage-example:
     depends_on:
-      - redis
+      - redis-backstage
     build:
       context: ./
       dockerfile: ./backstage-example-2/Dockerfile
     # ports:
     #   - 8887:8887
+    environment:
+      BACKSTAGE_CONFIG_FILE: development.conf
     restart: always
     volumes:
       - ./backstage-example-2/app/:/opt/backstage/app/:Z
@@ -236,7 +238,7 @@ services:
         max-size: 20m
         max-file: '5'
 
-  redis:
+  redis-backstage:
     image: dojot/redis:6.0.4-alpine3.11
     restart: always
     ports:
@@ -252,7 +254,7 @@ services:
     image: rediscommander/redis-commander:latest
     restart: always
     environment:
-      - REDIS_HOSTS=local:redis:6379
+      - REDIS_HOSTS=local:redis-backstage:6379
     ports:
       - "8081:8081"
 

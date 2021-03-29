@@ -23,7 +23,7 @@ export default function ReturnLogin(props) {
         const { data: resultUserInfo,
           status,
           statusText,
-         } = await axios.get(Config.USER_INFO_URI);
+         } = await axios.get(Config.USER_INFO_URL);
          if (status === 200) {
             setData({
               ...data,
@@ -68,7 +68,7 @@ export default function ReturnLogin(props) {
 
   const handleExampleData  = async (evt) => {
     try{
-    const { data: resultData } = await axios.get(Config.EXAMPLE_DATA_URI);
+    const { data: resultData } = await axios.get(Config.EXAMPLE_DATA_URL);
       setData({
         ...data,
         dataExample: resultData,
@@ -95,7 +95,7 @@ export default function ReturnLogin(props) {
   }
 
   const handleLogout  = async (evt) => {
-    window.location.href = Config.LOGOUT_URI;
+    window.location.href = Config.LOGOUT_URL;
   }
 
   return (

@@ -1,23 +1,23 @@
-const { Logger } = require('@dojot/microservice-sdk');
+const {
+  Logger,
+  ConfigManager: { getConfig },
+} = require('@dojot/microservice-sdk');
 const session = require('express-session');
 const createError = require('http-errors');
-const RedisStore = require('../../redis/StoreExpressSession')(session);
-// https://www.npmjs.com/package/csurf TODO
+
+const SessionStore = require('./SessionStore')(session);
 
 const logger = new Logger('backstage:express/interceptors/Session');
-const secret = 'aabcde ddd';
-const cookieName = 'dojot-backstage-cookie';
-const cookieHTTPS = false;
-const cookiePath = '/';
-const proxy = true;
-const domain = 'localhost';
+
+const { session: sessionConfig } = getConfig('BACKSTAGE');
+
 
 /**
  *  TODO
  * @param {*} keycloak
  * @param {*} req
  */
-async function renewAccessTokenIfNecessary(keycloak, req) {
+const renewAccessTokenIfNecessary = async (keycloak, req) => {
   logger.debug('renewAccessTokenIfNecessary: accessTokenExpiresAt=', req.session.accessTokenExpiresAt);
   if ((Date.now() > new Date(req.session.accessTokenExpiresAt).getTime())) {
     logger.debug('renewAccessTokenIfNecessary: Getting a new token...');
@@ -26,6 +26,7 @@ async function renewAccessTokenIfNecessary(keycloak, req) {
       refreshToken,
       refreshExpiresAt,
       accessTokenExpiresAt,
+      sessionState,
     } = await keycloak.getTokenByRefreshToken(
       req.session.realm,
       req.session.refreshToken,
@@ -35,9 +36,11 @@ async function renewAccessTokenIfNecessary(keycloak, req) {
     req.session.refreshToken = refreshToken;
     req.session.refreshExpiresAt = refreshExpiresAt;
     req.session.accessTokenExpiresAt = accessTokenExpiresAt;
+    req.session.sessionState = sessionState;
+
     logger.debug('renewAccessTokenIfNecessary: ...got a new token.');
   }
-}
+};
 
 
 /**
@@ -51,19 +54,27 @@ module.exports = ({
   name: 'session-express-interceptor',
   middleware:
   [session({
-    secret,
-    name: cookieName, // TODO
-    domain, // TODO
-    proxy, // TODO
-    store: new RedisStore({ redis }),
-    resave: false, // TODO // Forces the session to be saved back to the session store, even if the session was never modified
-    // rolling: true, //Call touch,  Force the session identifier cookie to be set on every response. The expiration is reset to the original maxAge, resetting the expiration countdown.
-    saveUninitialized: false, // TODO // Forces a session that is "uninitialized" to be saved to the store.
+    secret: sessionConfig.secret,
+    name: sessionConfig.cookieName, // TODO
+    domain: sessionConfig.domain, // TODO
+    proxy: sessionConfig.proxy, // TODO
+    store: new SessionStore({ redis }),
+    // Forces the session to be saved back to the session store,
+    // even if the session was never modified
+    resave: false,
+    // Forces a session that is "uninitialized" to be saved to the store.
+    saveUninitialized: false,
     cookie: {
-      path: cookiePath, // Specifies the value for the Path Set-Cookie. By default, this is set to '/', which is the root path of the domain
-      httpOnly: true, // Specifies the boolean value for the HttpOnly Set-Cookie attribute. When truthy, the HttpOnly attribute is set, otherwise it is not. By default, the HttpOnly attribute is set.
-      secure: cookieHTTPS, // TODO // Assegura que o navegador só envie o cookie por HTTPS.
-      sameSite: 'strict', // TODO  // Specifies the boolean or string to be the value for the SameSite Set-Cookie attribute.
+      // Specifies the value for the Path Set-Cookie.
+      // By default, this is set to '/', which is the root path of the domain
+      path: sessionConfig.cookiePath,
+      // Specifies the boolean value for the HttpOnly Set-Cookie attribute.
+      // When truthy, the HttpOnly attribute is set, otherwise it is not.
+      httpOnly: true,
+      // TODO Assegura que o navegador só envie o cookie por HTTPS.
+      secure: sessionConfig.cookieHTTPS,
+      // Specifies the boolean or string to be the value for the SameSite Set-Cookie attribute.
+      sameSite: 'strict',
     },
   }),
   async (req, res, next) => {

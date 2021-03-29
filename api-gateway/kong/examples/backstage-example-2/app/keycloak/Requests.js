@@ -4,7 +4,6 @@ const querystring = require('querystring');
 
 const createError = require('http-errors');
 
-const baseInternalUrl = 'http://apigw:8000';
 /**
  *
  * @param {*} expiresIn In seconds
@@ -38,6 +37,16 @@ const commonHandleError = (error) => {
   return (error);
 };
 
+function pathEndPoint(realm) {
+  return `/realms/${realm}/protocol/openid-connect`;
+}
+
+function pathTokenEndPoint(realm) {
+  return `${pathEndPoint(realm)}/token`;
+}
+
+const clientId = 'gui';
+const URI_AUTH_RETURN = 'http://localhost:8000/backstage/v1/auth/return';
 /**
  * This class call Keycloak api
  */
@@ -60,7 +69,7 @@ class Requests {
     });
 
 
-    this.logger = new Logger('cert-sc:x509IdentityMgmt/Client');
+    this.logger = new Logger('backstage:keycloak/Requests');
   }
 
   /**
@@ -71,18 +80,18 @@ class Requests {
    * @returns {String|null} PEM encoded CRL
    */
   async getTokenByAuthorizationCode(realm, authorizationCode, codeVerifier) {
-    this.logger.info('getTokenByAuthorizationCode: Getting the CRL...');
+    this.logger.info('getTokenByAuthorizationCode: Getting Access Token by Authorization Code...');
     try {
       const {
         status,
         statusText,
         data,
       } = await this.axiosKeycloak.post(
-        `/realms/${realm}/protocol/openid-connect/token`,
+        pathTokenEndPoint(realm),
         querystring.stringify({
           grant_type: 'authorization_code',
-          redirect_uri: 'http://localhost:8000/backstage/v1/auth/return', // TODO  config.REDIRECT_URL_BACK, //
-          client_id: 'gui',
+          redirect_uri: URI_AUTH_RETURN, // TODO  config.REDIRECT_URL_BACK, //
+          client_id: clientId,
           code_verifier: codeVerifier,
           code: authorizationCode,
         }),
@@ -112,19 +121,16 @@ class Requests {
         return {
           accessToken,
           accessTokenExpiresAt,
-          // accessTokenExpiresIn,
-          // refreshExpiresIn,
+          sessionState,
           refreshExpiresAt,
           refreshToken,
         };
       }
 
-      this.logger.info('getTokenByAuthorizationCode: Cannot retrieve CRL.  '
-      + `The API returns: code=${status}; message=${statusText}`);
-      return null;
+      throw new Error(`getTokenByAuthorizationCode: The API returns: code=${status}; message=${statusText}`);
     } catch (error) {
       const newError = commonHandleError(error);
-      this.logger.error('getTokenByAuthorizationCode:', newError); // TODO VER SE MOSTRA LINHA
+      this.logger.error('getTokenByAuthorizationCode:', newError);
       throw newError;
     }
   }
@@ -145,10 +151,10 @@ class Requests {
         statusText,
         data,
       } = await this.axiosKeycloak.post(
-        `/realms/${realm}/protocol/openid-connect/token`,
+        pathTokenEndPoint(realm),
         querystring.stringify({
           grant_type: 'refresh_token',
-          client_id: 'gui',
+          client_id: clientId,
           refresh_token: refreshToken,
         }),
       );
@@ -158,7 +164,7 @@ class Requests {
           access_token: accessToken,
           expires_in: accessTokenExpiresIn,
           refresh_expires_in: refreshExpiresIn,
-          refresh_token: refreshToken,
+          refresh_token: refreshTokenNew,
           token_type: tokenType,
           id_token: idToken,
           session_state: sessionState,
@@ -173,16 +179,14 @@ class Requests {
           accessToken,
           accessTokenExpiresAt,
           refreshExpiresAt,
-          refreshToken,
+          refreshToken: refreshTokenNew,
+          sessionState,
         };
       }
-
-      this.logger.info('getTokenByRefreshToken: Cannot retrieve CRL.  '
-      + `The API returns: code=${status}; message=${statusText}`);
-      return null;
+      throw new Error(`getTokenByRefreshToken: The API returns: code=${status}; message=${statusText}`);
     } catch (error) {
       const newError = commonHandleError(error);
-      this.logger.error('getTokenByRefreshToken:', newError); // TODO VER SE MOSTRA LINHA
+      this.logger.error('getTokenByRefreshToken:', newError);
       throw newError;
     }
   }
@@ -204,7 +208,7 @@ class Requests {
         statusText,
         data,
       } = await this.axiosKeycloak.post(
-        `/realms/${realm}/protocol/openid-connect/token`,
+        pathTokenEndPoint(realm),
         querystring.stringify({
           grant_type: 'urn:ietf:params:oauth:grant-type:uma-ticket',
           audience: 'kong',
@@ -234,12 +238,11 @@ class Requests {
         return permissionsArr;
       }
 
-      this.logger.warn('getPermissionsByToken: Cannot retrieve CRL.  '
-        + `The API returns: code=${status}; message=${statusText}`);
-      return null;
+      throw new Error(`getPermissionsByToken: The API returns: code=${status}; message=${statusText}`);
+
     } catch (error) {
       const newError = commonHandleError(error);
-      this.logger.error('getPermissionsByToken:', newError); // TODO VER SE MOSTRA LINHA
+      this.logger.error('getPermissionsByToken:', newError);
       throw newError;
     }
   }
@@ -259,7 +262,7 @@ class Requests {
         statusText,
         data,
       } = await this.axiosKeycloak.get(
-        `/realms/${realm}/protocol/openid-connect/userinfo`,
+        `${pathEndPoint(realm)}/userinfo`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -283,12 +286,10 @@ class Requests {
       // 403 Forbidden
       // 500 Internal Server Error
 
-      this.logger.warn('getUserInfoByToken: Cannot retrieve CRL.  '
-      + `The API returns: code=${status}; message=${statusText}`);
-      return null;
+      throw new Error(`getUserInfoByToken: The API returns: code=${status}; message=${statusText}`);
     } catch (error) {
       const newError = commonHandleError(error);
-      this.logger.error('getUserInfoByToken:', newError); // TODO VER SE MOSTRA LINHA
+      this.logger.error('getUserInfoByToken:', newError);
       throw newError;
     }
   }
@@ -307,7 +308,7 @@ class Requests {
       const {
         status,
         statusText,
-        data,
+        // data,
       } = await this.axiosKeycloak.get(
         '/',
       );
@@ -318,15 +319,13 @@ class Requests {
         };
       }
 
-      this.logger.warn('getStatus: Cannot .... .  '
-        + `The API returns: code=${status}; message=${statusText}`);
+      throw new Error(`getStatus: The API returns: code=${status}; message=${statusText}`);
+    } catch (error) {
+      const newError = commonHandleError(error);
+      this.logger.error('getStatus:', newError);
       return {
         connected: false,
       };
-    } catch (error) {
-      const newError = commonHandleError(error);
-      this.logger.error('getStatus:', newError); // TODO VER SE MOSTRA LINHA
-      throw newError;
     }
   }
 }

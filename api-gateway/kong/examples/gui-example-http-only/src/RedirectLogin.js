@@ -11,7 +11,7 @@ export default function RedirectLogin() {
   const state = 'login-gui-state';
 
   const handleRedirectLogin = async (evt) => {
-    window.location.href = Config.LOGIN_URI+'?tenant='+tenant+'&state='+state;
+    window.location.href = Config.LOGIN_URL+'?tenant='+tenant+'&state='+state;
   }
 
   return (

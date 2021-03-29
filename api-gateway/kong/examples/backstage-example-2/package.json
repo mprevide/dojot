@@ -42,7 +42,7 @@
     ],
     "homepage": "https://github.com/dojot",
     "dependencies": {
-        "@dojot/microservice-sdk": "0.1.9",
+        "@dojot/microservice-sdk": "0.1.11",
         "awilix": "^4.3.3",
         "axios": "^0.21.1",
         "base64url": "^3.0.1",

@@ -1,59 +1,43 @@
+const {
+  ConfigManager: { getConfig },
+  Logger,
+} = require('@dojot/microservice-sdk');
 
-const { promisify } = require('util');
+const { session_redis: sessionRedisConfig } = getConfig('BACKSTAGE');
 
+const logger = new Logger('backstage:Redis/RedisSessionMgmt');
 class RedisSessionMgmt {
-  constructor(redisClient, redisSub) {
+  constructor(
+    redisPub, redisSub,
+  ) {
     this.prefixSession = 'session:';
     this.prefixSessionTTL = 'session-ttl:';
     this.prefixSessionTTLSize = (this.prefixSessionTTL).length;
 
-    this.redisClient = redisClient;
+    this.redisPub = redisPub;
     this.redisSub = redisSub;
 
-    this.redisClientAsync = {
-      get: promisify(this.redisClient.get).bind(this.redisClient),
-      set: promisify(this.redisClient.set).bind(this.redisClient),
-      expire: promisify(this.redisClient.expire).bind(this.redisClient),
-      del: promisify(this.redisClient.del).bind(this.redisClient),
-    };
+    this.maxLifetime = sessionRedisConfig['max.life.time.sec'] || 86400; // One day in seconds.
+    this.maxIdle = sessionRedisConfig['max.idle.time.sec'] || 1800; // 30 minutes in seconds.
 
-    this.redisSubAsync = {
-      subscribe: promisify(this.redisSub.subscribe).bind(this.redisSub),
-    };
-
-    this.db = 0;
-    this.maxLifetime = 86400; // One day in seconds.
-    this.maxIdle = 1800; // 1800; // 30 minutes in seconds.
-    this.subIsInit = false;
     // Activate "notify-keyspace-events" for expired type events
-    this.redisClient.send_command('config', ['set', 'notify-keyspace-events', 'Ex']);
+    this.redisPub.send_command('config', ['set', 'notify-keyspace-events', 'Ex']);
   }
 
-  async initSub() {
-    // TODO: improve handle errors
-    // TODO: retry
-    this.redisSub.on('error', (error) => {
-      console.error(`sub: onError: ${error}`);
-    });
-    this.redisSub.on('end', (error) => {
-      console.log(`sub: onEnd: ${error}`);
-    });
-    this.redisSub.on('warning', (error) => {
-      console.log(`sub: onWarning: ${error}`);
-    });
-
-    this.redisSub.on('connect', (error) => {
-      if (error) {
-        console.error(`sub: Error on connect: ${error}`);
-      } else {
-        console.log('sub: Connect');
-      }
-    });
+  /**
+  * Initializes subscribe on expiration events in db passed as parameter
+  *
+  * @param {Number} db the redis db to listen for expiration event
+  */
+  async initSub(db = 0) {
     try {
-      await this.redisSubAsync.subscribe(`__keyevent@${this.db}__:expired`);
-      this.redisSub.on('message', (chan, idConnection) => this.onMessage(chan, idConnection));
+      // subscribe on expiration events
+      await this.redisSub.subscribe(`__keyevent@${db}__:expired`);
+      // this.redisSub.on('message', (chan, key) => this.onExpiration(chan, key));
+      // receives expiration messages onExpiration
+      this.redisSub.on('message', this.onExpiration);
     } catch (err) {
-      console.log(err);
+      logger.error(err);
       throw err;
     }
   }
@@ -65,70 +49,81 @@ class RedisSessionMgmt {
    * @param {*} chan
    * @param {*} key
    */
-  async onMessage(chan, key) {
+  async onExpiration(chan, key) {
+    logger.debug(`onExpiration: ${key}, ${chan}`);
     try {
       if (key.substring(0, this.prefixSessionTTLSize) === this.prefixSessionTTL) {
         const sid = key.slice(this.prefixSessionTTLSize);
-        console.log(`onMessage: ${key}, ${sid} ,${chan}`);
-        await this.redisClientAsync.del(this.prefixSession + sid);
+        logger.debug(`onExpiration: ${key}, ${sid} ,${chan}`);
+        await this.redisPub.del(this.prefixSession + sid);
       }
     } catch (err) {
-      console.log(err);
+      logger.error(err);
     }
   }
 
+  /**
+   *
+   * @param {*} sid
+   * @returns
+   */
   async get(sid) {
+    logger.debug(`get: sid=${sid}`);
     try {
       const key = this.prefixSession + sid;
-      const data = await this.redisClientAsync.get(key);
-      console.log(data);
+      const data = await this.redisPub.get(key);
       const result = JSON.parse(data);
       return result;
     } catch (err) {
-      console.log(err);
+      logger.error('get:', err);
       throw err;
     }
   }
 
-  // Required
+  /**
+   *
+   * @param {*} sid
+   * @param {*} sess
+   */
   async set(sid, sess) {
-    console.log('RedisStore set data sid sess', sid, sess);
+    logger.debug(`set: sid=${sid} sess=${JSON.stringify(sid)}`);
     try {
       const value = JSON.stringify(sess);
-      await this.redisClientAsync.set(this.prefixSession + sid, value);
-      await this.redisClientAsync.expire(this.prefixSession + sid, this.maxLifetime);
-      await this.redisClientAsync.set(this.prefixSessionTTL + sid, 'TEST');
-      await this.redisClientAsync.expire(this.prefixSessionTTL + sid, this.maxIdle);
+      await this.redisPub.set(this.prefixSession + sid, value);
+      await this.redisPub.expire(this.prefixSession + sid, this.maxLifetime);
+      await this.redisPub.set(this.prefixSessionTTL + sid, '');
+      await this.redisPub.expire(this.prefixSessionTTL + sid, this.maxIdle);
     } catch (err) {
-      console.log(err);
+      logger.error('set:', err);
       throw err;
     }
   }
 
+  /**
+   *
+   * @param {*} sid
+   */
   async destroy(sid) {
-    console.log('RedisStore destroy sid', sid);
-    // const key = this.prefixSession + sid;
-    // this.redisClient.del(key, cb);
-    // this.redisClient.del(this.prefixSessionTTL + sid, cb);
+    logger.debug(`destroy: sid=${sid}`);
     try {
-      await this.redisClientAsync.del(this.prefixSession + sid);
-      await this.redisClientAsync.del(this.prefixSessionTTL + sid);
+      await this.redisPub.del(this.prefixSession + sid);
+      await this.redisPub.del(this.prefixSessionTTL + sid);
     } catch (err) {
-      console.log(err);
+      logger.error('destroy:', err);
       throw err;
     }
   }
 
   async restartIdleTTL(sid) {
-    console.log('RedisStore touch sid', sid);
+    // console.log('RedisStore touch sid', sid);
     try {
-      const ret = await this.redisClientAsync.expire(this.prefixSessionTTL + sid, this.maxIdle);
+      const ret = await this.redisPub.expire(this.prefixSessionTTL + sid, this.maxIdle);
       if (ret !== 1) {
         return false;
       }
       return true;
     } catch (err) {
-      console.log(err);
+      logger.error(err);
       throw err;
     }
   }

@@ -12,8 +12,11 @@ const { lightship: configLightship } = getConfig('BACKSTAGE');
 const serviceState = new ServiceStateManager({
   lightship: transformObjectKeys(configLightship, camelCase),
 });
+
 serviceState.registerService('server');
 serviceState.registerService('keycloak');
+serviceState.registerService('redis-pub');
+serviceState.registerService('redis-sub');
 
 const logger = new Logger('backstage:App');
 
@@ -23,7 +26,6 @@ const Redis = require('./redis');
 const express = require('./express');
 
 const openApiPath = path.join(__dirname, '../api/v1.yml');
-
 
 /**
   * Wrapper to initialize the service
@@ -54,6 +56,7 @@ class App {
     try {
       this.keycloak.createHealthChecker();
       this.server.registerShutdown();
+      await this.redis.registerShutdown();
       this.redis.init();
       this.server.init(express(
         serviceState,
