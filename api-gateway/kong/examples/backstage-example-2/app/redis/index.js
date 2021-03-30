@@ -28,11 +28,11 @@ const TOTAL_RETRY_TIME = 1000 * 60 * 60;
  * @returns
  */
 const retryStrategy = (options) => {
-  if (options.error && options.error.code === 'ECONNREFUSED') {
-    // End reconnecting on a specific error and flush all commands with
-    // a individual error
-    return new Error('The server refused the connection');
-  }
+  // if (options.error && options.error.code === 'ECONNREFUSED') {
+  //   // End reconnecting on a specific error and flush all commands with
+  //   // a individual error
+  //   return new Error('The server refused the connection');
+  // }
   if (options.total_retry_time > TOTAL_RETRY_TIME) {
     // End reconnecting after a specific timeout and flush all commands
     // with a individual error
@@ -104,7 +104,7 @@ class Redis {
   async init() {
     this.handleEvents(this.redisPub, 'pub', this.serviceState);
     this.handleEvents(this.redisSub, 'sub', this.serviceState);
-
+    await this.registerShutdown();
     await this.management.initSub(redisConfig.db);
   }
 

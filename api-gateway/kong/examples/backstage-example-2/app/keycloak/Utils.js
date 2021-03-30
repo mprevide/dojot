@@ -1,12 +1,13 @@
 const baseUrl = 'http://localhost:8000';
+//const baseUrl = '';
 const clientId = 'gui';
 const codeChallengeMethod = 'S256';
+const mountPoint = '/backstage/v1';
 
-const pathT = (url, realm) => `${baseUrl}/auth/realms/${
-  realm}/protocol/openid-connect`;
+const pathT = (url, realm) => `${baseUrl}/auth/realms/${realm}/protocol/openid-connect`;
 
 
-const URL_RETURN_INTERNAL = `${baseUrl}/backstage/v1/auth/return`;
+const URL_RETURN_INTERNAL = `${baseUrl}${mountPoint}/auth/return`;
 const buildUrlLogin = (
   realm,
   state,

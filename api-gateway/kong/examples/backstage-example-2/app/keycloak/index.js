@@ -21,11 +21,12 @@ class Keycloak {
    *          Manages the services' states, providing health check and shutdown utilities.
    */
   constructor(serviceState) {
-    this.keycloakApi = new Requests(
-      configKeycloak['url.api.gateway'],
-      configKeycloak['max.timeout.ms'],
-    );
+    this.keycloakApi = new Requests();
     this.serviceState = serviceState;
+  }
+
+  init() {
+    this.createHealthChecker();
   }
 
   /**

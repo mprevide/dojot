@@ -25,7 +25,7 @@ class Server {
    * Initializes the service based on the instance of express received
    * @param {Express} express  instance of express
    */
-  init(express) {
+  async init(express) {
     this.server.on('request', express);
     this.server.on('listening', () => {
       logger.info('Server ready to accept connections!');
@@ -39,6 +39,8 @@ class Server {
       logger.error('Server experienced an error:', e);
     });
     this.server.listen(configServer.port, configServer.host);
+
+    await this.registerShutdown();
   }
 
   /**

@@ -32,7 +32,7 @@ const {
  *
  * @returns {express}
  */
-module.exports = (serviceState, openApiFilePath, { keycloak, redis }) => {
+module.exports = (serviceState, openApiFilePath, mountPoint, { keycloak, redis }) => {
   let openApiJson = null;
   try {
     // eslint-disable-next-line security/detect-non-literal-fs-filename
@@ -57,14 +57,14 @@ module.exports = (serviceState, openApiFilePath, { keycloak, redis }) => {
     interceptors: [
       {
         name: 'swagger-ui',
-        path: '/backstage/v1/api-docs',
+        path: `${mountPoint}/api-docs`,
         middleware: [swaggerUi.serve, swaggerUi.setup(openApiJson)],
       },
       // openApiValidatorInterceptor({ openApiFilePath }),
       sessionInterceptor({
         keycloak,
         redis,
-        mountPoint: '/backstage/v1',
+        mountPoint,
       }),
       requestIdInterceptor(),
       readinessInterceptor({
@@ -82,11 +82,11 @@ module.exports = (serviceState, openApiFilePath, { keycloak, redis }) => {
     ],
     routes: ([
       authRoutes({
-        mountPoint: '/backstage/v1',
+        mountPoint,
         keycloak,
       }),
       exampleRoutes({
-        mountPoint: '/backstage/v1',
+        mountPoint,
       }),
     ]).flat(),
     errorHandlers: [

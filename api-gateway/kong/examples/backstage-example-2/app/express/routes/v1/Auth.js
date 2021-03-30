@@ -1,5 +1,7 @@
 const { Logger } = require('@dojot/microservice-sdk');
 const HttpStatus = require('http-status-codes');
+
+// TODO - Remove external dependencias and transforme into params
 const { generatePKCEChallenge } = require('../../../Utils');
 const {
   buildUrlLogin,

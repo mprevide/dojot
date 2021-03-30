@@ -4,6 +4,8 @@ const querystring = require('querystring');
 
 const createError = require('http-errors');
 
+const { keycloak: configKeycloak } = ConfigManager.getConfig('BACKSTAGE');
+
 /**
  *
  * @param {*} expiresIn In seconds
@@ -37,16 +39,25 @@ const commonHandleError = (error) => {
   return (error);
 };
 
+/**
+ *
+ * @param {*} realm
+ * @returns
+ */
 function pathEndPoint(realm) {
   return `/realms/${realm}/protocol/openid-connect`;
 }
 
+/**
+ *
+ * @param {*} realm
+ * @returns
+ */
 function pathTokenEndPoint(realm) {
   return `${pathEndPoint(realm)}/token`;
 }
 
-const clientId = 'gui';
-const URI_AUTH_RETURN = 'http://localhost:8000/backstage/v1/auth/return';
+
 /**
  * This class call Keycloak api
  */
@@ -61,15 +72,24 @@ class Requests {
    * @param {*} paths.crl
    * @param {*} paths.ca
    */
-  constructor(url, timeout = 30000) {
+  constructor(internalUrl = 'http://localhost:8000',
+    baseUrl='http://localhost:8000',
+    clientId = 'gui',
+    mountPoint = '/backstage/v1',
+    timeout = 30000) {
+    this.baseURL = baseUrl;
     this.axiosKeycloak = axios.create({
       timeout,
-      baseURL: url,
+      baseURL: internalUrl,
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
     });
-
-
+    this.clientId = clientId;
+    this.mountPoint = mountPoint;
     this.logger = new Logger('backstage:keycloak/Requests');
+  }
+
+  getURIInternalReturn() {
+    return `${this.baseURL + this.mountPoint}/auth/return`;
   }
 
   /**
@@ -90,8 +110,8 @@ class Requests {
         pathTokenEndPoint(realm),
         querystring.stringify({
           grant_type: 'authorization_code',
-          redirect_uri: URI_AUTH_RETURN, // TODO  config.REDIRECT_URL_BACK, //
-          client_id: clientId,
+          redirect_uri: this.getURIInternalReturn(),
+          client_id: this.clientId,
           code_verifier: codeVerifier,
           code: authorizationCode,
         }),
@@ -154,7 +174,7 @@ class Requests {
         pathTokenEndPoint(realm),
         querystring.stringify({
           grant_type: 'refresh_token',
-          client_id: clientId,
+          client_id: this.clientId,
           refresh_token: refreshToken,
         }),
       );
@@ -239,7 +259,6 @@ class Requests {
       }
 
       throw new Error(`getPermissionsByToken: The API returns: code=${status}; message=${statusText}`);
-
     } catch (error) {
       const newError = commonHandleError(error);
       this.logger.error('getPermissionsByToken:', newError);

@@ -3,6 +3,7 @@ const {
   Logger,
 } = require('@dojot/microservice-sdk');
 
+// TODO remove _
 const { session_redis: sessionRedisConfig } = getConfig('BACKSTAGE');
 
 const logger = new Logger('backstage:Redis/RedisSessionMgmt');
@@ -24,6 +25,7 @@ class RedisSessionMgmt {
     this.redisPub.send_command('config', ['set', 'notify-keyspace-events', 'Ex']);
   }
 
+  // TODO separar sub
   /**
   * Initializes subscribe on expiration events in db passed as parameter
   *
@@ -33,7 +35,6 @@ class RedisSessionMgmt {
     try {
       // subscribe on expiration events
       await this.redisSub.subscribe(`__keyevent@${db}__:expired`);
-      // this.redisSub.on('message', (chan, key) => this.onExpiration(chan, key));
       // receives expiration messages onExpiration
       this.redisSub.on('message', this.onExpiration);
     } catch (err) {
@@ -114,8 +115,13 @@ class RedisSessionMgmt {
     }
   }
 
+  /**
+   *
+   * @param {*} sid
+   * @returns
+   */
   async restartIdleTTL(sid) {
-    // console.log('RedisStore touch sid', sid);
+    logger.debug(`restartIdleTTL: sid=${sid}`);
     try {
       const ret = await this.redisPub.expire(this.prefixSessionTTL + sid, this.maxIdle);
       if (ret !== 1) {
@@ -123,7 +129,7 @@ class RedisSessionMgmt {
       }
       return true;
     } catch (err) {
-      logger.error(err);
+      logger.error('restartIdleTTL:', err);
       throw err;
     }
   }

@@ -31,9 +31,9 @@ const openApiPath = path.join(__dirname, '../api/v1.yml');
   * Wrapper to initialize the service
   */
 class App {
-/**
- *
- */
+  /**
+   *
+   */
   constructor() {
     logger.debug('constructor: instantiate app...');
     try {
@@ -49,18 +49,19 @@ class App {
   }
 
   /**
-     * Initialize the server and influxdb
-     */
+   * Initialize the server and Backstage
+   */
   async init() {
     logger.info('init: Initializing the backstage...');
     try {
-      this.keycloak.createHealthChecker();
-      this.server.registerShutdown();
-      await this.redis.registerShutdown();
-      this.redis.init();
-      this.server.init(express(
+      const mountPoint = '/backstage/v1';
+      // TODO pass to keycloak '/backstage/v1',
+      this.keycloak.init();
+      await this.redis.init();
+      await this.server.init(express(
         serviceState,
         openApiPath,
+        mountPoint,
         {
           keycloak: this.keycloak.getApiInstance(),
           redis: this.redis.getManagementInstance(),
