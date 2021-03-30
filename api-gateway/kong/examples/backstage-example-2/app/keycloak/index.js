@@ -3,10 +3,11 @@ const {
   Logger,
 } = require('@dojot/microservice-sdk');
 const Requests = require('./Requests.js');
+const { buildUrlLogin, buildUrlLogout } = require('./Utils.js');
 
 const logger = new Logger('backstage:Keycloak');
 
-const { keycloak: configKeycloak } = getConfig('BACKSTAGE');
+const { keycloak: configKeycloak, app: configApp } = getConfig('BACKSTAGE');
 
 
 /**
@@ -20,8 +21,13 @@ class Keycloak {
    *          with register service 'Keycloak'} serviceState
    *          Manages the services' states, providing health check and shutdown utilities.
    */
-  constructor(serviceState) {
-    this.keycloakApi = new Requests();
+  constructor(serviceState, mountPoint = '/backstage/v1') {
+    this.mountPoint = mountPoint;
+    this.keycloakApi = new Requests(
+      configKeycloak['public.client.id'],
+      configKeycloak['url.api.gateway'],
+      `${configApp['base.url'] + mountPoint}/auth/return`,
+    );
     this.serviceState = serviceState;
   }
 
@@ -37,6 +43,24 @@ class Keycloak {
     return this.keycloakApi;
   }
 
+  static buildUrlLogin(realm, state, codeChallenge) {
+    buildUrlLogin({
+      baseUrl: configApp['base.url'],
+      clientId: configKeycloak['public.client.id'],
+      realm,
+      state,
+      codeChallenge,
+      codeChallengeMethod: 'S256', // TODO
+      urlReturn: `${configApp['base.url'] + this.mountPoint}/auth/return`,
+    });
+  }
+
+  static buildUrlLogout(realm) {
+    buildUrlLogout({
+      baseUrl: configApp['base.url'],
+      realm,
+    });
+  }
 
   /**
  * Create a 'healthCheck' for Keycloak

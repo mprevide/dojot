@@ -3,10 +3,10 @@ const HttpStatus = require('http-status-codes');
 
 // TODO - Remove external dependencias and transforme into params
 const { generatePKCEChallenge } = require('../../../Utils');
-const {
-  buildUrlLogin,
-  buildUrlLogout,
-} = require('../../../keycloak/Utils.js');
+// const {
+//   buildUrlLogin,
+//   buildUrlLogout,
+// } = require('../../../keycloak/Utils.js');
 
 const baseUrl = 'http://localhost:8000';
 
@@ -54,7 +54,10 @@ module.exports = ({ mountPoint, keycloak }) => {
               const newState = state ? 'login-state' : state;
 
               const { codeVerifier, codeChallenge } = generatePKCEChallenge();
-              const url = buildUrlLogin(
+
+              console.log('keycloak',keycloak);
+
+              const url = keycloak.buildUrlLogin(
                 realm,
                 newState,
                 codeChallenge,
@@ -112,7 +115,7 @@ module.exports = ({ mountPoint, keycloak }) => {
                     refreshToken,
                     refreshExpiresAt,
                     accessTokenExpiresAt,
-                  } = await keycloak.getTokenByAuthorizationCode(
+                  } = await keycloak.getApiInstance().getTokenByAuthorizationCode(
                     realm,
                     authorizationCode,
                     codeVerifier,
@@ -164,8 +167,10 @@ module.exports = ({ mountPoint, keycloak }) => {
               if (req.session && req.session.realm && req.session.accessToken) {
                 const { realm, accessToken } = req.session;
 
-                const permissionsArr = await keycloak.getPermissionsByToken(realm, accessToken);
-                const userInfoObj = await keycloak.getUserInfoByToken(realm, accessToken);
+                const permissionsArr = await keycloak.getApiInstance()
+                                    .getPermissionsByToken(realm, accessToken);
+                const userInfoObj = await keycloak.getApiInstance()
+                                      .getUserInfoByToken(realm, accessToken);
                 const result = {
                   permissions: permissionsArr,
                   ...userInfoObj,
@@ -205,7 +210,7 @@ module.exports = ({ mountPoint, keycloak }) => {
                 req.session.destroy((err) => {
                   logger.error(`auth-user-logout-route.get:session-destroy-error:=${JSON.stringify(err)}`);
                 });
-                return res.redirect(303, buildUrlLogout(realm));
+                return res.redirect(303, keycloak.buildUrlLogin(realm));
               }
               // TODO encode URL
               return res.redirect(303, `${baseUrl}?error=` + 'HouveUmProblema');

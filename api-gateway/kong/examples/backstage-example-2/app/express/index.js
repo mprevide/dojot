@@ -67,10 +67,10 @@ module.exports = (serviceState, openApiFilePath, mountPoint, { keycloak, redis }
         mountPoint,
       }),
       requestIdInterceptor(),
-      readinessInterceptor({
-        stateManager: serviceState,
-        logger,
-      }),
+      // readinessInterceptor({
+      //   stateManager: serviceState,
+      //   logger,
+      // }),
       beaconInterceptor({
         stateManager: serviceState,
         logger,

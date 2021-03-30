@@ -1,20 +1,20 @@
-const { Logger, ConfigManager } = require('@dojot/microservice-sdk');
+const { Logger } = require('@dojot/microservice-sdk');
 const { default: axios } = require('axios');
 const querystring = require('querystring');
 
 const createError = require('http-errors');
 
-const { keycloak: configKeycloak } = ConfigManager.getConfig('BACKSTAGE');
-
 /**
+ * Transforms from the time window that will expire, to the exact moment that will expire
  *
- * @param {*} expiresIn In seconds
- * @returns
+ * @param {Number} expiresIn In seconds
+ * @returns {Date}
  */
 const expiresInToExpiresAt = (expiresIn) => new Date(Date.now() + expiresIn * 1000);
 
 /**
- * Handles error coming from the TODO
+ * Handle errors from keycloak and kong
+ *
  * @param {Error} error
  * @returns  {Error}
  */
@@ -44,7 +44,7 @@ const commonHandleError = (error) => {
  * @param {*} realm
  * @returns
  */
-function pathEndPoint(realm) {
+function endpointOIDC(realm) {
   return `/realms/${realm}/protocol/openid-connect`;
 }
 
@@ -53,8 +53,8 @@ function pathEndPoint(realm) {
  * @param {*} realm
  * @returns
  */
-function pathTokenEndPoint(realm) {
-  return `${pathEndPoint(realm)}/token`;
+function endpointOIDCtoToken(realm) {
+  return `${endpointOIDC(realm)}/token`;
 }
 
 
@@ -63,34 +63,32 @@ function pathTokenEndPoint(realm) {
  */
 class Requests {
   /**
-   *
-   * @param {*} url
-   * @param {*} timeout
-   * @param {*} retries
-   * @param {*} paths
-   * @param {*} paths.sign
-   * @param {*} paths.crl
-   * @param {*} paths.ca
-   */
-  constructor(internalUrl = 'http://localhost:8000',
-    baseUrl='http://localhost:8000',
-    clientId = 'gui',
-    mountPoint = '/backstage/v1',
-    timeout = 30000) {
-    this.baseURL = baseUrl;
+  *
+  * @param {*} keycloakInternalURL
+  * @param {*} urlToReturn
+  * @param {*} clientId
+  * @param {*} mountPoint
+  */
+  constructor(
+    clientId,
+    keycloakInternalURL,
+    urlToReturn,
+  ) {
+    this.logger = new Logger('backstage:keycloak/Requests');
+
+    this.logger.debug('constructor:');
+    this.logger.debug(`constructor: clientId=${clientId}`);
+    this.logger.debug(`constructor: keycloakInternalURL=${keycloakInternalURL}`);
+    this.logger.debug(`constructor: urlToReturn=${urlToReturn}`);
+
+    this.urlToReturn = urlToReturn;
     this.axiosKeycloak = axios.create({
-      timeout,
-      baseURL: internalUrl,
+      baseURL: keycloakInternalURL,
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
     });
     this.clientId = clientId;
-    this.mountPoint = mountPoint;
-    this.logger = new Logger('backstage:keycloak/Requests');
   }
 
-  getURIInternalReturn() {
-    return `${this.baseURL + this.mountPoint}/auth/return`;
-  }
 
   /**
    * Gets the latest CRL released by the root CA.
@@ -107,19 +105,18 @@ class Requests {
         statusText,
         data,
       } = await this.axiosKeycloak.post(
-        pathTokenEndPoint(realm),
+        endpointOIDCtoToken(realm),
         querystring.stringify({
           grant_type: 'authorization_code',
-          redirect_uri: this.getURIInternalReturn(),
+          redirect_uri: this.urlToReturn,
           client_id: this.clientId,
           code_verifier: codeVerifier,
           code: authorizationCode,
         }),
-        // ,
-        // {
-        //   maxRedirects: 0,
-        //   headers: { 'content-type': 'application/x-www-form-urlencoded' },
-        // },
+        {
+          maxRedirects: 0,
+          // headers: { 'content-type': 'application/x-www-form-urlencoded' },
+        },
       );
 
       if (status === 200) {
@@ -171,7 +168,7 @@ class Requests {
         statusText,
         data,
       } = await this.axiosKeycloak.post(
-        pathTokenEndPoint(realm),
+        endpointOIDCtoToken(realm),
         querystring.stringify({
           grant_type: 'refresh_token',
           client_id: this.clientId,
@@ -228,7 +225,7 @@ class Requests {
         statusText,
         data,
       } = await this.axiosKeycloak.post(
-        pathTokenEndPoint(realm),
+        endpointOIDCtoToken(realm),
         querystring.stringify({
           grant_type: 'urn:ietf:params:oauth:grant-type:uma-ticket',
           audience: 'kong',
@@ -281,7 +278,7 @@ class Requests {
         statusText,
         data,
       } = await this.axiosKeycloak.get(
-        `${pathEndPoint(realm)}/userinfo`,
+        `${endpointOIDC(realm)}/userinfo`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,

@@ -63,7 +63,7 @@ class App {
         openApiPath,
         mountPoint,
         {
-          keycloak: this.keycloak.getApiInstance(),
+          keycloak: this.keycloak,
           redis: this.redis.getManagementInstance(),
         },
       ));
