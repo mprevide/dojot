@@ -8,6 +8,7 @@ export default function ReturnLogin(props) {
   const [data, setData] = useState({
     dataExample: {},
     state: 'none',
+    sessionState: 'none',
     userInfo: {},
     errorMsg: 'none',
   });
@@ -15,6 +16,7 @@ export default function ReturnLogin(props) {
   // getting the parameter state e error (if it exists) in the query string
   const paramsQueryString = new URLSearchParams(props.location.search);
   const stateQueryString = paramsQueryString.get('state') || 'none';
+  const sessionStateQueryString = paramsQueryString.get('session_state') || 'none';
   const errorQueryString = paramsQueryString.get('error');
 
   useEffect(() => {
@@ -28,6 +30,7 @@ export default function ReturnLogin(props) {
             setData({
               ...data,
               state: stateQueryString,
+              sessionState: sessionStateQueryString,
               userInfo: resultUserInfo,
             });
           }else {
@@ -77,7 +80,6 @@ export default function ReturnLogin(props) {
     }catch(error){
         // redirect to the homepage or do something else
         // ######
-        // 401 is a known error
         if (error.response && error.response.status===401){
           setData({
             ...data,
@@ -112,6 +114,9 @@ export default function ReturnLogin(props) {
       </div>
       <div>
         <span>State: {data.state} </span>
+      </div>
+      <div>
+        <span>Session State: {data.sessionState} </span>
       </div>
       <div>
         <span>Error: {data.errorMsg} </span>

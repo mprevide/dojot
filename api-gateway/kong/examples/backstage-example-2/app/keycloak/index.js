@@ -49,6 +49,7 @@ class Keycloak {
   }
 
   /**
+   * Built external URL for browser login
    *
    * @param {string} realm
    * @param {string} state
@@ -57,24 +58,25 @@ class Keycloak {
    */
   buildUrlLogin(realm, state, codeChallenge) {
     return buildUrlLogin({
-      baseUrl: this.baseUrl,
+      baseUrl: this.externalKeycloakUrl,
       clientId: this.clientId,
       realm,
       state,
       codeChallenge,
-      codeChallengeMethod: 'S256', // TODO
+      codeChallengeMethod: configKeycloak['code.challenge.method'], // TODO
       urlReturn: `${this.baseUrl + this.mountPoint}/auth/return`,
     });
   }
 
   /**
+   * Built external URL for browser logout
    *
    * @param {string} realm
    * @returns
    */
   buildUrlLogout(realm) {
     return buildUrlLogout({
-      baseUrl: this.baseUrl,
+      baseUrl: this.externalKeycloakUrl,
       realm,
     });
   }

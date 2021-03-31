@@ -1,15 +1,10 @@
-// const baseUrl = 'http://localhost:8000';
-// // const baseUrl = '';
-// const clientId = 'gui';
-// const codeChallengeMethod = 'S256';
-// const mountPoint = '/backstage/v1';
+const pathT = (url, realm) => `${url}/realms/${realm}/protocol/openid-connect`;
 
-// const { app: configApp } = getConfig('BACKSTAGE');
-
-const pathT = (url, realm) => `${url}/auth/realms/${realm}/protocol/openid-connect`;
-
-
-// const URL_RETURN_INTERNAL = `${baseUrl}${mountPoint}/auth/return`;
+/**
+ * Built external URL for browser login
+ * @param {object} param0
+ * @returns
+ */
 const buildUrlLogin = ({
   baseUrl,
   clientId,
@@ -32,6 +27,12 @@ const buildUrlLogin = ({
   return url.href;
 };
 
+/**
+ * Built external URL for browser logout
+ *
+ * @param {object} param0
+ * @returns
+ */
 const buildUrlLogout = ({
   baseUrl,
   realm,

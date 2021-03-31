@@ -1,9 +1,9 @@
 const { Logger } = require('@dojot/microservice-sdk');
 
 
-const logger = new Logger('backstage:express/interceptors/AxiosForKongAndKeycloackErrorsHandle');
+const logger = new Logger('backstage:express/interceptors/CommonErrorsHandle');
 /**
- * Default Express Error Handler
+ * Handle Errors Axios For Kong
  *
  * @returns an express middleware to handle errors.
  */

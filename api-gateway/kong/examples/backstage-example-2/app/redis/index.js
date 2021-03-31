@@ -6,14 +6,11 @@ const {
 } = require('@dojot/microservice-sdk');
 const RedisManagement = require('./RedisManagement');
 
-const RETRY_MS = 5000;
 const logger = new Logger('backstage:Redis');
 
 const { redis: redisConfig } = getConfig('BACKSTAGE');
 
-// TODO
-const MAX_ATTEMPT = 10;
-const TOTAL_RETRY_TIME = 1000 * 60 * 60;
+
 /**
  * A function that receives an options object as parameter including
  * the retry attempt, the total_retry_time indicating how much time passed
@@ -28,22 +25,9 @@ const TOTAL_RETRY_TIME = 1000 * 60 * 60;
  * @returns
  */
 const retryStrategy = (options) => {
-  // if (options.error && options.error.code === 'ECONNREFUSED') {
-  //   // End reconnecting on a specific error and flush all commands with
-  //   // a individual error
-  //   return new Error('The server refused the connection');
-  // }
-  if (options.total_retry_time > TOTAL_RETRY_TIME) {
-    // End reconnecting after a specific timeout and flush all commands
-    // with a individual error
-    return new Error('Retry time exhausted');
-  }
-  if (options.attempt > MAX_ATTEMPT) {
-    // End reconnecting with built in error
-    return undefined;
-  }
+  logger.debug(`retryStrategy: options=${JSON.stringify(options)}`);
   // reconnect after
-  return RETRY_MS;
+  return redisConfig['reconnect.after'];
 };
 
 /**

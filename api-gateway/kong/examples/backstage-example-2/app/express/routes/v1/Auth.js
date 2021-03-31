@@ -1,14 +1,14 @@
-const { Logger , ConfigManager: { getConfig }} = require('@dojot/microservice-sdk');
+const { Logger, ConfigManager: { getConfig } } = require('@dojot/microservice-sdk');
 const HttpStatus = require('http-status-codes');
 const { generatePKCEChallenge } = require('../../../Utils');
 const Keycloak = require('../../../keycloak');
 
 const {
-  app: configApp,
+  gui: configGui,
 } = getConfig('BACKSTAGE');
 
-const returnUrl = configApp['app.return.url']; //'http://localhost:8000/return';
-const homeUrl = configApp['app.home.url']; //'http://localhost:8000/return';
+const GUI_RETURN_URL = configGui['return.url'];
+const GUI_HOME_URL = configGui['home.url'];
 
 const logger = new Logger('backstage:express/routes/v1/Auth');
 
@@ -50,7 +50,7 @@ module.exports = ({ mountPoint }) => {
               req.session.codeVerifier = codeVerifier;
               req.session.realm = realm;
               req.session.tenant = realm;
-
+              logger.debug(`auth-route.get: redirect to ${url}`);
               return res.redirect(303, url);
             } catch (e) {
               logger.error('auth-route.get:', e);
@@ -111,7 +111,8 @@ module.exports = ({ mountPoint }) => {
 
                   // TODO
                   // encode URL
-                  return res.redirect(303, `${returnUrl}?state=${state}&session_state=${sessionState}`);
+                  logger.debug(`auth-return-route.get: redirect to ${GUI_RETURN_URL} with state=${state} and session_state=${sessionState}`);
+                  return res.redirect(303, `${GUI_RETURN_URL}?state=${state}&session_state=${sessionState}`);
                 } catch (e) {
                   req.session.destroy((err) => {
                     logger.warn('auth-return-route.get:session-destroy-error:', err);
@@ -119,13 +120,19 @@ module.exports = ({ mountPoint }) => {
                   // condition for some specific else throw e
                   // TODO
                   // encode URL
-                  return res.redirect(303, `${returnUrl}?error=${e}`);
+                  logger.debug(`auth-return-route.get: redirect to ${GUI_RETURN_URL} with e=${e}`);
+                  return res.redirect(303, `${GUI_RETURN_URL}?error=${e}`);
                 }
               }
             } catch (e) {
               logger.error('auth-return-route.get:', e);
               throw e;
             }
+            const e = 'There is no active session';
+            logger.debug(`auth-return-route.get: redirect to ${GUI_RETURN_URL} with e=${e}`);
+            // TODO
+            // encode URL
+            return res.redirect(303, `${GUI_RETURN_URL}?error=${e}`);
           },
         ],
       },
@@ -184,14 +191,17 @@ module.exports = ({ mountPoint }) => {
               if (req.session && req.session.realm) {
                 const { realm } = req.session;
                 req.session.destroy((err) => {
-                  logger.warn(`auth-user-logout-route.get:session-destroy-error:=${JSON.stringify(err)}`);
+                  logger.warn(`auth-user-logout-route.get: session-destroy-error:=${JSON.stringify(err)}`);
                 });
                 const url = Keycloak.buildUrlLogout(realm);
 
+                logger.debug(`auth-user-logout-route.get: redirect to ${url}`);
                 return res.redirect(303, url);
               }
               // TODO encode URL
-              return res.redirect(303, `${homeUrl}?error=` + 'HouveUmProblema');
+              const e = 'There is no active session';
+              logger.debug(`auth-user-logout-route.get: redirect to ${GUI_HOME_URL} with error=${e}`);
+              return res.redirect(303, `${GUI_HOME_URL}?error=${e}`);
             } catch (e) {
               logger.error('auth-user-logout-route.get:', e);
               throw e;

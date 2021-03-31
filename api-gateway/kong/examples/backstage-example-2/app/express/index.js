@@ -1,15 +1,11 @@
 
 const { ConfigManager, Logger, WebUtils } = require('@dojot/microservice-sdk');
-const swaggerUi = require('swagger-ui-express');
-const yaml = require('js-yaml');
-const fs = require('fs');
-
 
 const authRoutes = require('./routes/v1/Auth');
 const exampleRoutes = require('./routes/v1/Example');
 const openApiValidatorInterceptor = require('./interceptors/OpenApiValidator');
 const sessionInterceptor = require('./interceptors/session/Session');
-const handleErrors = require('./interceptors/AxiosForKongAndKeycloackErrorsHandle');
+const commonErrorsHandle = require('./interceptors/CommonErrorsHandle');
 
 const logger = new Logger('backstage:express');
 
@@ -32,17 +28,7 @@ const {
  *
  * @returns {express}
  */
-module.exports = (serviceState, openApiFilePath, mountPoint, { redis }) => {
-  let openApiJson = null;
-  try {
-    // eslint-disable-next-line security/detect-non-literal-fs-filename
-    openApiJson = yaml.safeLoad(fs.readFileSync(openApiFilePath, 'utf8'));
-    logger.debug(`OpenApi Json load: ${JSON.stringify(openApiJson)}`);
-  } catch (e) {
-    logger.error('Some error when try load open api in yaml', e);
-    throw e;
-  }
-
+module.exports = (serviceState, mountPoint, { redis }) => {
   const { defaultErrorHandler } = WebUtils.framework;
 
   const {
@@ -55,11 +41,6 @@ module.exports = (serviceState, openApiFilePath, mountPoint, { redis }) => {
 
   return WebUtils.framework.createExpress({
     interceptors: [
-      {
-        name: 'swagger-ui',
-        path: `${mountPoint}/api-docs`,
-        middleware: [swaggerUi.serve, swaggerUi.setup(openApiJson)],
-      },
       // openApiValidatorInterceptor({ openApiFilePath }),
       sessionInterceptor({
         // keycloak,
@@ -91,7 +72,7 @@ module.exports = (serviceState, openApiFilePath, mountPoint, { redis }) => {
     ]).flat(),
     errorHandlers: [
       // The order of the error handlers matters
-      handleErrors(),
+      commonErrorsHandle(),
       defaultErrorHandler({
         logger,
       }),

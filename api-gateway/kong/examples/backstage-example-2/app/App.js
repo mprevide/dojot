@@ -3,7 +3,6 @@ const {
   ConfigManager: { getConfig, transformObjectKeys },
   Logger,
 } = require('@dojot/microservice-sdk');
-const path = require('path');
 
 const camelCase = require('lodash.camelcase');
 
@@ -25,7 +24,6 @@ const Keycloak = require('./keycloak');
 const Redis = require('./redis');
 const express = require('./express');
 
-const openApiPath = path.join(__dirname, '../api/v1.yml');
 
 /**
   * Wrapper to initialize the service
@@ -39,8 +37,7 @@ class App {
     try {
       this.server = new Server(serviceState);
       // TODO singleton??
-      // this.keycloak = new Keycloak(serviceState);
-      // TODO singleton??
+
       this.redis = new Redis(serviceState);
     } catch (e) {
       logger.error('constructor:', e);
@@ -55,17 +52,14 @@ class App {
     logger.info('init: Initializing the backstage...');
     try {
       const mountPoint = '/backstage/v1';
-      // TODO pass to keycloak '/backstage/v1',
-      console.log('Keycloak', Keycloak);
+
       Keycloak.init(serviceState, mountPoint);
 
       await this.redis.init();
       await this.server.init(express(
         serviceState,
-        openApiPath,
         mountPoint,
         {
-          // keycloak: Keycloak,
           redis: this.redis.getManagementInstance(),
         },
       ));

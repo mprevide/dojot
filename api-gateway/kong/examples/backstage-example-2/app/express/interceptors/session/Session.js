@@ -4,8 +4,8 @@ const {
 } = require('@dojot/microservice-sdk');
 const session = require('express-session');
 const createError = require('http-errors');
-const Keycloak = require('../../../keycloak');
 
+const Keycloak = require('../../../keycloak');
 const SessionStore = require('./SessionStore')(session);
 
 const logger = new Logger('backstage:express/interceptors/Session');
@@ -14,12 +14,12 @@ const { session: sessionConfig } = getConfig('BACKSTAGE');
 
 
 /**
- *  TODO
- * @param {*} keycloak
- * @param {*} req
+ * Renew the access token through the refresh token if the current access token is expired
+ *
+ * @param {object} req
  */
 const renewAccessTokenIfNecessary = async (req) => {
-  logger.debug('renewAccessTokenIfNecessary: accessTokenExpiresAt=', req.session.accessTokenExpiresAt);
+  logger.debug('renewAccessTokenIfNecessary: ...');
   if ((Date.now() > new Date(req.session.accessTokenExpiresAt).getTime())) {
     logger.debug('renewAccessTokenIfNecessary: Getting a new token...');
     const {
@@ -45,7 +45,7 @@ const renewAccessTokenIfNecessary = async (req) => {
 
 
 /**
- * Middleware to TODO
+ * Middleware responsible for creating a session and managing it
  */
 module.exports = ({
   redis,
@@ -55,9 +55,9 @@ module.exports = ({
   middleware:
   [session({
     secret: sessionConfig.secret,
-    name: sessionConfig.cookieName, // TODO
-    domain: sessionConfig.domain, // TODO
-    proxy: sessionConfig.proxy, // TODO
+    name: sessionConfig.cookieName,
+    domain: sessionConfig.domain,
+    proxy: sessionConfig.proxy,
     store: new SessionStore({ redis }),
     // Forces the session to be saved back to the session store,
     // even if the session was never modified
@@ -71,7 +71,7 @@ module.exports = ({
       // Specifies the boolean value for the HttpOnly Set-Cookie attribute.
       // When truthy, the HttpOnly attribute is set, otherwise it is not.
       httpOnly: true,
-      // TODO Assegura que o navegador só envie o cookie por HTTPS.
+      // Ensures that the browser only sends the cookie over HTTPS.
       secure: sessionConfig.cookieHTTPS,
       // Specifies the boolean or string to be the value for the SameSite Set-Cookie attribute.
       sameSite: 'strict',

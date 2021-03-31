@@ -44,7 +44,7 @@ module.exports = (session) => {
         const data = await this.redisManagement.get(sid);
         return cb(null, data);
       } catch (err) {
-        logger.error('get: err=', err);
+        logger.error(`get: err=${err.stack || err}`);
         return cb(err);
       }
     }
@@ -67,7 +67,7 @@ module.exports = (session) => {
         await this.redisManagement.set(sid, sess);
         return cb(null, 'OK');
       } catch (err) {
-        logger.error('set: err=', err);
+        logger.error(`set: err=${err.stack || err}`);
         return cb(err);
       }
     }
@@ -77,8 +77,8 @@ module.exports = (session) => {
      * the store given a session ID. The callback should be
      * called as callback(error) once the session is destroyed
      *
-     * @param {*} sid session ID
-     * @param {*} cb callback
+     * @param {string} sid session ID
+     * @param {function} cb callback
      * @returns
      */
     async destroy(sid, cb = () => {}) {
@@ -87,7 +87,7 @@ module.exports = (session) => {
         await this.redisManagement.destroy(sid);
         return cb(null, 'OK');
       } catch (err) {
-        logger.error('destroy: err=', err);
+        logger.error(`destroy: err=${err.stack || err}`);
         return cb(err);
       }
     }
