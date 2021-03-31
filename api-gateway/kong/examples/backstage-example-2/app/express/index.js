@@ -32,7 +32,7 @@ const {
  *
  * @returns {express}
  */
-module.exports = (serviceState, openApiFilePath, mountPoint, { keycloak, redis }) => {
+module.exports = (serviceState, openApiFilePath, mountPoint, { redis }) => {
   let openApiJson = null;
   try {
     // eslint-disable-next-line security/detect-non-literal-fs-filename
@@ -62,7 +62,7 @@ module.exports = (serviceState, openApiFilePath, mountPoint, { keycloak, redis }
       },
       // openApiValidatorInterceptor({ openApiFilePath }),
       sessionInterceptor({
-        keycloak,
+        // keycloak,
         redis,
         mountPoint,
       }),
@@ -83,7 +83,7 @@ module.exports = (serviceState, openApiFilePath, mountPoint, { keycloak, redis }
     routes: ([
       authRoutes({
         mountPoint,
-        keycloak,
+        // keycloak,
       }),
       exampleRoutes({
         mountPoint,

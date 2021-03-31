@@ -4,6 +4,7 @@ const {
 } = require('@dojot/microservice-sdk');
 const session = require('express-session');
 const createError = require('http-errors');
+const Keycloak = require('../../../keycloak');
 
 const SessionStore = require('./SessionStore')(session);
 
@@ -17,7 +18,7 @@ const { session: sessionConfig } = getConfig('BACKSTAGE');
  * @param {*} keycloak
  * @param {*} req
  */
-const renewAccessTokenIfNecessary = async (keycloak, req) => {
+const renewAccessTokenIfNecessary = async (req) => {
   logger.debug('renewAccessTokenIfNecessary: accessTokenExpiresAt=', req.session.accessTokenExpiresAt);
   if ((Date.now() > new Date(req.session.accessTokenExpiresAt).getTime())) {
     logger.debug('renewAccessTokenIfNecessary: Getting a new token...');
@@ -27,7 +28,7 @@ const renewAccessTokenIfNecessary = async (keycloak, req) => {
       refreshExpiresAt,
       accessTokenExpiresAt,
       sessionState,
-    } = await keycloak.getTokenByRefreshToken(
+    } = await Keycloak.getTokenByRefreshToken(
       req.session.realm,
       req.session.refreshToken,
     );
@@ -47,7 +48,6 @@ const renewAccessTokenIfNecessary = async (keycloak, req) => {
  * Middleware to TODO
  */
 module.exports = ({
-  keycloak,
   redis,
   mountPoint,
 }) => ({
@@ -93,7 +93,7 @@ module.exports = ({
       try {
         // Get a new access token with the refresh token
         // if the current access token is expired
-        await renewAccessTokenIfNecessary(keycloak, req);
+        await renewAccessTokenIfNecessary(req);
       } catch (e) {
         err.message = 'It was not possible to renew the token.';
         return next(err);

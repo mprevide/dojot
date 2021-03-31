@@ -13,7 +13,7 @@ const createError = require('http-errors');
 const expiresInToExpiresAt = (expiresIn) => new Date(Date.now() + expiresIn * 1000);
 
 /**
- * Handle errors from keycloak and kong
+ * Handle errors from keycloak and kong then standardize
  *
  * @param {Error} error
  * @returns  {Error}
@@ -41,7 +41,7 @@ const commonHandleError = (error) => {
 
 /**
  *
- * @param {*} realm
+ * @param {string} realm
  * @returns
  */
 function endpointOIDC(realm) {
@@ -50,10 +50,10 @@ function endpointOIDC(realm) {
 
 /**
  *
- * @param {*} realm
+ * @param {string} realm
  * @returns
  */
-function endpointOIDCtoToken(realm) {
+function endpointOIDCToken(realm) {
   return `${endpointOIDC(realm)}/token`;
 }
 
@@ -63,12 +63,12 @@ function endpointOIDCtoToken(realm) {
  */
 class Requests {
   /**
-  *
-  * @param {*} keycloakInternalURL
-  * @param {*} urlToReturn
-  * @param {*} clientId
-  * @param {*} mountPoint
-  */
+   * @constructor
+   *
+   * @param {string} clientId
+   * @param {string} keycloakInternalURL
+   * @param {string} urlToReturn
+   */
   constructor(
     clientId,
     keycloakInternalURL,
@@ -82,6 +82,7 @@ class Requests {
     this.logger.debug(`constructor: urlToReturn=${urlToReturn}`);
 
     this.urlToReturn = urlToReturn;
+
     this.axiosKeycloak = axios.create({
       baseURL: keycloakInternalURL,
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
@@ -91,11 +92,16 @@ class Requests {
 
 
   /**
-   * Gets the latest CRL released by the root CA.
+   * Get a  token from the authorization code
    *
-   * @throws Will throw an error if cannot retrieve CRL
+   * @throws Will throw an error if cannot get token using  authorization code
    *
-   * @returns {String|null} PEM encoded CRL
+   * @returns {{accessToken: string,
+   *            accessTokenExpiresAt: Date,
+   *            refreshExpiresAt: Date,
+   *            refreshToken: string,
+   *            sessionState: string }} object with new access token, new refresh token,
+   *                                    and when the tokens will expire
    */
   async getTokenByAuthorizationCode(realm, authorizationCode, codeVerifier) {
     this.logger.info('getTokenByAuthorizationCode: Getting Access Token by Authorization Code...');
@@ -105,9 +111,10 @@ class Requests {
         statusText,
         data,
       } = await this.axiosKeycloak.post(
-        endpointOIDCtoToken(realm),
+        endpointOIDCToken(realm),
         querystring.stringify({
           grant_type: 'authorization_code',
+          // TODO the redirect_uri needs to be passed with a valid value, but it is not used
           redirect_uri: this.urlToReturn,
           client_id: this.clientId,
           code_verifier: codeVerifier,
@@ -115,7 +122,6 @@ class Requests {
         }),
         {
           maxRedirects: 0,
-          // headers: { 'content-type': 'application/x-www-form-urlencoded' },
         },
       );
 
@@ -125,11 +131,11 @@ class Requests {
           expires_in: accessTokenExpiresIn,
           refresh_expires_in: refreshExpiresIn,
           refresh_token: refreshToken,
-          token_type: tokenType,
-          id_token: idToken,
+          // token_type: tokenType, //TODO
+          // id_token: idToken,
           session_state: sessionState,
-          scope,
-          'not-before-policy': notBeforePolicy,
+          // scope,
+          // 'not-before-policy': notBeforePolicy,
         } = data;
 
         const refreshExpiresAt = expiresInToExpiresAt(refreshExpiresIn);
@@ -138,9 +144,9 @@ class Requests {
         return {
           accessToken,
           accessTokenExpiresAt,
-          sessionState,
           refreshExpiresAt,
           refreshToken,
+          sessionState,
         };
       }
 
@@ -154,11 +160,16 @@ class Requests {
 
 
   /**
-   * Gets the latest CRL released by the root CA.
+   * Get a new token from the refresh token
    *
-   * @throws Will throw an error if cannot retrieve CRL
+   * @throws Will throw an error if cannot get token using refresh token
    *
-   * @returns {String|null} PEM encoded CRL
+   * @returns {{accessToken: string,
+   *            accessTokenExpiresAt: Date,
+   *            refreshExpiresAt: Date,
+   *            refreshToken: string,
+   *            sessionState: string }} object with new access token, new refresh token,
+   *                                    and when the tokens will expire
    */
   async getTokenByRefreshToken(realm, refreshToken) {
     this.logger.info('getTokenByRefreshToken: Getting the CRL...');
@@ -168,7 +179,7 @@ class Requests {
         statusText,
         data,
       } = await this.axiosKeycloak.post(
-        endpointOIDCtoToken(realm),
+        endpointOIDCToken(realm),
         querystring.stringify({
           grant_type: 'refresh_token',
           client_id: this.clientId,
@@ -182,11 +193,11 @@ class Requests {
           expires_in: accessTokenExpiresIn,
           refresh_expires_in: refreshExpiresIn,
           refresh_token: refreshTokenNew,
-          token_type: tokenType,
-          id_token: idToken,
+          // token_type: tokenType,// TODO
+          // id_token: idToken,
           session_state: sessionState,
-          scope,
-          'not-before-policy': notBeforePolicy,
+          // scope,
+          // 'not-before-policy': notBeforePolicy,
         } = data;
 
         const refreshExpiresAt = expiresInToExpiresAt(refreshExpiresIn);
@@ -209,15 +220,14 @@ class Requests {
   }
 
   /**
-   * Gets the latest CRL released by the root CA.
+   * Obtains user permission information by token
    *
-   * @throws Will throw an error if cannot retrieve CRL
+   * @throws Will throw an error if cannot get user permission information
    *
-   * @returns {String|null} PEM encoded CRL
+   * @returns {{resourceName: string, scopes: array}[]}
+   *                           Array the objects with user permission information
    */
   async getPermissionsByToken(realm, accessToken) {
-    // console.log('realm=', realm);
-    // console.log('accessToken=', accessToken);
     this.logger.debug('getPermissionsByToken: Getting the CRL...');
     try {
       const {
@@ -225,7 +235,7 @@ class Requests {
         statusText,
         data,
       } = await this.axiosKeycloak.post(
-        endpointOIDCtoToken(realm),
+        endpointOIDCToken(realm),
         querystring.stringify({
           grant_type: 'urn:ietf:params:oauth:grant-type:uma-ticket',
           audience: 'kong',
@@ -239,8 +249,6 @@ class Requests {
         },
       );
 
-      // If the authorization request does not map to any permission, a 403 HTTP status code is returned instead.
-      // 401 {"error":"HTTP 401 Unauthorized"}
       if (status === 200) {
         const permissionsArr = data.reduce((filtered, value) => {
           const { rsname, scopes } = value;
@@ -264,11 +272,13 @@ class Requests {
   }
 
   /**
-   * Gets the latest CRL released by the root CA.
+   * Obtains user information by token
    *
-   * @throws Will throw an error if cannot retrieve CRL
+   * @throws Will throw an error if cannot get user info
    *
-   * @returns {String|null} PEM encoded CRL
+   * @returns {{name: string, username: string,
+   *           email: string, emailVerified: boolean,
+   *           realm: string, tenant: string}} Object with user information
    */
   async getUserInfoByToken(realm, accessToken) {
     this.logger.debug('getUserInfoByToken: Getting the CRL...');
@@ -298,10 +308,6 @@ class Requests {
         };
       }
 
-      // 401 Unauthorized
-      // 403 Forbidden
-      // 500 Internal Server Error
-
       throw new Error(`getUserInfoByToken: The API returns: code=${status}; message=${statusText}`);
     } catch (error) {
       const newError = commonHandleError(error);
@@ -312,36 +318,27 @@ class Requests {
 
 
   /**
-   * Gets the latest CRL released by the root CA.
+   * Getting Keycloak status
    *
-   * @throws Will throw an error if cannot retrieve CRL
-   *
-   * @returns {String|null} PEM encoded CRL
+   * @returns {boolean} if the service is available
    */
   async getStatus() {
-    this.logger.debug('getStatus: ...');
+    this.logger.debug('getStatus: Getting Keycloak status...');
     try {
       const {
         status,
         statusText,
-        // data,
-      } = await this.axiosKeycloak.get(
-        '/',
-      );
+      } = await this.axiosKeycloak.get('/');
 
       if (status === 200) {
-        return {
-          connected: true,
-        };
+        return true;
       }
 
       throw new Error(`getStatus: The API returns: code=${status}; message=${statusText}`);
     } catch (error) {
       const newError = commonHandleError(error);
       this.logger.error('getStatus:', newError);
-      return {
-        connected: false,
-      };
+      return false;
     }
   }
 }

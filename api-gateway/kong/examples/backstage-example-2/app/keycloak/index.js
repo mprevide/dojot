@@ -5,9 +5,12 @@ const {
 const Requests = require('./Requests.js');
 const { buildUrlLogin, buildUrlLogout } = require('./Utils.js');
 
-const logger = new Logger('backstage:Keycloak');
+const {
+  keycloak: configKeycloak,
+  app: configApp,
+} = getConfig('BACKSTAGE');
 
-const { keycloak: configKeycloak, app: configApp } = getConfig('BACKSTAGE');
+const logger = new Logger('backstage:Keycloak');
 
 
 /**
@@ -15,59 +18,79 @@ const { keycloak: configKeycloak, app: configApp } = getConfig('BACKSTAGE');
  */
 class Keycloak {
   /**
-   * @constructor
+   *
+   * @param {an instance of @dojot/microservice-sdk.ServiceStateManager
+   *          with register service 'Keycloak'} serviceState
+   *          Manages the services' states, providing health check and shutdown utilities.
+   *
+   * @param {String} mountPoint
+   */
+  init(serviceState, mountPoint) {
+    this.createHealthChecker(serviceState);
+    this.mountPoint = mountPoint;
+    this.clientId = configKeycloak['public.client.id'];
+    this.baseUrl = configApp['base.url'];
+    this.externalKeycloakUrl = configKeycloak['url.external'];
+    this.internalKeycloakUrl = configKeycloak['url.api.gateway'];
+    this.healthCheckMs = configKeycloak['healthcheck.ms'];
+    this.keycloakApi = new Requests(
+      this.clientId,
+      this.internalKeycloakUrl,
+      `${this.baseUrl + this.mountPoint}/auth/return`,
+    );
+  }
+
+  /**
+   * Returns a Requests instance
+   * @returns {Requests}
+   */
+  getApiInstance() {
+    return this.keycloakApi;
+  }
+
+  /**
+   *
+   * @param {string} realm
+   * @param {string} state
+   * @param {string} codeChallenge
+   * @returns
+   */
+  buildUrlLogin(realm, state, codeChallenge) {
+    return buildUrlLogin({
+      baseUrl: this.baseUrl,
+      clientId: this.clientId,
+      realm,
+      state,
+      codeChallenge,
+      codeChallengeMethod: 'S256', // TODO
+      urlReturn: `${this.baseUrl + this.mountPoint}/auth/return`,
+    });
+  }
+
+  /**
+   *
+   * @param {string} realm
+   * @returns
+   */
+  buildUrlLogout(realm) {
+    return buildUrlLogout({
+      baseUrl: this.baseUrl,
+      realm,
+    });
+  }
+
+  /**
+   * Create a 'healthCheck' for Keycloak
+   *
+   * @private
    *
    * @param {an instance of @dojot/microservice-sdk.ServiceStateManager
    *          with register service 'Keycloak'} serviceState
    *          Manages the services' states, providing health check and shutdown utilities.
    */
-  constructor(serviceState, mountPoint = '/backstage/v1') {
-    this.mountPoint = mountPoint;
-    this.keycloakApi = new Requests(
-      configKeycloak['public.client.id'],
-      configKeycloak['url.api.gateway'],
-      `${configApp['base.url'] + mountPoint}/auth/return`,
-    );
-    this.serviceState = serviceState;
-  }
-
-  init() {
-    this.createHealthChecker();
-  }
-
-  /**
-     *  Returns a Query instance
-     * @returns {Query}
-     */
-  getApiInstance() {
-    return this.keycloakApi;
-  }
-
-  static buildUrlLogin(realm, state, codeChallenge) {
-    buildUrlLogin({
-      baseUrl: configApp['base.url'],
-      clientId: configKeycloak['public.client.id'],
-      realm,
-      state,
-      codeChallenge,
-      codeChallengeMethod: 'S256', // TODO
-      urlReturn: `${configApp['base.url'] + this.mountPoint}/auth/return`,
-    });
-  }
-
-  static buildUrlLogout(realm) {
-    buildUrlLogout({
-      baseUrl: configApp['base.url'],
-      realm,
-    });
-  }
-
-  /**
- * Create a 'healthCheck' for Keycloak
- */
-  createHealthChecker() {
+  createHealthChecker(serviceState) {
     const healthChecker = async (signalReady, signalNotReady) => {
-      const { connected } = await this.keycloakApi.getStatus();
+      const connected = await this.keycloakApi.getStatus();
       if (connected) {
         logger.debug('createHealthChecker: Keycloak is healthy');
         signalReady();
@@ -76,8 +99,10 @@ class Keycloak {
         signalNotReady();
       }
     };
-    this.serviceState.addHealthChecker('keycloak', healthChecker, configKeycloak['heathcheck.ms']);
+    serviceState.addHealthChecker('keycloak',
+      healthChecker, this.healthCheckMs);
   }
 }
 
-module.exports = Keycloak;
+const keycloakInstance = new Keycloak();
+module.exports = keycloakInstance;

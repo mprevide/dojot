@@ -39,7 +39,7 @@ class App {
     try {
       this.server = new Server(serviceState);
       // TODO singleton??
-      this.keycloak = new Keycloak(serviceState);
+      // this.keycloak = new Keycloak(serviceState);
       // TODO singleton??
       this.redis = new Redis(serviceState);
     } catch (e) {
@@ -56,14 +56,16 @@ class App {
     try {
       const mountPoint = '/backstage/v1';
       // TODO pass to keycloak '/backstage/v1',
-      this.keycloak.init();
+      console.log('Keycloak', Keycloak);
+      Keycloak.init(serviceState, mountPoint);
+
       await this.redis.init();
       await this.server.init(express(
         serviceState,
         openApiPath,
         mountPoint,
         {
-          keycloak: this.keycloak,
+          // keycloak: Keycloak,
           redis: this.redis.getManagementInstance(),
         },
       ));
