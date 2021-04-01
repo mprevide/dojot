@@ -98,7 +98,7 @@ module.exports = ({ mountPoint }) => {
                     refreshToken,
                     refreshExpiresAt,
                     accessTokenExpiresAt,
-                  } = await Keycloak.getApiInstance().getTokenByAuthorizationCode(
+                  } = await Keycloak.getRequestsInstance().getTokenByAuthorizationCode(
                     realm,
                     authorizationCode,
                     codeVerifier,
@@ -114,8 +114,8 @@ module.exports = ({ mountPoint }) => {
                   logger.debug(`auth-return-route.get: redirect to ${GUI_RETURN_URL} with state=${state} and session_state=${sessionState}`);
                   return res.redirect(303, `${GUI_RETURN_URL}?state=${state}&session_state=${sessionState}`);
                 } catch (e) {
-                  req.session.destroy((err) => {
-                    logger.warn('auth-return-route.get:session-destroy-error:', err);
+                  req.session.destroy((err, msg) => {
+                    logger.warn('auth-return-route.get:session-destroy-error:', msg, err);
                   });
                   // condition for some specific else throw e
                   // TODO
@@ -154,9 +154,9 @@ module.exports = ({ mountPoint }) => {
               if (req.session && req.session.realm && req.session.accessToken) {
                 const { realm, accessToken } = req.session;
 
-                const permissionsArr = await Keycloak.getApiInstance()
+                const permissionsArr = await Keycloak.getRequestsInstance()
                   .getPermissionsByToken(realm, accessToken);
-                const userInfoObj = await Keycloak.getApiInstance()
+                const userInfoObj = await Keycloak.getRequestsInstance()
                   .getUserInfoByToken(realm, accessToken);
                 const result = {
                   permissions: permissionsArr,
@@ -193,7 +193,7 @@ module.exports = ({ mountPoint }) => {
                 req.session.destroy((err) => {
                   logger.warn(`auth-user-logout-route.get: session-destroy-error:=${JSON.stringify(err)}`);
                 });
-                const url = Keycloak.buildUrlLogout(realm);
+                const url = Keycloak.buildUrlLogout(realm, GUI_HOME_URL);
 
                 logger.debug(`auth-user-logout-route.get: redirect to ${url}`);
                 return res.redirect(303, url);

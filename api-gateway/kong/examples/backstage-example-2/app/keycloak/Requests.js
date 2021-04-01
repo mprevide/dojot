@@ -96,6 +96,10 @@ class Requests {
    *
    * @throws Will throw an error if cannot get token using  authorization code
    *
+   * @param {string} realm
+   * @param {string} authorizationCode
+   * @param {string} codeVerifier
+   *
    * @returns {{accessToken: string,
    *            accessTokenExpiresAt: Date,
    *            refreshExpiresAt: Date,
@@ -164,6 +168,9 @@ class Requests {
    *
    * @throws Will throw an error if cannot get token using refresh token
    *
+   * @param {string} realm
+   * @param {string} refreshToken
+   *
    * @returns {{accessToken: string,
    *            accessTokenExpiresAt: Date,
    *            refreshExpiresAt: Date,
@@ -224,7 +231,10 @@ class Requests {
    *
    * @throws Will throw an error if cannot get user permission information
    *
-   * @returns {{resourceName: string, scopes: array}[]}
+   * @param {string} realm
+   * @param {string} accessToken
+   *
+   * @returns {{resourceName: string, scopes: string[]}[]}
    *                           Array the objects with user permission information
    */
   async getPermissionsByToken(realm, accessToken) {
@@ -271,10 +281,14 @@ class Requests {
     }
   }
 
+
   /**
    * Obtains user information by token
    *
    * @throws Will throw an error if cannot get user info
+   *
+   * @param {string} realm
+   * @param {string} accessToken
    *
    * @returns {{name: string, username: string,
    *           email: string, emailVerified: boolean,

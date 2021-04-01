@@ -9,4 +9,8 @@ psql -v ON_ERROR_STOP=1 --dbname postgres --username  postgres  <<-EOSQL
     CREATE database keycloak;
     CREATE USER keycloak WITH UNENCRYPTED PASSWORD 'keycloak';
     GRANT ALL PRIVILEGES ON DATABASE keycloak TO keycloak;
+    CREATE database backstage;
+    CREATE USER backstage WITH UNENCRYPTED PASSWORD 'backstage';
+    GRANT ALL PRIVILEGES ON DATABASE backstage TO backstage;
 EOSQL
+

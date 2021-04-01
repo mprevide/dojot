@@ -48,7 +48,6 @@ const renewAccessTokenIfNecessary = async (req) => {
  * Middleware responsible for creating a session and managing it
  */
 module.exports = ({
-  redis,
   mountPoint,
 }) => ({
   name: 'session-express-interceptor',
@@ -58,7 +57,7 @@ module.exports = ({
     name: sessionConfig.cookieName,
     domain: sessionConfig.domain,
     proxy: sessionConfig.proxy,
-    store: new SessionStore({ redis }),
+    store: new SessionStore(),
     // Forces the session to be saved back to the session store,
     // even if the session was never modified
     resave: false,

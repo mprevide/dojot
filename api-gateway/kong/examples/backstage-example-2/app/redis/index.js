@@ -35,13 +35,35 @@ const retryStrategy = (options) => {
  */
 class Redis {
   /**
-     * @constructor
-     *
-     * @param {an instance of @dojot/microservice-sdk.ServiceStateManager
-     *          with register service 'redis'} serviceState
-     *          Manages the services' states, providing health check and shutdown utilities.
-    */
-  constructor(serviceState) {
+   * Create an asynchronous version of the net methods that will be used
+   */
+  createRedisAsync() {
+    this.redisPubAsync = {
+      get: promisify(this.redisPub.get).bind(this.redisPub),
+      set: promisify(this.redisPub.set).bind(this.redisPub),
+      expire: promisify(this.redisPub.expire).bind(this.redisPub),
+      del: promisify(this.redisPub.del).bind(this.redisPub),
+      ping: promisify(this.redisPub.ping).bind(this.redisPub),
+      quit: promisify(this.redisPub.quit).bind(this.redisPub),
+      send_command: (this.redisPub.send_command).bind(this.redisPub),
+    };
+
+    this.redisSubAsync = {
+      subscribe: promisify(this.redisSub.subscribe).bind(this.redisSub),
+      ping: promisify(this.redisSub.ping).bind(this.redisSub),
+      quit: promisify(this.redisSub.quit).bind(this.redisSub),
+      on: (this.redisSub.on).bind(this.redisSub),
+      unsubscribe: promisify(this.redisSub.unsubscribe).bind(this.redisSub),
+    };
+  }
+
+  /**
+   *
+   * @param {an instance of @dojot/microservice-sdk.ServiceStateManager
+   *          with register service 'redis'} serviceState
+   *          Manages the services' states, providing health check and shutdown utilities.
+   */
+  async init(serviceState) {
     this.redisPub = redis.createClient({
       retry_strategy: retryStrategy,
       ...redisConfig,
@@ -62,30 +84,13 @@ class Redis {
 
     this.serviceState = serviceState;
 
-    this.redisPubAsync = {
-      get: promisify(this.redisPub.get).bind(this.redisPub),
-      set: promisify(this.redisPub.set).bind(this.redisPub),
-      expire: promisify(this.redisPub.expire).bind(this.redisPub),
-      del: promisify(this.redisPub.del).bind(this.redisPub),
-      ping: promisify(this.redisPub.ping).bind(this.redisPub),
-      quit: promisify(this.redisPub.quit).bind(this.redisPub),
-      send_command: (this.redisPub.send_command).bind(this.redisPub),
-    };
-
-    this.redisSubAsync = {
-      subscribe: promisify(this.redisSub.subscribe).bind(this.redisSub),
-      ping: promisify(this.redisSub.ping).bind(this.redisSub),
-      quit: promisify(this.redisSub.quit).bind(this.redisSub),
-      on: (this.redisSub.on).bind(this.redisSub),
-    };
+    this.createRedisAsync();
 
     this.management = new RedisManagement(
       this.redisPubAsync,
       this.redisSubAsync,
     );
-  }
 
-  async init() {
     this.handleEvents(this.redisPub, 'pub', this.serviceState);
     this.handleEvents(this.redisSub, 'sub', this.serviceState);
     await this.registerShutdown();
@@ -93,9 +98,9 @@ class Redis {
   }
 
   /**
- *  TODO
- * @param {*} clientRedis
- * @param {*} nameClient
+ *  Handles redis events and reflects them in the service state manager
+ * @param {string} clientRedis
+ * @param {string} nameClient
  */
   handleEvents(clientRedis, nameClient) {
     clientRedis.on('ready', () => {
@@ -125,9 +130,9 @@ class Redis {
 
 
   /**
-    *  Returns a RedisManagement instance
-    * @returns {RedisManagement}
-    */
+  *  Returns a RedisManagement instance
+  * @returns {RedisManagement}
+  */
   getManagementInstance() {
     return this.management;
   }
@@ -138,6 +143,8 @@ class Redis {
   async registerShutdown() {
     this.serviceState.registerShutdownHandler(async () => {
       logger.debug('ShutdownHandler: Trying close redis sub...');
+      // TODO: I think things are not well organized unsubscribe here and subscribe in another class
+      await this.redisSubAsync.unsubscribe();
       await this.redisSubAsync.quit();
       logger.warn('ShutdownHandler: Closed redis sub.');
     });
@@ -149,4 +156,4 @@ class Redis {
   }
 }
 
-module.exports = Redis;
+module.exports = new Redis();

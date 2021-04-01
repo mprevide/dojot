@@ -12,7 +12,6 @@ const {
 
 const logger = new Logger('backstage:Keycloak');
 
-
 /**
  * Wrapper for Keycloak
  */
@@ -33,7 +32,7 @@ class Keycloak {
     this.externalKeycloakUrl = configKeycloak['url.external'];
     this.internalKeycloakUrl = configKeycloak['url.api.gateway'];
     this.healthCheckMs = configKeycloak['healthcheck.ms'];
-    this.keycloakApi = new Requests(
+    this.requests = new Requests(
       this.clientId,
       this.internalKeycloakUrl,
       `${this.baseUrl + this.mountPoint}/auth/return`,
@@ -44,8 +43,8 @@ class Keycloak {
    * Returns a Requests instance
    * @returns {Requests}
    */
-  getApiInstance() {
-    return this.keycloakApi;
+  getRequestsInstance() {
+    return this.requests;
   }
 
   /**
@@ -63,8 +62,8 @@ class Keycloak {
       realm,
       state,
       codeChallenge,
-      codeChallengeMethod: configKeycloak['code.challenge.method'], // TODO
-      urlReturn: `${this.baseUrl + this.mountPoint}/auth/return`,
+      codeChallengeMethod: configKeycloak['code.challenge.method'],
+      urlReturn: `${this.baseUrl + this.mountPoint}/auth/return`, // TODO remove from here
     });
   }
 
@@ -74,9 +73,10 @@ class Keycloak {
    * @param {string} realm
    * @returns
    */
-  buildUrlLogout(realm) {
+  buildUrlLogout(realm, redirectUri) {
     return buildUrlLogout({
       baseUrl: this.externalKeycloakUrl,
+      redirectUri,
       realm,
     });
   }
@@ -92,7 +92,7 @@ class Keycloak {
    */
   createHealthChecker(serviceState) {
     const healthChecker = async (signalReady, signalNotReady) => {
-      const connected = await this.keycloakApi.getStatus();
+      const connected = await this.requests.getStatus();
       if (connected) {
         logger.debug('createHealthChecker: Keycloak is healthy');
         signalReady();
@@ -106,5 +106,4 @@ class Keycloak {
   }
 }
 
-const keycloakInstance = new Keycloak();
-module.exports = keycloakInstance;
+module.exports = new Keycloak();

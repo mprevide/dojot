@@ -2,12 +2,13 @@
 const {
   Logger,
 } = require('@dojot/microservice-sdk');
+const Redis = require('../../../redis');
 
 const logger = new Logger('backstage:express/interceptors/SessionStore');
 
+
 module.exports = (session) => {
   const { Store } = session;
-
 
   /**
    * Class to be used with session-express, see more about Sessions Stores
@@ -20,7 +21,7 @@ module.exports = (session) => {
   class SessionStore extends Store {
     constructor(options = {}) {
       super(options);
-      this.redisManagement = options.redis;
+      this.redisManagement = Redis.getManagementInstance();
     }
 
     /**
@@ -85,6 +86,7 @@ module.exports = (session) => {
       logger.debug(`destroy: sid=${sid}`);
       try {
         await this.redisManagement.destroy(sid);
+        // TODO: destroy session in the keycloak by calling logout?
         return cb(null, 'OK');
       } catch (err) {
         logger.error(`destroy: err=${err.stack || err}`);

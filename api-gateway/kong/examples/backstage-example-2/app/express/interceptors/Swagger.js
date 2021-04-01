@@ -8,6 +8,8 @@ const logger = new Logger('backstage:express/interceptors/Swagger');
 
 const openApiFilePath = path.join(__dirname, '../../../api/v1.yml');
 
+// https://www.npmjs.com/package/swagger-to-graphql
+
 let openApiJson = null;
 try {
   // eslint-disable-next-line security/detect-non-literal-fs-filename

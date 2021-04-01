@@ -4,6 +4,7 @@ const { ConfigManager, Logger, WebUtils } = require('@dojot/microservice-sdk');
 const authRoutes = require('./routes/v1/Auth');
 const exampleRoutes = require('./routes/v1/Example');
 const openApiValidatorInterceptor = require('./interceptors/OpenApiValidator');
+const graphQLInterceptor = require('./interceptors/GraphQL');
 const sessionInterceptor = require('./interceptors/session/Session');
 const commonErrorsHandle = require('./interceptors/CommonErrorsHandle');
 
@@ -28,7 +29,7 @@ const {
  *
  * @returns {express}
  */
-module.exports = (serviceState, mountPoint, { redis }) => {
+module.exports = (serviceState, mountPoint) => {
   const { defaultErrorHandler } = WebUtils.framework;
 
   const {
@@ -42,11 +43,11 @@ module.exports = (serviceState, mountPoint, { redis }) => {
   return WebUtils.framework.createExpress({
     interceptors: [
       // openApiValidatorInterceptor({ openApiFilePath }),
-      sessionInterceptor({
-        // keycloak,
-        redis,
-        mountPoint,
-      }),
+      // sessionInterceptor({
+      //   // keycloak,
+      //   // redis,
+      //   mountPoint,
+      // }),
       requestIdInterceptor(),
       // readinessInterceptor({
       //   stateManager: serviceState,
@@ -60,11 +61,13 @@ module.exports = (serviceState, mountPoint, { redis }) => {
       requestLogInterceptor({
         logger,
       }),
+      graphQLInterceptor({
+        mountPoint,
+      }),
     ],
     routes: ([
       authRoutes({
         mountPoint,
-        // keycloak,
       }),
       exampleRoutes({
         mountPoint,

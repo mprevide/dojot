@@ -189,6 +189,17 @@ services:
         max-size: 20m
         max-file: '5'
 
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@pgadmin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    depends_on:
+      - postgres
+    restart: always
+    ports:
+      - 5050:80
+
   mongodb:
     image: mongo:3.2
     restart: always

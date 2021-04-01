@@ -35,10 +35,11 @@ const buildUrlLogin = ({
  */
 const buildUrlLogout = ({
   baseUrl,
+  redirectUri,
   realm,
 }) => {
   const url = new URL(`${pathT(baseUrl, realm)}/logout?`);
-  url.searchParams.append('redirect_uri', baseUrl);
+  url.searchParams.append('redirect_uri', redirectUri);
 
   return url.href;
 };

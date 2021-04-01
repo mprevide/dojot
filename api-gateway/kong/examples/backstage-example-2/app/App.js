@@ -16,6 +16,8 @@ serviceState.registerService('server');
 serviceState.registerService('keycloak');
 serviceState.registerService('redis-pub');
 serviceState.registerService('redis-sub');
+serviceState.registerService('postgres');
+
 
 const logger = new Logger('backstage:App');
 
@@ -23,7 +25,7 @@ const Server = require('./Server');
 const Keycloak = require('./keycloak');
 const Redis = require('./redis');
 const express = require('./express');
-
+const Postgres = require('./postgres');
 
 /**
   * Wrapper to initialize the service
@@ -38,7 +40,7 @@ class App {
       this.server = new Server(serviceState);
       // TODO singleton??
 
-      this.redis = new Redis(serviceState);
+      // this.redis = new Redis(serviceState);
     } catch (e) {
       logger.error('constructor:', e);
       throw e;
@@ -53,15 +55,13 @@ class App {
     try {
       const mountPoint = '/backstage/v1';
 
+      await Postgres.init(serviceState);
+      await Redis.init(serviceState);
       Keycloak.init(serviceState, mountPoint);
 
-      await this.redis.init();
       await this.server.init(express(
         serviceState,
         mountPoint,
-        {
-          redis: this.redis.getManagementInstance(),
-        },
       ));
     } catch (e) {
       logger.error('init:', e);

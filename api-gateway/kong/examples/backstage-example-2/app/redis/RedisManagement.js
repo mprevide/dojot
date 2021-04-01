@@ -25,7 +25,6 @@ class RedisSessionMgmt {
     this.redisPub.send_command('config', ['set', 'notify-keyspace-events', 'Ex']);
   }
 
-  // TODO separar sub
   /**
   * Initializes subscribe on expiration events in db passed as parameter
   *
@@ -44,18 +43,24 @@ class RedisSessionMgmt {
   }
 
   /**
-   * It is called when the on message event happens in the sub
+   * It is called when the on message event happens in the sub.
+   *
+   * In this case the event will always expire and will
+   * delete key {this.prefixSession + sid} and its value
+   * sid is extracted from the key,
+   * knowing that the key will be {this.prefixSessionTTL+sid}
+   *
+   * TODO: make the expiring action happen inside REDIS probably using a lua script
    *
    * @private
-   * @param {*} chan
-   * @param {*} key
+   * @param {string} channel
+   * @param {string} key
    */
-  async onExpiration(chan, key) {
-    logger.debug(`onExpiration: ${key}, ${chan}`);
+  async onExpiration(channel, key) {
+    logger.debug(`onExpiration: key=${key}, channel=${channel}`);
     try {
       if (key.substring(0, this.prefixSessionTTLSize) === this.prefixSessionTTL) {
         const sid = key.slice(this.prefixSessionTTLSize);
-        logger.debug(`onExpiration: ${key}, ${sid} ,${chan}`);
         await this.redisPub.del(this.prefixSession + sid);
       }
     } catch (err) {
@@ -64,8 +69,11 @@ class RedisSessionMgmt {
   }
 
   /**
+   * This  method is used to get a value
+   * from key {this.prefixSession + sid} on redis
    *
-   * @param {*} sid
+   * @param {string} sid  session ID
+   *
    * @returns
    */
   async get(sid) {
@@ -82,9 +90,15 @@ class RedisSessionMgmt {
   }
 
   /**
+   * This  method is used to set {sess}
+   * into key {this.prefixSession + sid} with ttl {this.maxLifetime} and
+   * to set a empty value
+   * into key {this.prefixSessionTTL + sid} with ttl {this.maxIdle}
+   * on redis
    *
-   * @param {*} sid
-   * @param {*} sess
+   *
+   * @param {string} sid  session ID
+   * @param {object} sess  session ID
    */
   async set(sid, sess) {
     logger.debug(`set: sid=${sid} sess=${JSON.stringify(sid)}`);
@@ -101,14 +115,18 @@ class RedisSessionMgmt {
   }
 
   /**
+   * This  method is used to delete
+   * key {this.prefixSession + sid} and
+   * key {this.prefixSessionTTL + sid} from redis
    *
-   * @param {*} sid
+   * @param {string} sid  session ID
    */
   async destroy(sid) {
     logger.debug(`destroy: sid=${sid}`);
     try {
       await this.redisPub.del(this.prefixSession + sid);
       await this.redisPub.del(this.prefixSessionTTL + sid);
+      // TODO: destroy session in the keycloak by calling logout?
     } catch (err) {
       logger.error('destroy:', err);
       throw err;
@@ -116,9 +134,10 @@ class RedisSessionMgmt {
   }
 
   /**
+   * This method is used to restore the ttl {this.maxIdle} into
+   * key {this.prefixSessionTTL + sid} on redis
    *
-   * @param {*} sid
-   * @returns
+   * @param {string} sid  session ID
    */
   async restartIdleTTL(sid) {
     logger.debug(`restartIdleTTL: sid=${sid}`);
