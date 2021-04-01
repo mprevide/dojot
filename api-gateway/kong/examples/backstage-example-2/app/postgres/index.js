@@ -10,8 +10,6 @@ const { postgres_client: configClientPG, postgres: configPG } = getConfig('BACKS
 
 const tableName = 'user_config';
 
-
-console.log('configClientPG', configClientPG);
 /**
  * Wrapper for Redis
  */
@@ -23,10 +21,12 @@ class Postgres {
    *          Manages the services' states, providing health check and shutdown utilities.
    */
   async init(serviceState) {
+    this.serviceState = serviceState;
     this.client = new Client(configClientPG);
     await this.client.connect();
     await this.checkTable();
-    this.serviceState = serviceState;
+    this.createHealthChecker();
+    this.registerShutdown();
   }
 
 
@@ -77,7 +77,7 @@ class Postgres {
     const healthChecker = async (signalReady, signalNotReady) => {
       // Try and make a query
       try {
-        const result = await this.client.query('SELECT * FROM pg_stat_statements');
+        const result = await this.client.query('SELECT NOW();');
         if (!result) {
           logger.error('health: unhealthy, cause: no stats ');
           signalNotReady();
@@ -96,10 +96,10 @@ class Postgres {
   /**
    *  Registers a shutdown to the redis
    */
-  async registerShutdown() {
+  registerShutdown() {
     this.serviceState.registerShutdownHandler(async () => {
       logger.debug('ShutdownHandler: Trying close postgres...');
-      await await this.client.end();
+      await this.client.end();
       logger.warn('ShutdownHandler: Closed postgres.');
     });
   }
