@@ -1,0 +1,38 @@
+mutation {
+  updateConfig(user: "user", tenant: "tenant", config: "{\"a\":1}")
+}
+
+{
+  getConfig(user: "user", tenant: "tenant")
+}
+
+{
+  getDeviceById(deviceId: "ab00f6") {
+    id,
+    label,
+    attrs {
+      staticValue,
+      valueType,
+      isDynamic
+    }
+  }
+}
+
+{
+  getDevices{
+    totalPages,
+    currentPage,
+    devices{
+      id
+      label
+      attrs {
+        staticValue
+      }
+    }
+  }
+}
+
+{
+  getDeviceHistoryForDashboard(filter: { devices: [{deviceID: "ab00f6"}]},
+                               configs: { sourceType: 0, operationType: 0 } )
+}
