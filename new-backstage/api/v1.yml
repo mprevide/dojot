@@ -1,0 +1,189 @@
+---
+openapi: 3.0.1
+info:
+  title: Backstage - Backend for frontend - Dojot
+  description: ''
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 0.0.1
+externalDocs:
+  description: Find out more about Dojot
+  url: https://dojotdocs.readthedocs.io/
+servers:
+- url: "{url}"
+  description: URL TODO
+  variables:
+    url:
+      default: 'http://localhost:8000/'
+tags:
+- name: auth
+  description: ''
+paths:
+  /backstage/v1/auth:
+   get:
+      tags:
+        - auth
+      summary: "abc"
+      description: |
+        abcde
+      operationId: loginTODO
+      parameters:
+        - name: tenant
+          in: query
+          description: |
+             TODO
+          required: true
+          allowReserved: true
+          schema:
+            type: string
+          examples:
+            admin:
+              summary: Tenant admin
+              value: "admin"
+        - name: state
+          in: query
+          description: |
+             TODO
+          required: false
+          allowReserved: true
+          schema:
+            type: string
+      responses:
+        "303":
+          description: TODO
+          headers:
+            Location:
+              schema:
+                type: string
+                description: TODO
+                example: <base-url>/realms/<tenant>/protocol/openid-connect/auth?client_id=gui&redirect_uri=<base-url>%2Fbackstage%2Fv1%2Fauth%2Freturn&state=<state>&response_type=code&scope=openid"&code_challenge=<code-challenge>&code_challenge_method=<code-challenge-method>
+            Set-Cookie:
+              schema:
+                type: string
+                example: connect.sid=abcde12345; Path=/; Expires=date-time; HttpOnly;SameSite=Strict
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        default:
+          description: Unexpected error
+  /backstage/v1/auth/return:
+   get:
+      tags:
+        - auth
+      summary: "abc"
+      description: |
+        abcde
+      operationId: loginTODO2
+      parameters:
+        - name: code
+          in: query
+          description: |
+             TODO
+          required: true
+          allowReserved: true
+          schema:
+            type: string
+        - name: state
+          in: query
+          description: |
+             TODO
+          required: false
+          allowReserved: true
+          schema:
+            type: string
+        - name: session_state
+          in: query
+          description: |
+             TODO
+          required: false
+          allowReserved: true
+          schema:
+            type: string
+      responses:
+        "303":
+          description: TODO
+          headers:
+            Location:
+              schema:
+                type: string
+                example: <url-gui-retorno>?error=<error-message-if-there-is-an-error>
+        default:
+          description: Unexpected error
+  /backstage/v1/auth/userInfo:
+   get:
+      tags:
+        - auth
+      summary: "abc"
+      description: |
+        abcde
+      operationId: loginTODO3
+      responses:
+        "200":
+          description: TODO
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  username:
+                    type: string
+                  email:
+                    type: string
+                  emailVerified:
+                    type: boolean
+                  tenant:
+                    description: the same as tenant
+                    type: string
+                  relm:
+                    description: the same as tenant
+                    type: string
+                  permissions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        resourceName:
+                          type: string
+                        scopes:
+                          type: array
+                          items:
+                            type: string
+                            enum: [view, create, update, delete]
+        default:
+          description: Unexpected error
+  /backstage/v1/auth/logout:
+    get:
+      tags:
+        - auth
+      summary: "abc"
+      description: |
+        abcde
+      operationId: loginTODO4
+      responses:
+        "303":
+          description: TODO
+          headers:
+            Location:
+              schema:
+                type: string
+                example: <url-gui-home>?error=<error-message-if-there-is-an-error>
+        "404":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        default:
+          description: Unexpected error
