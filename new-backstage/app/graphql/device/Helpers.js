@@ -49,6 +49,7 @@ const formatValueType = (valType) => {
     case 'float':
       valueType = 'NUMBER';
       break;
+    case 'boolean':
     case 'bool':
       valueType = 'BOOLEAN';
       break;

@@ -230,8 +230,9 @@ services:
         max-file: '5'
 
   backstage:
-    depends_on:
-      - redis-backstage
+    # depends_on:
+    #   - redis-backstage
+    #   - postgres
     build:
       context: ./../
       dockerfile: ./Dockerfile
@@ -240,7 +241,8 @@ services:
     restart: always
     volumes:
       - ./../app/:/opt/backstage/app/:Z
-    command: ["npm", "run", "dev"]
+    # remove temporarily the `--only=prod` flag in npm install on the Dockerfile to use nodemon (npm run dev)
+    # command: ["npm", "run", "dev"]
     logging:
       driver: json-file
       options:
@@ -258,7 +260,6 @@ services:
         max-size: 100m
 
   redis-commander:
-    container_name: redis-commander
     hostname: redis-commander
     image: rediscommander/redis-commander:latest
     restart: always

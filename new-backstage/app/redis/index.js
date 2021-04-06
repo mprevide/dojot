@@ -12,20 +12,21 @@ const { redis: redisConfig } = getConfig('BACKSTAGE');
 
 
 /**
- * A function that receives an options object as parameter including
- * the retry attempt, the total_retry_time indicating how much time passed
- * since the last time connected, the error why the connection was lost and
- * the number of times_connected in total. If you return a number from this function,
- * the retry will happen exactly after that time in milliseconds.
- *  If you return a non-number, no further retry will happen and all offline
- * commands are flushed with errors. Return an error to return that specific
- * error to all offline commands.
- *
- * @param {Object} options
- * @returns
- */
+   * A function that receives an options object as parameter including
+   * the retry attempt, the total_retry_time indicating how much time passed
+   * since the last time connected, the error why the connection was lost and
+   * the number of times_connected in total. If you return a number from this function,
+   * the retry will happen exactly after that time in milliseconds.
+   *  If you return a non-number, no further retry will happen and all offline
+   * commands are flushed with errors. Return an error to return that specific
+   * error to all offline commands.
+   *
+   * @param {Object} options
+   * @returns
+   */
 const retryStrategy = (options) => {
   logger.debug(`retryStrategy: options=${JSON.stringify(options)}`);
+
   // reconnect after
   return redisConfig['reconnect.after'];
 };
@@ -57,6 +58,7 @@ class Redis {
     };
   }
 
+  // caso nao esteja em pe nao aceitar conexoes?
   /**
    *
    * @param {an instance of @dojot/microservice-sdk.ServiceStateManager
@@ -64,9 +66,12 @@ class Redis {
    *          Manages the services' states, providing health check and shutdown utilities.
    */
   async init(serviceState) {
-    this.redisPub = redis.createClient({
-      retry_strategy: retryStrategy,
-      ...redisConfig,
+    try {
+      // const retryStrategyBound = this.retryStrategy.bind(this);
+
+      this.redisPub = redis.createClient({
+        retry_strategy: retryStrategy,
+        ...redisConfig,
       // TODO
       // An object containing options to pass to [tls.connect]
       // (https://nodejs.org/api/tls.html#tls_tls_connect_port_host_options_callback)
@@ -76,26 +81,49 @@ class Redis {
       //  cert: fs.readFileSync('path_to_certfile', encoding='ascii'),
       //  ca: [ fs.readFileSync('path_to_ca_certfile', encoding='ascii') ]
       // }
-    });
-    this.redisSub = redis.createClient({
-      retry_strategy: retryStrategy,
-      ...redisConfig,
-    });
+      });
+      this.redisSub = redis.createClient({
+        retry_strategy: retryStrategy,
+        ...redisConfig,
+      });
 
-    this.serviceState = serviceState;
+      this.serviceState = serviceState;
 
-    this.createRedisAsync();
+      this.createRedisAsync();
 
-    this.management = new RedisManagement(
-      this.redisPubAsync,
-      this.redisSubAsync,
-    );
+      this.management = new RedisManagement(
+        this.redisPubAsync,
+        this.redisSubAsync,
+      );
 
-    this.handleEvents(this.redisPub, 'pub', this.serviceState);
-    this.handleEvents(this.redisSub, 'sub', this.serviceState);
-    await this.registerShutdown();
-    await this.management.initSub(redisConfig.db);
+      // this.management.initSub(redisConfig.db);
+
+      this.initSub = this.management.initSub.bind(this.management);
+      this.initPub = this.management.initPub.bind(this.management);
+
+      this.redisPub.on('connect', () => {
+        logger.debug('Redis pub is connect.');
+        this.serviceState.signalReady('redis-pub');
+        // await this.management.initSub(redisConfig.db);
+        this.initPub();
+      });
+
+      this.redisSub.on('connect', async () => {
+        logger.debug('Redis sub is connect.');
+        this.serviceState.signalReady('redis-sub');
+        // await this.management.initSub(redisConfig.db);
+        await this.initSub(redisConfig.db);
+      });
+
+      this.handleEvents(this.redisPub, 'pub', this.serviceState);
+      this.handleEvents(this.redisSub, 'sub', this.serviceState);
+      await this.registerShutdown();
+      // await this.management.initSub(redisConfig.db); // indice retry??
+    } catch (error) {
+      logger.error('init: error=', error);
+    }
   }
+
 
   /**
  *  Handles redis events and reflects them in the service state manager
@@ -117,10 +145,6 @@ class Redis {
     });
     clientRedis.on('warning', (warning) => {
       logger.warn(`Redis ${nameClient} has an warning:`, warning);
-    });
-    clientRedis.on('connect', () => {
-      logger.debug(`Redis ${nameClient} is connect.`);
-      this.serviceState.signalReady(`redis-${nameClient}`);
     });
     clientRedis.on('reconnecting', () => {
       logger.warn(`Redis ${nameClient} is trying to reconnect...`);

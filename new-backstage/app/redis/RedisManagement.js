@@ -21,8 +21,24 @@ class RedisSessionMgmt {
     this.maxLifetime = sessionRedisConfig['max.life.time.sec'] || 86400; // One day in seconds.
     this.maxIdle = sessionRedisConfig['max.idle.time.sec'] || 1800; // 30 minutes in seconds.
 
+    const onExpiration = this.onExpiration.bind(this);
     // Activate "notify-keyspace-events" for expired type events
-    this.redisPub.send_command('config', ['set', 'notify-keyspace-events', 'Ex']);
+    // this.redisPub.send_command('config', ['set', 'notify-keyspace-events', 'Ex']);
+    // receives expiration messages onExpiration
+    this.redisSub.on('message', onExpiration);
+  }
+
+  initPub() {
+    logger.debug('initPub:');
+    try {
+      // subscribe on expiration events
+      this.redisPub.send_command('config', ['set', 'notify-keyspace-events', 'Ex']);
+      // // receives expiration messages onExpiration
+      // this.redisSub.on('message', this.onExpiration);
+    } catch (err) {
+      logger.error(err);
+      throw err;
+    }
   }
 
   /**
@@ -31,11 +47,12 @@ class RedisSessionMgmt {
   * @param {Number} db the redis db to listen for expiration event
   */
   async initSub(db = 0) {
+    logger.debug(`initSub: db=${db}`);
     try {
       // subscribe on expiration events
       await this.redisSub.subscribe(`__keyevent@${db}__:expired`);
-      // receives expiration messages onExpiration
-      this.redisSub.on('message', this.onExpiration);
+      // // receives expiration messages onExpiration
+      // this.redisSub.on('message', this.onExpiration); // TODO aqui ou no contrutor?
     } catch (err) {
       logger.error(err);
       throw err;
@@ -58,9 +75,13 @@ class RedisSessionMgmt {
    */
   async onExpiration(channel, key) {
     logger.debug(`onExpiration: key=${key}, channel=${channel}`);
+    logger.debug(`onExpiration: this.prefixSessionTTLSize=${this.prefixSessionTTLSize}, this.prefixSessionTTL=${this.prefixSessionTTL}`);
+    logger.debug(`onExpiration: key.substring(0, this.prefixSessionTTLSize)=${key.substring(0, this.prefixSessionTTLSize)}`);
+
     try {
       if (key.substring(0, this.prefixSessionTTLSize) === this.prefixSessionTTL) {
         const sid = key.slice(this.prefixSessionTTLSize);
+        logger.debug(`onExpiration: sid=${sid}`);
         await this.redisPub.del(this.prefixSession + sid);
       }
     } catch (err) {
