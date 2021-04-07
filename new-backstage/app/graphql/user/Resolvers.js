@@ -1,6 +1,5 @@
 /* eslint-disable no-param-reassign */
 const {
-  //   ConfigManager: { getConfig },
   Logger,
 } = require('@dojot/microservice-sdk');
 
@@ -12,7 +11,6 @@ const Resolvers = {
   Query: {
     async getConfig(root, params) {
       let query = {};
-      const clientPG = Postgres.getClientInstance();
       if (params.user) {
         if (params.user === '**generic_user**') {
           throw new Error('Cannot use this username');
@@ -29,7 +27,7 @@ const Resolvers = {
       }
 
       try {
-        const result = await clientPG.query(query);
+        const result = await Postgres.query(query);
         if (result.rowCount) {
           return (JSON.stringify(result.rows[0].configuration));
         }
@@ -44,7 +42,6 @@ const Resolvers = {
 
   Mutation: {
     async updateConfig(root, params) {
-      const clientPG = Postgres.getClientInstance();
       const genUser = '**generic_user**';
       try {
         if (params.config === null) {
@@ -68,7 +65,7 @@ const Resolvers = {
         }
 
         const date = new Date().toLocaleString();
-        let result = await clientPG.query(query);
+        let result = await Postgres.query(query);
 
 
         if (result.rowCount) {
@@ -76,7 +73,7 @@ const Resolvers = {
             text: 'UPDATE user_config SET configuration=$3, last_update=$4 WHERE username=$1 AND tenant=$2;',
             values: [params.user, params.tenant, JSON.parse(params.config), date],
           };
-          result = await clientPG.query(query);
+          result = await Postgres.query(query);
           if (result.rowCount) {
             return "Updated user's dashboard configuration";
           }
@@ -87,7 +84,7 @@ const Resolvers = {
             text: 'INSERT INTO user_config VALUES ($1, $2, $3, $4);',
             values: [params.tenant, params.user, JSON.parse(params.config), date],
           };
-          result = await clientPG.query(query);
+          result = await Postgres.query(query);
           if (result.rowCount) {
             return 'Added configuration to database';
           }

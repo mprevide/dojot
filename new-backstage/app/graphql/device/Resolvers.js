@@ -233,7 +233,7 @@ const Resolvers = {
         throw error;
       }
 
-      console.log('dynamicAttrs, staticAttrs, dojotDevices, deviceDictionary, operationType', dynamicAttrs, staticAttrs, dojotDevices, deviceDictionary, operationType)
+      console.log('dynamicAttrs, staticAttrs, dojotDevices, deviceDictionary, operationType', dynamicAttrs, staticAttrs, dojotDevices, deviceDictionary, operationType);
 
       const {
         history,

@@ -19,12 +19,13 @@ class Keycloak {
   /**
    *
    * @param {an instance of @dojot/microservice-sdk.ServiceStateManager
-   *          with register service 'Keycloak'} serviceState
+   *          with register service 'keycloak'} serviceState
    *          Manages the services' states, providing health check and shutdown utilities.
    *
    * @param {String} mountPoint
    */
   init(serviceState, mountPoint) {
+    this.serviceName = 'keycloak';
     this.createHealthChecker(serviceState);
     this.mountPoint = mountPoint;
     this.clientId = configKeycloak['public.client.id'];
@@ -49,9 +50,13 @@ class Keycloak {
     return this.requests;
   }
 
+  /**
+   * Checks whether it was started properly by calling the init method
+   * @private
+   */
   checkInitiated() {
     if (!this.init) {
-      throw new Error('Call init first');
+      throw new Error('Call init method first');
     }
   }
 
@@ -111,7 +116,7 @@ class Keycloak {
         signalNotReady();
       }
     };
-    serviceState.addHealthChecker('keycloak',
+    serviceState.addHealthChecker(this.serviceName,
       healthChecker, this.healthCheckMs);
   }
 }

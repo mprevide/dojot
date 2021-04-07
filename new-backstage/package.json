@@ -14,8 +14,8 @@
         "debug": "DEBUG=express-session node --unhandled-rejections=strict index.js",
         "test": "jest",
         "test:watch": "jest --watchAll --no-cache --runInBand --detectOpenHandles",
-        "lint": "eslint --ext .js .",
-        "lint:fix": "eslint --fix --ext .js .",
+        "lint": "eslint app/** index.js --ext .js",
+        "lint:fix": "eslint app/** index.js --fix --ext .js",
         "check-licenses": "apache2-license-checker"
     },
     "repository": {
@@ -49,14 +49,12 @@
     "homepage": "https://github.com/dojot",
     "dependencies": {
         "@dojot/microservice-sdk": "0.1.11",
-        "awilix": "^4.3.3",
         "axios": "^0.21.1",
         "base64url": "^3.0.1",
-        "compression": "^1.7.4",
+        "caniuse-lite": "^1.0.30001207",
         "express": "^4.17.1",
         "express-graphql": "^0.12.0",
         "express-openapi-validator": "^4.8.0",
-        "express-paginate": "^1.0.2",
         "express-session": "^1.17.1",
         "flat": "^5.0.2",
         "graphql": "^15.5.0",
@@ -66,13 +64,11 @@
         "http-status-codes": "^2.1.4",
         "http-terminator": "^2.0.3",
         "js-yaml": "^3.14.0",
-        "jwt-decode": "^3.1.2",
         "lodash": "^4.17.21",
         "lodash.camelcase": "^4.3.0",
         "moment": "^2.29.1",
         "nocache": "^2.1.0",
         "pg": "^8.5.1",
-        "promise-retry": "^2.0.1",
         "randomstring": "^1.1.5",
         "redis": "^3.0.2",
         "swagger-ui-express": "^4.1.4"
@@ -85,8 +81,7 @@
         ],
         "collectCoverageFrom": [
             "app/**/*.js",
-            "!index.js",
-            "!app/sdk/**/*.js"
+            "!index.js"
         ],
         "moduleDirectories": [
             "node_modules",
@@ -109,7 +104,7 @@
     },
     "devDependencies": {
         "@bbc/apache2-license-checker": "^1.1.4",
-        "eslint": "^7.10.0",
+        "eslint": "^7.23.0",
         "eslint-config-airbnb-base": "^14.2.0",
         "eslint-plugin-import": "^2.22.1",
         "eslint-plugin-security": "^1.4.0",

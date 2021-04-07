@@ -3,27 +3,29 @@ const {
   Logger,
 } = require('@dojot/microservice-sdk');
 
-// TODO remove _
-const { session_redis: sessionRedisConfig } = getConfig('BACKSTAGE');
+const { session: sessionRedisConfig } = getConfig('BACKSTAGE');
 
 const logger = new Logger('backstage:Redis/RedisSessionMgmt');
 class RedisSessionMgmt {
   constructor(
     redisPub, redisSub,
   ) {
+    this.maxLifetime = sessionRedisConfig['redis.max.life.time.sec'] || 86400; // One day in seconds.
+    this.maxIdle = sessionRedisConfig['redis.max.idle.time.sec'] || 1800; // 30 minutes in seconds.
+
+    // `session` is a key created in redis with ttl with the value`this.maxLifetime`.
+    // It is the maximum time for a session.
     this.prefixSession = 'session:';
-    this.prefixSessionTTL = 'session-ttl:';
-    this.prefixSessionTTLSize = (this.prefixSessionTTL).length;
+
+    // `session-idle` is a key created in redis with ttl with
+    // the value `this.maxIdle` in each request, this ttl is restarted.
+    this.prefixSessionIdle = 'session-idle:';
+    this.prefixSessionIdleSize = (this.prefixSessionIdle).length;
 
     this.redisPub = redisPub;
     this.redisSub = redisSub;
 
-    this.maxLifetime = sessionRedisConfig['max.life.time.sec'] || 86400; // One day in seconds.
-    this.maxIdle = sessionRedisConfig['max.idle.time.sec'] || 1800; // 30 minutes in seconds.
-
     const onExpiration = this.onExpiration.bind(this);
-    // Activate "notify-keyspace-events" for expired type events
-    // this.redisPub.send_command('config', ['set', 'notify-keyspace-events', 'Ex']);
     // receives expiration messages onExpiration
     this.redisSub.on('message', onExpiration);
   }
@@ -31,10 +33,8 @@ class RedisSessionMgmt {
   initPub() {
     logger.debug('initPub:');
     try {
-      // subscribe on expiration events
+      // Activate "notify-keyspace-events" for expired type events
       this.redisPub.send_command('config', ['set', 'notify-keyspace-events', 'Ex']);
-      // // receives expiration messages onExpiration
-      // this.redisSub.on('message', this.onExpiration);
     } catch (err) {
       logger.error(err);
       throw err;
@@ -51,8 +51,6 @@ class RedisSessionMgmt {
     try {
       // subscribe on expiration events
       await this.redisSub.subscribe(`__keyevent@${db}__:expired`);
-      // // receives expiration messages onExpiration
-      // this.redisSub.on('message', this.onExpiration); // TODO aqui ou no contrutor?
     } catch (err) {
       logger.error(err);
       throw err;
@@ -75,12 +73,12 @@ class RedisSessionMgmt {
    */
   async onExpiration(channel, key) {
     logger.debug(`onExpiration: key=${key}, channel=${channel}`);
-    logger.debug(`onExpiration: this.prefixSessionTTLSize=${this.prefixSessionTTLSize}, this.prefixSessionTTL=${this.prefixSessionTTL}`);
-    logger.debug(`onExpiration: key.substring(0, this.prefixSessionTTLSize)=${key.substring(0, this.prefixSessionTTLSize)}`);
+    logger.debug(`onExpiration: this.prefixSessionTTLSize=${this.prefixSessionIdleSize}, this.prefixSessionTTL=${this.prefixSessionIdle}`);
+    logger.debug(`onExpiration: key.substring(0, this.prefixSessionTTLSize)=${key.substring(0, this.prefixSessionIdleSize)}`);
 
     try {
-      if (key.substring(0, this.prefixSessionTTLSize) === this.prefixSessionTTL) {
-        const sid = key.slice(this.prefixSessionTTLSize);
+      if (key.substring(0, this.prefixSessionIdleSize) === this.prefixSessionIdle) {
+        const sid = key.slice(this.prefixSessionIdleSize);
         logger.debug(`onExpiration: sid=${sid}`);
         await this.redisPub.del(this.prefixSession + sid);
       }
@@ -127,8 +125,8 @@ class RedisSessionMgmt {
       const value = JSON.stringify(sess);
       await this.redisPub.set(this.prefixSession + sid, value);
       await this.redisPub.expire(this.prefixSession + sid, this.maxLifetime);
-      await this.redisPub.set(this.prefixSessionTTL + sid, '');
-      await this.redisPub.expire(this.prefixSessionTTL + sid, this.maxIdle);
+      await this.redisPub.set(this.prefixSessionIdle + sid, '');
+      await this.redisPub.expire(this.prefixSessionIdle + sid, this.maxIdle);
     } catch (err) {
       logger.error('set:', err);
       throw err;
@@ -146,7 +144,7 @@ class RedisSessionMgmt {
     logger.debug(`destroy: sid=${sid}`);
     try {
       await this.redisPub.del(this.prefixSession + sid);
-      await this.redisPub.del(this.prefixSessionTTL + sid);
+      await this.redisPub.del(this.prefixSessionIdle + sid);
       // TODO: destroy session in the keycloak by calling logout?
     } catch (err) {
       logger.error('destroy:', err);
@@ -163,7 +161,7 @@ class RedisSessionMgmt {
   async restartIdleTTL(sid) {
     logger.debug(`restartIdleTTL: sid=${sid}`);
     try {
-      const ret = await this.redisPub.expire(this.prefixSessionTTL + sid, this.maxIdle);
+      const ret = await this.redisPub.expire(this.prefixSessionIdle + sid, this.maxIdle);
       if (ret !== 1) {
         return false;
       }

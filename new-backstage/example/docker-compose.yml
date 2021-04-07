@@ -270,12 +270,8 @@ services:
 
   spa-example:
     build:
-      context: ./spa-example
+      context: ./spa-example/
       dockerfile: ./Dockerfile
-    # ports:
-    #  - "8001:80"
-    volumes:
-      - ".:/spa-example/app:rw"
     # There is currently a bug: https://github.com/facebook/create-react-app/issues/8688#issuecomment-602149917
     tty: true
     command: npm start

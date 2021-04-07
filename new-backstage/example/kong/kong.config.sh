@@ -83,7 +83,7 @@ createRoute "${1}" "${1}_route" "${3}" "${4}"
 createEndpoint "device-manager" "http://dojot-mock:8888"  '"/device", "/template"' "false"
 addAuthToEndpoint "device-manager"
 
-createEndpoint "history" "http://dojot-mock:8000"  '"/history"' "false"
+createEndpoint "history" "http://dojot-mock:8888"  '"/history"' "false"
 addAuthToEndpoint "history"
 
 createEndpoint "keycloak" "http://keycloak:8080/auth"  '"/auth"' "true"

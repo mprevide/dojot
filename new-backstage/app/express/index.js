@@ -87,7 +87,7 @@ module.exports = (serviceState, mountPoint) => {
       commonErrorsHandle(),
       defaultErrorHandler({
         logger,
-      })
+      }),
     ],
     logger,
     supportTrustProxy: configExpress.trustproxy,

@@ -25,7 +25,7 @@ module.exports = ({ mountPoint }) => ({
         locations: error.locations,
         // stack: error.stack ? error.stack.split('\n') : [],
         // path: error.path,
-      })
+      }),
     }),
   ],
 });
