@@ -202,7 +202,7 @@ paths:
         - graphql
       summary: "graphql"
       description: |
-        This endpoint is to be used with graphql, if graphiql (graphql graphical interface) is active, it is possible to access this endpoint via get via the browser and it is necessary to have created a cookie for the session using /auth endpoint. And there it will be possible to access the documentation of queries and mutations available for graphql.
+        This endpoint is to be used with graphql it is necessary to have created a cookie for the session using /auth endpoint.
       operationId: graphqlPost
       responses:
         "401":
