@@ -100,7 +100,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
           publish_dir: ./swagger-docs
-          destination_dir: new-backstage
+          destination_dir: new-backstage/swagger
           keep_files: true
           allow_empty_commit: false
 
@@ -148,7 +148,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
-          publish_dir: ./new-backstage/new-backstage-docs
+          publish_dir: ./new-backstage/new-backstage-docs/graphql
           destination_dir: new-backstage
           keep_files: true
           allow_empty_commit: false
