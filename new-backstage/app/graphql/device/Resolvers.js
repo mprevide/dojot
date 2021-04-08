@@ -6,25 +6,9 @@ const moment = require('moment');
 const {
   Logger,
 } = require('@dojot/microservice-sdk');
-const createError = require('http-errors');
 
 const logger = new Logger('backstage:graphql/device/Resolvers');
 const UTIL = require('../utils/AxiosUtils');
-
-
-// TODO transfer to utils
-// const commonHandleError = (error) => {
-//   if (error.response && error.response.status && error.response.data) {
-//     const {
-//       status,
-//       data: errorTxt,
-//     } = error.response;
-//     if (errorTxt) {
-//       return createError(status, errorTxt);
-//     }
-//   }
-//   return (error);
-// };
 
 const {
   reduceList,
@@ -232,8 +216,6 @@ const Resolvers = {
         logger.error(error.stack || error);
         throw error;
       }
-
-      console.log('dynamicAttrs, staticAttrs, dojotDevices, deviceDictionary, operationType', dynamicAttrs, staticAttrs, dojotDevices, deviceDictionary, operationType);
 
       const {
         history,

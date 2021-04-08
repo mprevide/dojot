@@ -1,5 +1,4 @@
 const { Logger, ConfigManager: { getConfig } } = require('@dojot/microservice-sdk');
-const HttpStatus = require('http-status-codes');
 const { generatePKCEChallenge } = require('../../../Utils');
 const Keycloak = require('../../../keycloak');
 

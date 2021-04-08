@@ -5,12 +5,12 @@ const querystring = require('querystring');
 const createError = require('http-errors');
 
 /**
- * Transforms from the time window that will expire, to the exact moment that will expire
+ * Transforms from the time window that will expire, to the approximate moment that will expire
  *
  * @param {Number} expiresIn In seconds
  * @returns {Date}
  */
-const expiresInToExpiresAt = (expiresIn) => new Date(Date.now() + expiresIn * 1000);
+const expiresInToExpiresAt = (expiresIn) => new Date(Date.now() + (expiresIn - 2) * 1000);
 
 /**
  * Handle errors from keycloak and kong then standardize
@@ -118,7 +118,7 @@ class Requests {
         endpointOIDCToken(realm),
         querystring.stringify({
           grant_type: 'authorization_code',
-          // TODO the redirect_uri needs to be passed with a valid value, but it is not used
+          // the redirect_uri needs to be passed with a valid value, but it is not used
           redirect_uri: this.urlToReturn,
           client_id: this.clientId,
           code_verifier: codeVerifier,
@@ -135,11 +135,7 @@ class Requests {
           expires_in: accessTokenExpiresIn,
           refresh_expires_in: refreshExpiresIn,
           refresh_token: refreshToken,
-          // token_type: tokenType, //TODO
-          // id_token: idToken,
           session_state: sessionState,
-          // scope,
-          // 'not-before-policy': notBeforePolicy,
         } = data;
 
         const refreshExpiresAt = expiresInToExpiresAt(refreshExpiresIn);
@@ -200,11 +196,7 @@ class Requests {
           expires_in: accessTokenExpiresIn,
           refresh_expires_in: refreshExpiresIn,
           refresh_token: refreshTokenNew,
-          // token_type: tokenType,// TODO
-          // id_token: idToken,
           session_state: sessionState,
-          // scope,
-          // 'not-before-policy': notBeforePolicy,
         } = data;
 
         const refreshExpiresAt = expiresInToExpiresAt(refreshExpiresIn);

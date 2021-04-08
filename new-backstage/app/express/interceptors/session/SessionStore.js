@@ -114,7 +114,7 @@ module.exports = (session) => {
       try {
         const ret = await this.redisManagement.restartIdleTTL(sid);
         if (!ret) {
-          return cb(null, 'EXPIRED'); // TODO check lib behavior
+          return cb(null, 'EXPIRED');
         }
         return cb(null, 'OK');
       } catch (err) {

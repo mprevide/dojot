@@ -19,7 +19,7 @@ try {
 }
 
 /**
- * Middleware TODO
+ * Middleware swagger ui
  */
 module.exports = ({ mountPoint }) => ({
   name: 'swagger-ui',
