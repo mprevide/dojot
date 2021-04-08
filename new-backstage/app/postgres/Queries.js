@@ -1,7 +1,7 @@
 
 const QUERY_CHECK_TABLE_USER_CONFIG_EXIST = 'SELECT * FROM information_schema.tables WHERE table_name=\'user_config\';';
 
-const QUERY_CREATE_TABLE_USER_CONFIG = 'CREATE TABLE user_config ( '
+const QUERY_CREATE_TABLE_USER_CONFIG = 'CREATE TABLE IF NOT EXISTS user_config ( '
   + 'tenant varchar(255) NOT NULL, '
   + 'username varchar(255) NOT NULL,'
   + 'configuration json NOT NULL, '

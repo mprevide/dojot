@@ -1,11 +1,10 @@
 const { Logger } = require('@dojot/microservice-sdk');
 
-
 const logger = new Logger('backstage:express/interceptors/CommonErrorsHandle');
 /**
  * Handle  Common Errors
  *
- * @returns an express middleware to handle errors.
+ * @returns an express middleware to handle common errors.
  */
 module.exports = () => (
   /**

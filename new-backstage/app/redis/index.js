@@ -135,7 +135,7 @@ class Redis {
    * Create an asynchronous version of the net methods that will be used
    * @private
    */
-   createRedisAsync() {
+  createRedisAsync() {
     this.redisPubAsync = {
       get: promisify(this.redisPub.get).bind(this.redisPub),
       set: promisify(this.redisPub.set).bind(this.redisPub),
@@ -187,5 +187,3 @@ class Redis {
 }
 
 module.exports = new Redis();
-
-

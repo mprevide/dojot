@@ -26,36 +26,27 @@ export default function ReturnLogin(props) {
     userInfo: {},
     dataExample: {},
     state: 'none',
-    // sessionState: 'none',
     errorMsg: 'none',
   });
 
   // getting the parameter state e error (if it exists) in the query string
   const paramsQueryString = new URLSearchParams(props.location.search);
+
   const stateQueryString = paramsQueryString.get('state') || 'none';
-  // const sessionStateQueryString = paramsQueryString.get('session_state') || 'none';
   const errorQueryString = paramsQueryString.get('error');
 
   useEffect(() => {
     async function call() {
       try{
-        const { data: resultUserInfo,
-          status,
-          statusText,
+        const { data: resultUserInfo
          } = await axios.get(Config.USER_INFO_URL);
-        //  if (status === 200) {
             setData({
               ...data,
               state: stateQueryString,
-              // sessionState: sessionStateQueryString,
               userInfo: resultUserInfo,
             });
-          // }
-          console.log('resultUserInfo', resultUserInfo);
-          // throw new Error('Unable to verify an active session');
       }catch(error){
         // redirect to the homepage or do something else
-        // ######
         if (error.response && error.response.status===401){
           setData({
             ...data,
@@ -74,9 +65,6 @@ export default function ReturnLogin(props) {
         call();
       } else {
         // redirect to the homepage or do something else
-        // ######
-        // passing here means that something went wrong in the login
-        // and an error was answered in the return query string
         setData({
           ...data,
           errorMsg: errorQueryString,
@@ -97,7 +85,6 @@ export default function ReturnLogin(props) {
       });
     }catch(error){
         // redirect to the homepage or do something else
-        // ######
         if (error.response && error.response.status===401){
           setData({
             ...data,
@@ -166,7 +153,3 @@ export default function ReturnLogin(props) {
     </div>
   );
 }
-
-// <div>
-// <span>Session State: {data.sessionState} </span>
-// </div>

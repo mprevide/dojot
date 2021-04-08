@@ -1,30 +1,32 @@
-// const expressGraphQL = require('express-graphql');
 const { graphqlHTTP } = require('express-graphql');
+const {
+  ConfigManager: { getConfig },
+} = require('@dojot/microservice-sdk');
 
-const { Logger } = require('@dojot/microservice-sdk');
 const rootSchema = require('../../graphql/Schema');
 
-const logger = new Logger('backstage:express/interceptors/Swagger');
+const { graphql: configGraphql } = getConfig('BACKSTAGE');
 
 /**
- * Middleware TODO
+ * Middleware graphql
+ * @param {string} mountPoint
+ * @returns
  */
 module.exports = ({ mountPoint }) => ({
   name: 'graphql',
   path: `${mountPoint}/graphql`,
   middleware: [
     (req, res, next) => {
+      // inject token obtained from the session
       req.token = req.session.accessToken;
       return next();
     },
     graphqlHTTP({
       schema: rootSchema,
-      graphiql: { headerEditorEnabled: true }, // TODO defaultQuery?: string;
+      graphiql: configGraphql ? { headerEditorEnabled: true } : false,
       customFormatErrorFn: (error) => ({
         message: error.message,
         locations: error.locations,
-        // stack: error.stack ? error.stack.split('\n') : [],
-        // path: error.path,
       }),
     }),
   ],

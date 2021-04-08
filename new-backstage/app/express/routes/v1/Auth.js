@@ -19,7 +19,8 @@ const logger = new Logger('backstage:express/routes/v1/Auth');
 */
 module.exports = ({ mountPoint }) => {
   /**
-   * TODO
+   *  Create session, generate PKCE, and redirect to the
+   *  keycloack login screen using the openid connect protocol
    */
   const auth = {
     mountPoint,
@@ -30,7 +31,6 @@ module.exports = ({ mountPoint }) => {
         method: 'get',
         middleware: [
           async (req, res) => {
-            logger.debug('auth-route.get: req.params=', req.params);
             logger.debug('auth-route.get: req.query=', req.query);
             logger.debug('auth-route.get: req.sessionID=', req.sessionID);
 
@@ -50,7 +50,9 @@ module.exports = ({ mountPoint }) => {
               req.session.codeVerifier = codeVerifier;
               req.session.realm = realm;
               req.session.tenant = realm;
+
               logger.debug(`auth-route.get: redirect to ${url}`);
+
               return res.redirect(303, url);
             } catch (e) {
               logger.error('auth-route.get:', e);
@@ -62,6 +64,13 @@ module.exports = ({ mountPoint }) => {
     ],
   };
 
+  /**
+   * Called when there is success in the login screen, this endpoint
+   * is passed as `redirect_uri` when redirecting to the keycloack login screen
+   * and if the login happens
+   * correctly the keycloack calls this endpoint.
+   * The openid connect protocol is used.
+   */
   const authReturn = {
     mountPoint,
     name: 'auth-return-route',
@@ -71,11 +80,12 @@ module.exports = ({ mountPoint }) => {
         method: 'get',
         middleware: [
           async (req, res) => {
-            logger.debug('auth-return-route.get: req.params=', req.params);
             logger.debug('auth-return-route.get: req.query=', req.query);
             logger.debug('auth-return-route.get: req.sessionID=', req.sessionID);
 
             try {
+              const url = new URL(GUI_RETURN_URL);
+
               const {
                 realm,
                 codeVerifier,
@@ -84,9 +94,9 @@ module.exports = ({ mountPoint }) => {
               if (codeVerifier) {
                 const {
                   state,
-                  session_state: sessionState,
                   code: authorizationCode,
                 } = req.query;
+
                 try {
                   const {
                     accessToken,
@@ -104,30 +114,30 @@ module.exports = ({ mountPoint }) => {
                   req.session.refreshExpiresAt = refreshExpiresAt;
                   req.session.accessTokenExpiresAt = accessTokenExpiresAt;
 
-                  // TODO
-                  // encode URL
-                  logger.debug(`auth-return-route.get: redirect to ${GUI_RETURN_URL} with state=${state} and session_state=${sessionState}`);
-                  return res.redirect(303, `${GUI_RETURN_URL}?state=${state}&session_state=${sessionState}`);
+                  url.searchParams.append('state', state);
+
+                  logger.debug(`auth-return-route.get: redirect to ${GUI_RETURN_URL} with state=${state}`);
+                  return res.redirect(303, url.href);
                 } catch (e) {
                   req.session.destroy((err, msg) => {
                     logger.warn('auth-return-route.get:session-destroy-error:', msg, err);
                   });
-                  // condition for some specific else throw e
-                  // TODO
-                  // encode URL
+
+                  url.searchParams.append('error', e);
+
                   logger.debug(`auth-return-route.get: redirect to ${GUI_RETURN_URL} with e=${e}`);
-                  return res.redirect(303, `${GUI_RETURN_URL}?error=${e}`);
+                  return res.redirect(303, url.href);
                 }
+              } else {
+                const e = 'There is no active session';
+                url.searchParams.append('error', e);
+                logger.debug(`auth-return-route.get: redirect to ${GUI_RETURN_URL} with e=${e}`);
+                return res.redirect(303, url.href);
               }
             } catch (e) {
               logger.error('auth-return-route.get:', e);
               throw e;
             }
-            const e = 'There is no active session';
-            logger.debug(`auth-return-route.get: redirect to ${GUI_RETURN_URL} with e=${e}`);
-            // TODO
-            // encode URL
-            return res.redirect(303, `${GUI_RETURN_URL}?error=${e}`);
           },
         ],
       },
@@ -159,12 +169,12 @@ module.exports = ({ mountPoint }) => {
                   ...userInfoObj,
                 };
                 logger.debug(`auth-user-info-route.get: result=${JSON.stringify(result)}`);
-                return res.status(HttpStatus.OK).json(result);
+                return res.status(200).json(result);
               }
             } catch (e) {
               logger.error('device-user-info.get:', e);
             }
-            return res.status(HttpStatus.UNAUTHORIZED)
+            return res.status(401)
               .json({ error: 'There is no active session' });
           },
         ],
@@ -172,7 +182,13 @@ module.exports = ({ mountPoint }) => {
     ],
   };
 
-  const authUserLogout = {
+  /**
+   * Logout the active user using openid connect and redirects to
+   * the keycloack logout url if there is an active session and
+   * that keycloack url redirects to `gui.home.url` or redirects directly
+   * to` gui.home.url` with an error query string.
+   */
+  const authLogout = {
     mountPoint,
     name: 'auth-user-logout-route',
     path: ['/auth/logout'],
@@ -189,15 +205,17 @@ module.exports = ({ mountPoint }) => {
                 req.session.destroy((err) => {
                   logger.warn(`auth-user-logout-route.get: session-destroy-error:=${JSON.stringify(err)}`);
                 });
-                const url = Keycloak.buildUrlLogout(realm, GUI_HOME_URL);
 
+                const url = Keycloak.buildUrlLogout(realm, GUI_HOME_URL);
                 logger.debug(`auth-user-logout-route.get: redirect to ${url}`);
                 return res.redirect(303, url);
               }
-              // TODO encode URL
+              const url = new URL(GUI_HOME_URL);
               const e = 'There is no active session';
+
+              url.searchParams.append('error', e);
               logger.debug(`auth-user-logout-route.get: redirect to ${GUI_HOME_URL} with error=${e}`);
-              return res.redirect(303, `${GUI_HOME_URL}?error=${e}`);
+              return res.redirect(303, url.href);
             } catch (e) {
               logger.error('auth-user-logout-route.get:', e);
               throw e;
@@ -212,5 +230,5 @@ module.exports = ({ mountPoint }) => {
   return [auth,
     authReturn,
     authUserInfo,
-    authUserLogout];
+    authLogout];
 };

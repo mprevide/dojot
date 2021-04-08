@@ -4,7 +4,7 @@ const {
   Logger,
 } = require('@dojot/microservice-sdk');
 const { flatten, unflatten } = require('flat');
-const { QUERY_CHECK_TABLE_USER_CONFIG_EXIST, QUERY_CREATE_TABLE_USER_CONFIG } = require('./Queries');
+const { QUERY_CREATE_TABLE_USER_CONFIG } = require('./Queries');
 const { replaceTLSFlattenConfigs } = require('../Utils');
 
 const logger = new Logger('backstage:Postgres');
@@ -35,7 +35,7 @@ class Postgres {
         ...configClientPGReplaced,
       });
       this.handleEvents();
-      await this.checkTableUserConfigExist();
+      await this.checkTableUserConfig();
       this.createHealthChecker();
       this.registerShutdown();
       this.init = true;
@@ -85,17 +85,15 @@ class Postgres {
   async query(query) {
     this.checkInitiated();
     logger.debug(`query: Executing query=${JSON.stringify(query)}`);
-    let client = null;
     try {
-      client = await this.pool.connect();
+      const client = await this.pool.connect();
       const result = await client.query(query);
       logger.debug('query: The query returned=', result);
+      client.release();
       return result;
     } catch (err) {
       logger.warn('query: error=', err);
       throw err;
-    } finally {
-      client.release();
     }
   }
 
@@ -114,17 +112,17 @@ class Postgres {
    * Checks if the user_config table exists, if the creation does not exist
    * @private
    */
-  async checkTableUserConfigExist() {
+  async checkTableUserConfig() {
     try {
-      const result = await this.query({ text: QUERY_CHECK_TABLE_USER_CONFIG_EXIST });
-      logger.debug('checkTable result', result);
-      if (!result.rowCount) {
-        logger.info('Table user_config not found.');
-        await this.query({ text: QUERY_CREATE_TABLE_USER_CONFIG });
-        logger.info('Table user_config created.');
-      } else {
-        logger.info('Table user_config already exists.');
-      }
+      // const result = await this.query({ text: QUERY_CHECK_TABLE_USER_CONFIG_EXIST });
+      // logger.debug('checkTable result', result);
+      // if (!result.rowCount) {
+      //   logger.info('Table user_config not found.');
+      await this.query({ text: QUERY_CREATE_TABLE_USER_CONFIG });
+      //   logger.info('Table user_config created.');
+      // } else {
+      //   logger.info('Table user_config already exists.');
+      // }
       logger.info('Table user_config is available to use.');
     } catch (err) {
       logger.error('checkTable: err=', err);

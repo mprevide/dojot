@@ -91,14 +91,3 @@ createEndpoint "keycloak" "http://keycloak:8080/auth"  '"/auth"' "true"
 createEndpoint "spa-example" "http://spa-example:80"  '"/"' "false"
 
 createEndpoint "backstage" "http://backstage:3000"  '"/backstage"' "false"
-
-# echo ""
-# echo ""
-# echo "- add plugin rate-limiting in keycloak"
-# curl  -s  -sS -X POST \
-# --url ${kong}/services/auth-service/plugins/ \
-# --data "name=rate-limiting" \
-# --data "config.minute=5" \
-# --data "config.hour=40" \
-# --data "config.policy=local"
-

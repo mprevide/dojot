@@ -233,6 +233,7 @@ services:
     # depends_on:
     #   - redis-backstage
     #   - postgres
+    #   - keycloak
     build:
       context: ./../
       dockerfile: ./Dockerfile
@@ -272,7 +273,6 @@ services:
     build:
       context: ./spa-example/
       dockerfile: ./Dockerfile
-    # There is currently a bug: https://github.com/facebook/create-react-app/issues/8688#issuecomment-602149917
     tty: true
     command: npm start
 
