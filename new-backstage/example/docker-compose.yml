@@ -241,7 +241,7 @@ services:
       BACKSTAGE_CONFIG_FILE: development.conf
     restart: always
     volumes:
-      - ./../app/:/opt/backstage/app/:Z
+      - ./../app/:/opt/backstage/app/:Z #- ./../app/graphql:/opt/backstage/app/graphql:Z
     # remove temporarily the `--only=prod` flag in npm install on the Dockerfile to use nodemon (npm run dev)
     # command: ["npm", "run", "dev"]
     logging:

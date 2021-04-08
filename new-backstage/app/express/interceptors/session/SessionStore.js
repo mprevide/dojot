@@ -43,7 +43,7 @@ module.exports = (session) => {
       logger.debug(`get: sid=${sid}`);
       try {
         const data = await this.redisManagement.get(sid);
-        logger.debug(`get: data=${data}`);
+        logger.debug(`get: data=${JSON.stringify(data)}`);
         return cb(null, data);
       } catch (err) {
         logger.error(`get: err=${err.stack || err}`);
