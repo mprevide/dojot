@@ -138,11 +138,10 @@ jobs:
           cd new-backstage/
           npm install
           mkdir -p new-backstage-docs
-          #npm install -g graphql graphql-tools lodash @2fd/graphdoc
+          cd new-backstage-docs
           npm install -g @2fd/graphdoc
-          node docs/GenerateFileSchema.js
-          graphdoc -s schemaDoc.graphql -o ./${VERSION_NAME} -f
-          rm -rf schemaDoc.graphql
+          node ../docs/GenerateFileSchema.js
+          graphdoc -s ../docs/schemaDoc.graphql -o ./${VERSION_NAME} -f
 
       - name: Publish Documentation
         uses: peaceiris/actions-gh-pages@v3
