@@ -136,12 +136,9 @@ jobs:
           VERSION_NAME: ${{ steps.version_doc.outputs.version }}
         run: |
           mkdir -p new-backstage-docs
-          npm install -g @2fd/graphdoc
-          npm install -g graphql
-          npm install -g graphql-tools
-          npm install -g lodash
+          npm install -g graphql graphql-tools lodash @2fd/graphdoc
           node new-backstage/docs/GenerateFileSchema.js
-          graphdoc -s schemaDoc.graphql -o ./${VERSION} -f
+          graphdoc -s schemaDoc.graphql -o ./${VERSION_NAME} -f
           rm -rf schemaDoc.graphql
 
       - name: Publish Documentation
