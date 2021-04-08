@@ -61,7 +61,9 @@ module.exports = (serviceState, mountPoint) => {
       sessionInterceptor({
         mountPoint,
       }),
-
+      graphQLInterceptor({
+        mountPoint,
+      }),
     ],
     routes: ([
       authRoutes({
