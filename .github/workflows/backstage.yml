@@ -137,6 +137,7 @@ jobs:
         run: |
           mkdir -p new-backstage-docs
           npm install -g @2fd/graphdoc
+          npm install -g graphql
           npm install -g graphql-tools
           npm install -g lodash
           node new-backstage/docs/GenerateFileSchema.js
