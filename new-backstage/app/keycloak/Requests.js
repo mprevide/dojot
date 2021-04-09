@@ -250,7 +250,6 @@ class Requests {
             Authorization: `Bearer ${accessToken}`,
             'content-type': 'application/x-www-form-urlencoded',
           },
-          maxRedirects: 0,
         },
       );
 
@@ -303,7 +302,6 @@ class Requests {
             Authorization: `Bearer ${accessToken}`,
             'content-type': 'application/x-www-form-urlencoded',
           },
-          maxRedirects: 0,
         },
       );
 
@@ -353,7 +351,6 @@ class Requests {
             Authorization: `Bearer ${accessToken}`,
             'content-type': 'application/x-www-form-urlencoded',
           },
-          maxRedirects: 0,
         },
       );
 

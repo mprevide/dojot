@@ -10,7 +10,7 @@ const {
 const fs = require('fs');
 
 /**
- *
+ * TODO
  * @param {string} [hash='sha256']
  * @returns {{codeChallenge:string,codeVerifier:string}} PKCE challenge pair
  */
@@ -24,13 +24,6 @@ const generatePKCEChallenge = (hash = 'sha256') => {
     codeChallenge,
     codeVerifier,
   };
-};
-
-const handleErrorAxios = (error) => {
-  if (error.response && error.response.status && error.response.data) {
-    throw new Error(`${error.response.status}: ${JSON.stringify(error.response.data)}`);
-  }
-  throw error;
 };
 
 
@@ -85,7 +78,6 @@ const replaceTLSFlattenConfigs = (config) => {
 };
 
 module.exports = {
-  generatePKCEChallenge,
-  handleErrorAxios,
   replaceTLSFlattenConfigs,
+  generatePKCEChallenge,
 };

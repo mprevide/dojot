@@ -1,12 +1,8 @@
 const axios = require('axios');
 const {
-//   ConfigManager: { getConfig },
   Logger,
 } = require('@dojot/microservice-sdk');
 const UTIL = require('../utils/AxiosUtils');
-// const logger = require('../../utils/Log');
-
-// const { session_redis: sessionRedisConfig } = getConfig('BACKSTAGE');
 
 const logger = new Logger('backstage:graphql/template/Resolvers');
 

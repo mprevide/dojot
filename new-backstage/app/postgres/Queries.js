@@ -1,6 +1,3 @@
-
-const QUERY_CHECK_TABLE_USER_CONFIG_EXIST = 'SELECT * FROM information_schema.tables WHERE table_name=\'user_config\';';
-
 const QUERY_CREATE_TABLE_USER_CONFIG = 'CREATE TABLE IF NOT EXISTS user_config ( '
   + 'tenant varchar(255) NOT NULL, '
   + 'username varchar(255) NOT NULL,'
@@ -10,4 +7,4 @@ const QUERY_CREATE_TABLE_USER_CONFIG = 'CREATE TABLE IF NOT EXISTS user_config (
   + ');';
 
 
-module.exports = { QUERY_CHECK_TABLE_USER_CONFIG_EXIST, QUERY_CREATE_TABLE_USER_CONFIG };
+module.exports = { QUERY_CREATE_TABLE_USER_CONFIG };

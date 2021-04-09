@@ -1,3 +1,4 @@
+// TODO
 const pathT = (url, realm) => `${url}/realms/${realm}/protocol/openid-connect`;
 
 /**

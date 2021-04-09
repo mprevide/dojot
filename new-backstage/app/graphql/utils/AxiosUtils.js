@@ -5,6 +5,7 @@ const {
 const {
   app: configApp,
 } = getConfig('BACKSTAGE');
+
 class AxiosUtils {
   static get GET() {
     return 'GET';
@@ -19,7 +20,7 @@ class AxiosUtils {
   }
 
   static optionsAxios(method, url, token, baseUrl = configApp['internal.base.url']) {
-    const promise = {
+    return {
       method,
       headers: {
         'content-type': 'application/json',
@@ -27,7 +28,13 @@ class AxiosUtils {
       },
       url: `${baseUrl}${url}`,
     };
-    return promise;
+  }
+
+  static handleErrorAxios(error) {
+    if (error.response && error.response.status && error.response.data) {
+      throw new Error(`${error.response.status}: ${JSON.stringify(error.response.data)}`);
+    }
+    throw error;
   }
 }
 

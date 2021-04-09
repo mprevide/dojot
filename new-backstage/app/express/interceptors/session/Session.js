@@ -99,7 +99,7 @@ module.exports = ({
       }
       return next();
     }
-
+    // TODO
     req.session.destroy((err2, msg) => {
       logger.warn(':', msg, err2);
     });

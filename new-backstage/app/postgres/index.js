@@ -114,15 +114,7 @@ class Postgres {
    */
   async checkTableUserConfig() {
     try {
-      // const result = await this.query({ text: QUERY_CHECK_TABLE_USER_CONFIG_EXIST });
-      // logger.debug('checkTable result', result);
-      // if (!result.rowCount) {
-      //   logger.info('Table user_config not found.');
       await this.query({ text: QUERY_CREATE_TABLE_USER_CONFIG });
-      //   logger.info('Table user_config created.');
-      // } else {
-      //   logger.info('Table user_config already exists.');
-      // }
       logger.info('Table user_config is available to use.');
     } catch (err) {
       logger.error('checkTable: err=', err);
