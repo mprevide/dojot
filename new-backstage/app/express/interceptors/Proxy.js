@@ -3,15 +3,41 @@ const {
 } = require('@dojot/microservice-sdk');
 
 const { createProxyMiddleware } = require('http-proxy-middleware');
+const fs = require('fs');
+const { TestScheduler } = require('@jest/core');
+
+// const logger = new Logger('backstage:express/interceptors/Proxy');
 
 
-const logger = new Logger('backstage:express/interceptors/Proxy');
-
+const configProxy = {
+  target: 'http://apigw:8000',
+  'log.level': 'debug',
+  'ssl.key': 'valid-ssl-key.pem',
+  'ssl.cert': 'valid-ssl-cert.pem',
+  secure: false, // true/false, if you want to verify the SSL Certs
+};
 // const { graphql: configGraphql } = getConfig('BACKSTAGE');
 
 
 // http://localhost:8000/backstage/v1/proxy/device
 // http://apigw:8000/device
+
+// const configFinal = {
+//   ssl: {
+//     key: fs.readFileSync('valid-ssl-key.pem', 'utf8'),
+//     cert: fs.readFileSync('valid-ssl-cert.pem', 'utf8'),
+//   },
+// };
+
+// const sslConfig = () => {
+//   const config = {};
+
+//   if (configProxy['ssl.key']) {
+//     config.ssl.key = fs.readFileSync(configProxy['ssl.key'], 'utf8');
+//   }
+
+//   return config;
+// };
 
 /**
  * Middleware graphql
@@ -29,41 +55,16 @@ module.exports = ({ mountPoint }) => ({
     },
     createProxyMiddleware(
       {
-        target: 'http://apigw:8000',
-        logLevel: 'debug',
-        // option.logLevel
-        // option.logProvider:
-        logProvider: (provider) => {
-          // add custom header to request
-          // const myCustomProvider = {
-          //   log: logger.debug,
-          //   debug: logger.debug,
-          //   info: logger.info,
-          //   warn: logger.warn,
-          //   error: logger.error,
-          // };
-          const myCustomProvider = {
-            log: console.log,
-            debug: console.log,
-            info: console.log,
-            warn: console.log,
-            error: console.error,
-          };
-          return myCustomProvider;
-          // Authorization: `Bearer ${token}`,
-          // or log the req
-        },
+        target: configProxy.target,
+        logLevel: configProxy['log.level'],
+        logProvider: () => new Logger('backstage:express/interceptors/Proxy'),
         changeOrigin: true,
-        pathRewrite: {
-          '^/backstage/v1/proxy': '', // rewrite path
-          //      '^/api/remove/path': '/path', // remove base path
-        },
-        onProxyReq: (proxyReq, req, res) => {
-          // add custom header to request
+        pathRewrite: (path) => path.replace(`${mountPoint}/proxy`, ''),
+        onProxyReq: (proxyReq, req) => {
           proxyReq.setHeader('Authorization', `Bearer ${req.token}`);
-          // Authorization: `Bearer ${token}`,
-          // or log the req
         },
+        secure: configProxy.secure,
+        // TODO
         // ssl: {
         //     key: fs.readFileSync('valid-ssl-key.pem', 'utf8'),
         //     cert: fs.readFileSync('valid-ssl-cert.pem', 'utf8')
