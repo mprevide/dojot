@@ -4,6 +4,12 @@ const mocks = require('./mock');
 
 const app = express();
 
+app.use(express.json());
+app.use(express.urlencoded({
+  extended: true,
+}));
+
+
 try {
   app.get('/device', (req, res) => {
     res.setHeader('Content-Type', 'application/json');
@@ -11,7 +17,25 @@ try {
     res.status(200).end(JSON.stringify(mocks.devices));
   });
 
-  app.get('/device/:id', (req, res) => {
+  app.post('/device', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    if (req.body.label && req.body.templates) {
+      res.status(200).end(JSON.stringify({
+        devices: [
+          {
+            id: '12345',
+            label: req.body.label,
+          }],
+      }));
+    } else {
+      res.status(400).end(JSON.stringify({
+        message: 'Bad Request',
+        status: 400,
+      }));
+    }
+  });
+
+  app.post('/device/:id', (req, res) => {
     res.setHeader('Content-Type', 'application/json');
     if (req.params.id === 'ab00f6') {
       res.status(200).end(JSON.stringify(mocks.device1));

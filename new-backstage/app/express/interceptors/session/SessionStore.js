@@ -5,7 +5,7 @@ const {
 const Redis = require('../../../redis');
 const Keycloak = require('../../../keycloak');
 
-const logger = new Logger('backstage:express/interceptors/SessionStore');
+const logger = new Logger('backstage:express/interceptors/session/SessionStore');
 
 
 module.exports = (session) => {

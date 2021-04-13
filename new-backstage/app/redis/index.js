@@ -45,6 +45,7 @@ class Redis {
    */
   async init(serviceState) {
     try {
+
       const redisConfigReplaced = replaceTLSFlattenConfigs(redisConfig);
 
       this.redisPub = redis.createClient({
@@ -58,7 +59,9 @@ class Redis {
 
       this.serviceState = serviceState;
 
+
       this.createRedisAsync();
+
 
       this.management = new RedisManagement(
         this.redisPubAsync,
@@ -84,7 +87,9 @@ class Redis {
       this.handleEvents(this.redisSub, 'sub', this.serviceState);
 
       await this.registerShutdown();
-      this.init = true;
+
+      console.log('init createRedisAsync');
+      this.initialized = true;
     } catch (error) {
       logger.error('init: error=', error);
     }
@@ -95,7 +100,7 @@ class Redis {
    * @private
    */
   checkInitiated() {
-    if (!this.init) {
+    if (!this.initialized) {
       throw new Error('Call init method first');
     }
   }
@@ -140,15 +145,12 @@ class Redis {
       set: promisify(this.redisPub.set).bind(this.redisPub),
       expire: promisify(this.redisPub.expire).bind(this.redisPub),
       del: promisify(this.redisPub.del).bind(this.redisPub),
-      ping: promisify(this.redisPub.ping).bind(this.redisPub),
       quit: promisify(this.redisPub.quit).bind(this.redisPub),
       send_command: (this.redisPub.send_command).bind(this.redisPub),
-      exists: (this.redisPub.exists).bind(this.redisPub),
     };
 
     this.redisSubAsync = {
       subscribe: promisify(this.redisSub.subscribe).bind(this.redisSub),
-      ping: promisify(this.redisSub.ping).bind(this.redisSub),
       quit: promisify(this.redisSub.quit).bind(this.redisSub),
       on: (this.redisSub.on).bind(this.redisSub),
       unsubscribe: promisify(this.redisSub.unsubscribe).bind(this.redisSub),
@@ -172,14 +174,14 @@ class Redis {
     this.serviceState.registerShutdownHandler(async () => {
       logger.debug('ShutdownHandler: Trying close redis sub...');
       // TODO: I think things are not well organized unsubscribe here and subscribe in another class
-      this.init = false;
+      this.initialized = false;
       await this.redisSubAsync.unsubscribe();
       await this.redisSubAsync.quit();
       logger.warn('ShutdownHandler: Closed redis sub.');
     });
     this.serviceState.registerShutdownHandler(async () => {
       logger.debug('ShutdownHandler: Trying close redis pub...');
-      this.init = false;
+      this.initialized = false;
       await this.redisPubAsync.quit();
       logger.warn('ShutdownHandler: Closed redis pub.');
     });

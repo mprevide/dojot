@@ -8,7 +8,7 @@ const createError = require('http-errors');
 const Keycloak = require('../../../keycloak');
 const SessionStore = require('./SessionStore')(session);
 
-const logger = new Logger('backstage:express/interceptors/Session');
+const logger = new Logger('backstage:express/interceptors/session/Session');
 
 const { session: sessionConfig } = getConfig('BACKSTAGE');
 
@@ -87,7 +87,7 @@ module.exports = ({
     }
     const err = new createError.Unauthorized();
     // These routes require Token access in the session
-    if (req.session.accessToken && req.session.accessTokenExpiresAt) {
+    if (req.session && req.session.accessToken && req.session.accessTokenExpiresAt) {
       try {
         // Get a new access token with the refresh token
         // if the current access token is expired

@@ -149,7 +149,7 @@ class RedisSessionMgmt {
    * Set function that return a promise to be called before destroy
    * this function receives accessToken, realm, refreshToken
    *
-   * @param {function} prom
+   * @param {AsyncFunction} prom #TODO AsyncFunction
    */
   setFuncToCallBeforeDestroy(prom) {
     this.beforeDestroy = prom;

@@ -25,6 +25,7 @@ export default function ReturnLogin(props) {
   const [data, setData] = useState({
     userInfo: {},
     dataExample: {},
+    dataProxy: {},
     state: 'none',
     errorMsg: 'none',
   });
@@ -101,6 +102,38 @@ export default function ReturnLogin(props) {
       }
   }
 
+  const handleExampleProxy  = async (evt) => {
+    try{
+    const { data: resultData } = await axios.post(Config.PROXY_URL+'/device', {
+      "label": "test_device",
+      "templates": [
+        1
+      ]
+    });
+
+      setData({
+        ...data,
+        dataProxy: resultData,
+        errorMsg:'none',
+      });
+    }catch(error){
+        // redirect to the homepage or do something else
+        if (error.response && error.response.status===401){
+          setData({
+            ...data,
+            dataProxy: {},
+            errorMsg: `${error.response.status}: ${JSON.stringify(error.response.data)}`,
+          });
+        }else{
+          setData({
+            ...data,
+            dataProxy: {},
+            errorMsg: error.message,
+          });
+        }
+      }
+  }
+
   const handleLogout  = async (evt) => {
     window.location.href = Config.LOGOUT_URL;
   }
@@ -137,6 +170,18 @@ export default function ReturnLogin(props) {
       <div>
         <br/>
       </div>
+      <div>
+      <div>
+      <button
+        onClick={handleExampleProxy}>
+        Proxy, create device `test_device`
+      </button>
+      </div>
+      <div>Data returned: {JSON.stringify(data.dataProxy)}</div>
+    </div>
+    <div>
+      <br/>
+    </div>
       <div>
         <span>Error message: {data.errorMsg} </span>
       </div>

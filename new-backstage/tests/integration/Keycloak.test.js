@@ -59,7 +59,7 @@ describe('Keycloak tests', () => {
   afterEach(() => {
   });
   test('init', () => {
-    keycloak.initialized(serviceStateMock, 'mountPoint');
+    keycloak.init(serviceStateMock);
 
     expect(keycloak.initialized).toBe(true);
     expect(keycloak.healthCheckMs).toBe(30000);
@@ -391,9 +391,10 @@ describe('Keycloak tests', () => {
     const realm = 'admin';
     const state = 'state';
     const codeChallenge = 'codeChallenge';
-    const urlLogin = keycloak.buildUrlLogin(realm, state, codeChallenge);
+    const urlReturn= 'redirectUri';
+    const urlLogin = keycloak.buildUrlLogin(realm, state, codeChallenge, urlReturn);
 
-    expect(urlLogin).toBe('http://localhost:8000/auth/realms/admin/protocol/openid-connect/auth?client_id=gui&response_type=code&scope=openid&state=state&code_challenge=codeChallenge&code_challenge_method=S256&redirect_uri=http%3A%2F%2Flocalhost%3A8000mountPoint%2Fauth%2Freturn');
+    expect(urlLogin).toBe('http://localhost:8000/auth/realms/admin/protocol/openid-connect/auth?client_id=gui&response_type=code&scope=openid&state=state&code_challenge=codeChallenge&code_challenge_method=S256&redirect_uri=redirectUri');
   });
 
   test('buildUrlLogout ', async () => {

@@ -23,9 +23,8 @@ class Keycloak {
    *
    * @param {String} mountPoint
    */
-  init(serviceState, mountPoint) {
+  init(serviceState) {
     this.serviceName = 'keycloak';
-    this.mountPoint = mountPoint;
     this.clientId = configKeycloak['public.client.id'];
     this.externalKeycloakUrl = configKeycloak['url.external'];
     this.internalKeycloakUrl = configKeycloak['url.api.gateway'];

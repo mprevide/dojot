@@ -7,6 +7,7 @@ const graphQLInterceptor = require('./interceptors/GraphQL');
 const sessionInterceptor = require('./interceptors/session/Session');
 const commonErrorsHandle = require('./interceptors/CommonErrorsHandle');
 const swaggerInterceptor = require('./interceptors/Swagger');
+const proxyInterceptor = require('./interceptors/Proxy');
 
 const logger = new Logger('backstage:express');
 
@@ -44,7 +45,7 @@ module.exports = (serviceState, mountPoint) => {
       swaggerInterceptor({
         mountPoint,
       }),
-      openApiValidatorInterceptor(),
+      // openApiValidatorInterceptor(),
       readinessInterceptor({
         stateManager: serviceState,
         logger,
@@ -59,6 +60,9 @@ module.exports = (serviceState, mountPoint) => {
       }),
       responseCompressInterceptor(),
       sessionInterceptor({
+        mountPoint,
+      }),
+      proxyInterceptor({
         mountPoint,
       }),
       graphQLInterceptor({

@@ -147,10 +147,15 @@ module.exports = ({ mountPoint }) => {
     ],
   };
 
+  /**
+   *  Returns information from the active session user such as name,
+   *  email, tenant (realm) and the permissions associated with that
+   *  user using openid connect.
+   */
   const authUserInfo = {
     mountPoint,
     name: 'auth-user-info-route',
-    path: ['/auth/userInfo'],
+    path: ['/auth/user-info'],
     handlers: [
       {
         method: 'get',
@@ -186,15 +191,15 @@ module.exports = ({ mountPoint }) => {
   };
 
   /**
-   * Logout the active user using openid connect and redirects to
+   * Revoke the active user session using openid connect and redirects to
    * the keycloack logout url if there is an active session and
    * that keycloack url redirects to `gui.home.url` or redirects directly
    * to` gui.home.url` with an error query string.
    */
-  const authLogout = {
+  const authRevoke = {
     mountPoint,
-    name: 'auth-user-logout-route',
-    path: ['/auth/logout'],
+    name: 'auth-user-revoke-route',
+    path: ['/auth/revoke'],
     handlers: [
       {
         method: 'get',
@@ -233,5 +238,5 @@ module.exports = ({ mountPoint }) => {
   return [auth,
     authReturn,
     authUserInfo,
-    authLogout];
+    authRevoke];
 };
