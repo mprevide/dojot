@@ -47,7 +47,7 @@ const renewAccessTokenIfNecessary = async (req) => {
  * Middleware responsible for creating a session and managing it
  */
 module.exports = ({
-  mountPoint,
+  exceptionRoutes,
 }) => ({
   name: 'session-express-interceptor',
   middleware:
@@ -79,10 +79,14 @@ module.exports = ({
     logger.debug(`Receiving requisition for: ${req.path}`);
 
     // These routes do not require Token access in the session
-    if (req.path === `${mountPoint}/auth`
-      || req.path === `${mountPoint}/auth/return`
-      || req.path === `${mountPoint}/auth/logout`
-    ) {
+    // if (req.path === `${mountPoint}/auth` exceptionRoutes
+    //   || req.path === `${mountPoint}/auth/return`
+    //   || req.path === `${mountPoint}/auth/revoke`
+    // ) {
+    //   return next();
+    // }
+
+    if (exceptionRoutes.includes(req.path)) {
       return next();
     }
     const err = new createError.Unauthorized();

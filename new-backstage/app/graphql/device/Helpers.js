@@ -210,16 +210,18 @@ const getHistory = async (devices, options, queryString) => {
 const getStaticAttributes = (dojotDevices, requestedDevices) => {
   const auxStaticAttrs = {};
   requestedDevices.forEach(({ deviceID, staticAttrs = [] }) => {
-    for (const template in dojotDevices[deviceID].attrs) {
-      if (dojotDevices[deviceID].attrs.hasOwnProperty(template)) {
-        dojotDevices[deviceID].attrs[template].forEach((attribute) => {
-          if (attribute.type === 'static' && staticAttrs.includes(attribute.label)) {
-            if (!auxStaticAttrs[deviceID]) {
-              auxStaticAttrs[deviceID] = { deviceID, deviceLabel: dojotDevices[deviceID].label };
+    if (dojotDevices && dojotDevices[deviceID]) {
+      for (const template in dojotDevices[deviceID].attrs) {
+        if (dojotDevices[deviceID].attrs.hasOwnProperty(template)) {
+          dojotDevices[deviceID].attrs[template].forEach((attribute) => {
+            if (attribute.type === 'static' && staticAttrs.includes(attribute.label)) {
+              if (!auxStaticAttrs[deviceID]) {
+                auxStaticAttrs[deviceID] = { deviceID, deviceLabel: dojotDevices[deviceID].label };
+              }
+              auxStaticAttrs[deviceID][attribute.id] = { ...attribute, templateID: template };
             }
-            auxStaticAttrs[deviceID][attribute.id] = { ...attribute, templateID: template };
-          }
-        });
+          });
+        }
       }
     }
   });

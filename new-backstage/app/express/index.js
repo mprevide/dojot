@@ -45,7 +45,7 @@ module.exports = (serviceState, mountPoint) => {
       swaggerInterceptor({
         mountPoint,
       }),
-      // openApiValidatorInterceptor(),
+      openApiValidatorInterceptor(),
       readinessInterceptor({
         stateManager: serviceState,
         logger,
@@ -60,7 +60,11 @@ module.exports = (serviceState, mountPoint) => {
       }),
       responseCompressInterceptor(),
       sessionInterceptor({
-        mountPoint,
+        exceptionRoutes: [
+          `${mountPoint}/auth`,
+          `${mountPoint}/auth/return`,
+          `${mountPoint}/auth/revoke`,
+        ],
       }),
       proxyInterceptor({
         mountPoint,

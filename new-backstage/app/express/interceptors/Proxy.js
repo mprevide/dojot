@@ -55,7 +55,7 @@ module.exports = ({ mountPoint }) => ({
         },
         changeOrigin: true,
         pathRewrite: {
-          '^/backstage/v1/proxy': '/', // rewrite path
+          '^/backstage/v1/proxy': '', // rewrite path
           //      '^/api/remove/path': '/path', // remove base path
         },
         onProxyReq: (proxyReq, req, res) => {

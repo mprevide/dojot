@@ -104,7 +104,7 @@ export default function ReturnLogin(props) {
 
   const handleExampleProxy  = async (evt) => {
     try{
-    const { data: resultData } = await axios.post(Config.PROXY_URL+'/device', {
+    const { data: resultData } = await axios.post(Config.PROXY_URL+'/device?a=1&abc=d', {
       "label": "test_device",
       "templates": [
         1
@@ -174,7 +174,7 @@ export default function ReturnLogin(props) {
       <div>
       <button
         onClick={handleExampleProxy}>
-        Proxy, create device `test_device`
+        Proxy, create a device `test_device`
       </button>
       </div>
       <div>Data returned: {JSON.stringify(data.dataProxy)}</div>

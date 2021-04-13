@@ -9,11 +9,9 @@ app.use(express.urlencoded({
   extended: true,
 }));
 
-
 try {
   app.get('/device', (req, res) => {
     res.setHeader('Content-Type', 'application/json');
-
     res.status(200).end(JSON.stringify(mocks.devices));
   });
 
@@ -35,7 +33,7 @@ try {
     }
   });
 
-  app.post('/device/:id', (req, res) => {
+  app.get('/device/:id', (req, res) => {
     res.setHeader('Content-Type', 'application/json');
     if (req.params.id === 'ab00f6') {
       res.status(200).end(JSON.stringify(mocks.device1));

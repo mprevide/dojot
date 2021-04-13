@@ -230,19 +230,19 @@ services:
         max-file: '5'
 
   backstage:
-    # depends_on:
-    #   - redis-backstage
-    #   - postgres
-    #   - keycloak
     build:
       context: ./../
       dockerfile: ./Dockerfile
     environment:
       BACKSTAGE_CONFIG_FILE: development.conf
       NODE_ENV: development
+      # The BACKSTAGE_SESSION_SECRET should be unique for each environment
+      BACKSTAGE_SESSION_SECRET: j0yYsBdc4p+PPq6ArjshcPdz0HA6W
+      BACKSTAGE_SESSION_COOKIE_HTTPS: 'false'
     restart: always
     volumes:
-      - ./../app/:/opt/backstage/app/:Z #- ./../app/graphql:/opt/backstage/app/graphql:Z
+      - ./../app/:/opt/backstage/app/:Z
+    # - ./../app/graphql:/opt/backstage/app/graphql:Z
     # remove temporarily the `--only=prod` flag in npm install on the Dockerfile to use nodemon (npm run dev)
     command: ["npm", "run", "dev"]
     logging:

@@ -11,7 +11,8 @@ class RedisSessionMgmt {
     redisPub, redisSub,
   ) {
     this.maxLifetime = sessionRedisConfig['redis.max.life.time.sec'] || 86400; // One day in seconds.
-    this.maxIdle = sessionRedisConfig['redis.max.idle.time.sec'] || 1800; // 30 minutes in seconds.
+    this.maxIdleTime = sessionRedisConfig['redis.max.idle.time.sec'] || 1800; // 30 minutes in seconds.
+    this.maxLoginReturnTime = sessionRedisConfig['redis.max.login.return.time.sec'] || 120;// 2 min
 
     // `session` is a key created in redis with ttl with the value`this.maxLifetime`.
     // It is the maximum time for a session.
@@ -138,7 +139,8 @@ class RedisSessionMgmt {
       await this.redisPub.set(this.prefixSession + sid, value);
       await this.redisPub.expire(this.prefixSession + sid, this.maxLifetime);
       await this.redisPub.set(this.prefixSessionIdle + sid, this.sessionIdleValue);
-      await this.redisPub.expire(this.prefixSessionIdle + sid, this.maxIdle);
+      // TODO: this.maxIdle mudar para primeira sessão
+      await this.redisPub.expire(this.prefixSessionIdle + sid, this.maxLoginReturnTime);
     } catch (err) {
       logger.error('set:', err);
       throw err;
@@ -173,7 +175,6 @@ class RedisSessionMgmt {
 
       await this.redisPub.del(this.prefixSession + sid);
       await this.redisPub.del(this.prefixSessionIdle + sid);
-
     } catch (err) {
       logger.error('destroy:', err);
       throw err;
@@ -189,7 +190,7 @@ class RedisSessionMgmt {
   async restartIdleTTL(sid) {
     logger.debug(`restartIdleTTL: sid=${sid}`);
     try {
-      const ret = await this.redisPub.expire(this.prefixSessionIdle + sid, this.maxIdle);
+      const ret = await this.redisPub.expire(this.prefixSessionIdle + sid, this.maxIdleTime);
       if (ret !== 1) {
         return false;
       }
