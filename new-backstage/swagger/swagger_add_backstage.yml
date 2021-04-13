@@ -125,13 +125,13 @@ paths:
                     type: string
         default:
           description: Unexpected error
-  /backstage/v1/auth/userInfo:
+  /backstage/v1/auth/user-info:
    get:
       tags:
         - auth
       summary: "User information"
       description: |
-        Returns information from the active session user such as name, email, tenant (relm) and the persmissions associated with that user using openid connect.
+        Returns information from the active session user such as name, email, tenant (realm) and the permissions associated with that user using openid connect.
       operationId: userInfo
       responses:
         "200":
@@ -178,17 +178,17 @@ paths:
                     type: string
         default:
           description: Unexpected error
-  /backstage/v1/auth/logout:
+  /backstage/v1/auth/revoke:
     get:
       tags:
         - auth
-      summary: "Logout"
+      summary: "Revoke"
       description: |
-        Logout the active user using openid connect and redirects to the keycloack logout url if there is an active session and that keycloack url redirects to `gui.home.url` or redirects directly to`gui.home.url` with an error query string.
-      operationId: Logout
+        Revoke the active user session using openid connect and redirects to the keycloack logout url if there is an active session and that keycloack url redirects to `gui.home.url` or redirects directly to`gui.home.url` with an error query string.
+      operationId: revoke
       responses:
         "303":
-          description: Redirects to the keycloack logout url or redirects directly to`gui.home.url` with an error 
+          description: Redirects to the keycloack logout url or redirects directly to `gui.home.url` with an error
           headers:
             Location:
               schema:
