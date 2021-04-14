@@ -35,10 +35,10 @@ class Postgres {
         ...configClientPGReplaced,
       });
       this.handleEvents();
-      await this.checkTableUserConfig();
       this.createHealthChecker();
       this.registerShutdown();
-      this.init = true;
+      this.initialized = true;
+      await this.checkTableUserConfig();
     } catch (error) {
       logger.error('init: error=', error);
       throw error;
@@ -51,20 +51,20 @@ class Postgres {
    */
   handleEvents() {
     this.pool.on('connect', () => {
-      logger.debug('handleEvents: postgres connected');
+      logger.debug('handleEvents: postgres -> connected');
       this.serviceState.signalReady(this.serviceName);
     });
 
     // Whenever a client is checked out from the pool the pool will
     // emit the acquire event with the client that was acquired.
     this.pool.on('acquire', () => {
-      logger.debug('handleEvents: postgres acquire');
+      logger.debug('handleEvents: postgres -> acquire');
     });
 
     // Whenever a client is closed & removed from the pool
     // the pool will emit the remove event.
     this.pool.on('remove', () => {
-      logger.debug('handleEvents: postgres remove');
+      logger.debug('handleEvents: postgres -> remove');
     });
 
     this.pool.on('error', (error) => {
@@ -102,7 +102,7 @@ class Postgres {
    * @private
    */
   checkInitiated() {
-    if (!this.init) {
+    if (!this.initialized) {
       throw new Error('Call init method first');
     }
   }
@@ -166,7 +166,7 @@ class Postgres {
   registerShutdown() {
     this.serviceState.registerShutdownHandler(async () => {
       logger.debug('ShutdownHandler: Trying close postgres pool...');
-      this.init = false;
+      this.initialized = false;
       await this.pool.end();
       logger.warn('ShutdownHandler: Closed postgres pool.');
     });

@@ -391,7 +391,7 @@ describe('Keycloak tests', () => {
     const realm = 'admin';
     const state = 'state';
     const codeChallenge = 'codeChallenge';
-    const urlReturn= 'redirectUri';
+    const urlReturn = 'redirectUri';
     const urlLogin = keycloak.buildUrlLogin(realm, state, codeChallenge, urlReturn);
 
     expect(urlLogin).toBe('http://localhost:8000/auth/realms/admin/protocol/openid-connect/auth?client_id=gui&response_type=code&scope=openid&state=state&code_challenge=codeChallenge&code_challenge_method=S256&redirect_uri=redirectUri');
@@ -404,5 +404,4 @@ describe('Keycloak tests', () => {
 
     expect(urlLogout).toBe('http://localhost:8000/auth/realms/admin/protocol/openid-connect/logout?redirect_uri=redirectUri');
   });
-
 });

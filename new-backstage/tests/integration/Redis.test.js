@@ -1,3 +1,4 @@
+/* eslint-disable security/detect-object-injection */
 const mockConfig = {
   app: {
     'base.url': 'http://localhost:8000',
@@ -23,8 +24,8 @@ const mockSdk = {
   },
   Logger: jest.fn(() => ({
     debug: () => jest.fn(),
-    // error: () => jest.fn(),
-    error: (a, b, c, d) => console.log(a, b, c, d),
+    error: () => jest.fn(),
+    // error: (a, b, c, d) => console.log(a, b, c, d),
     info: () => jest.fn(),
     warn: () => jest.fn(),
   })),
@@ -37,6 +38,9 @@ const mockQuit = jest.fn((callback) => callback());
 const mockUnsubscribe = jest.fn((callback) => callback());
 // const mockGet = jest.fn((key, callback) => callback(null, true))
 const mockGet = jest.fn();
+const mockSet = jest.fn();
+const mockExpire = jest.fn();
+const mockDel = jest.fn();
 
 // https://github.com/dojot/dojot/blob/afb17ae4ef0fd20ee600332d681fa12adce0180e/tools/cert-sidecar/test/integration/OpensslWrapper.test.js#L49
 const mockRedis = {
@@ -50,11 +54,11 @@ const mockRedis = {
     quit: mockQuit, // this.redisSubAsync.quit();
     get: mockGet, // this.get(sid);
     // // redisPub.set(this.prefixSession + sid, value);
-    set: jest.fn((key, value, callback) => callback(null, true)),
+    set: mockSet,
     // this.redisPub.expire(this.prefixSession + sid, this.maxLifetime);
-    expire: jest.fn((key, time, callback) => callback(null, true)),
+    expire: mockExpire,
     // this.redisPub.del(this.prefixSession + sid);
-    del: jest.fn((key, callback) => callback(null, true)),
+    del: mockDel,
     send_command: mockSendCommand, // not promisify
     // this.redisSubAsync.unsubscribe();
     unsubscribe: mockUnsubscribe,
@@ -121,39 +125,172 @@ describe('redis tests', () => {
   });
 
   test('Management get: ok', async () => {
+    const valueGet = { a: 1 };
+    mockGet
+      .mockImplementationOnce((key, callback) => callback(null, true))
+      .mockImplementationOnce((key, callback) => callback(null, JSON.stringify(valueGet)));
 
-    const valueGet = {a: 1};
-  mockGet
-  .mockImplementationOnce((key, callback) => callback(null, true))
-  .mockImplementationOnce((key, callback) => callback(null, JSON.stringify(valueGet)));
-
-    const value = await redis.getManagementInstance().get();
-    expect(value).toStrictEqual(valueGet)
+    const value = await redis.getManagementInstance().get('sid');
+    expect(mockGet).toHaveBeenNthCalledWith(1, 'session-idle:sid', expect.any(Function));
+    expect(mockGet).toHaveBeenNthCalledWith(2, 'session:sid', expect.any(Function));
+    expect(value).toStrictEqual(valueGet);
   });
 
   test('Management get: keyIdle doest exist', async () => {
+    mockGet
+      .mockImplementationOnce((key, callback) => callback(null, null));
 
-  mockGet
-  .mockImplementationOnce((key, callback) => callback(null, null));
+    const value = await redis.getManagementInstance().get('sid');
+    expect(mockGet).toHaveBeenNthCalledWith(1, 'session-idle:sid', expect.any(Function));
 
-    const value = await redis.getManagementInstance().get();
-    expect(value).toStrictEqual(null)
+    expect(value).toStrictEqual(null);
   });
 
   test('Management get: error', async () => {
-    expect.assertions(1);
+    expect.assertions(2);
     const msgError = 'x';
-  mockGet
-  .mockImplementationOnce((key, callback) => callback(new Error(msgError), null));
-    try{
-      const value = await redis.getManagementInstance().get();
-    }catch(e){
-      expect(e.message).toStrictEqual(msgError)
+    mockGet
+      .mockImplementationOnce((key, callback) => callback(new Error(msgError), null));
+    try {
+      await redis.getManagementInstance().get('sid');
+    } catch (e) {
+      expect(mockGet).toHaveBeenNthCalledWith(1, 'session-idle:sid', expect.any(Function));
+      expect(e.message).toStrictEqual(msgError);
     }
-
   });
 
+  test('Management set: ok', async () => {
+    const value = { a: 1, b: 2 };
+    const key = 'sid';
 
+    mockSet
+      .mockImplementationOnce(((k, v, callback) => callback(null, true)))
+      .mockImplementationOnce((k, v, callback) => callback(null, true));
+    mockExpire
+      .mockImplementationOnce(((k, time, callback) => callback(null, true)))
+      .mockImplementationOnce((k, time, callback) => callback(null, true));
+
+    await redis.getManagementInstance().set(key, value);
+
+    expect(mockSet).toHaveBeenNthCalledWith(1, 'session:sid', JSON.stringify(value), expect.any(Function));
+    expect(mockSet).toHaveBeenNthCalledWith(2, 'session-idle:sid', 'empty', expect.any(Function));
+
+    expect(mockExpire).toHaveBeenNthCalledWith(1, 'session:sid', 86400, expect.any(Function));
+    expect(mockExpire).toHaveBeenNthCalledWith(2, 'session-idle:sid', 120, expect.any(Function));
+  });
+
+  test('Management set: error', async () => {
+    const value = { a: 1, b: 2 };
+    const key = 'sid';
+    expect.assertions(2);
+    const msgError = 'x';
+    mockSet
+      .mockImplementationOnce(((k, v, callback) => callback(new Error(msgError), true)));
+    try {
+      await redis.getManagementInstance().set(key, value);
+    } catch (e) {
+      expect(mockSet).toHaveBeenNthCalledWith(1, 'session:sid', JSON.stringify(value), expect.any(Function));
+      expect(e.message).toStrictEqual(msgError);
+    }
+  });
+
+  test('Management destroy: ok', async () => {
+    const valueGet = {
+      accessToken: 'accessToken',
+      realm: 'realm',
+      refreshToken: 'refreshToken',
+    };
+    mockGet
+      .mockImplementationOnce((k, callback) => callback(null, true))
+      .mockImplementationOnce((k, callback) => callback(null, JSON.stringify(valueGet)));
+
+    mockDel
+      .mockImplementationOnce(((k, callback) => callback(null, true)))
+      .mockImplementationOnce((k, callback) => callback(null, true));
+
+    const asyncMock = jest.fn().mockImplementation(() => Promise.resolve('ok'));
+    redis.getManagementInstance().setFuncToCallBeforeDestroy(asyncMock);
+
+    await redis.getManagementInstance().destroy('sid');
+
+    expect(mockGet).toHaveBeenNthCalledWith(1, 'session-idle:sid', expect.any(Function));
+    expect(mockGet).toHaveBeenNthCalledWith(2, 'session:sid', expect.any(Function));
+    expect(mockDel).toHaveBeenNthCalledWith(1, 'session:sid', expect.any(Function));
+    expect(mockDel).toHaveBeenNthCalledWith(2, 'session-idle:sid', expect.any(Function));
+    expect(asyncMock).toHaveBeenCalledWith(
+      valueGet.realm,
+      valueGet.accessToken,
+      valueGet.refreshToken,
+    );
+  });
+  test('Management destroy: err', async () => {
+    expect.assertions(2);
+    const msgError = 'x';
+    mockGet
+      .mockImplementationOnce((key, callback) => callback(new Error(msgError), null));
+
+    try {
+      await redis.getManagementInstance().destroy('sid');
+    } catch (e) {
+      expect(mockGet).toHaveBeenNthCalledWith(1, 'session-idle:sid', expect.any(Function));
+      expect(e.message).toStrictEqual(msgError);
+    }
+  });
+
+  test('restartIdleTTL: ok', async () => {
+    const key = 'sid';
+
+    mockExpire
+      .mockImplementationOnce(((k, time, callback) => callback(null, true)));
+
+    await redis.getManagementInstance().restartIdleTTL(key);
+
+    expect(mockExpire).toHaveBeenNthCalledWith(1, 'session-idle:sid', 1800, expect.any(Function));
+  });
+
+  test('restartIdleTTL: error', async () => {
+    expect.assertions(2);
+    const msgError = 'x';
+    mockExpire
+      .mockImplementationOnce(((k, time, callback) => callback(new Error(msgError), true)));
+
+    try {
+      await redis.getManagementInstance().restartIdleTTL('sid');
+    } catch (e) {
+      expect(mockExpire).toHaveBeenNthCalledWith(1, 'session-idle:sid', 1800, expect.any(Function));
+      expect(e.message).toStrictEqual(msgError);
+    }
+  });
+
+  test('onExpiration', async () => {
+    const valueGet = {
+      accessToken: 'accessToken',
+      realm: 'realm',
+      refreshToken: 'refreshToken',
+    };
+    mockGet
+      .mockImplementationOnce((k, callback) => callback(null, true))
+      .mockImplementationOnce((k, callback) => callback(null, JSON.stringify(valueGet)));
+
+    mockDel
+      .mockImplementationOnce(((k, callback) => callback(null, true)))
+      .mockImplementationOnce((k, callback) => callback(null, true));
+
+    const asyncMock = jest.fn().mockImplementation(() => Promise.resolve('ok'));
+    redis.getManagementInstance().setFuncToCallBeforeDestroy(asyncMock);
+
+    await redis.getManagementInstance().onExpiration('channel', 'session-idle:sid');
+
+    expect(mockGet).toHaveBeenNthCalledWith(1, 'session-idle:sid', expect.any(Function));
+    expect(mockGet).toHaveBeenNthCalledWith(2, 'session:sid', expect.any(Function));
+    expect(mockDel).toHaveBeenNthCalledWith(1, 'session:sid', expect.any(Function));
+    expect(mockDel).toHaveBeenNthCalledWith(2, 'session-idle:sid', expect.any(Function));
+    expect(asyncMock).toHaveBeenCalledWith(
+      valueGet.realm,
+      valueGet.accessToken,
+      valueGet.refreshToken,
+    );
+  });
 
   test('registerShutdown', async () => {
     redis.registerShutdown();
@@ -164,12 +301,11 @@ describe('redis tests', () => {
     await callback2();
 
     expect(mockQuit)
-    .toHaveBeenCalledTimes(2);
+      .toHaveBeenCalledTimes(2);
 
     expect(mockUnsubscribe)
-    .toHaveBeenCalledTimes(1);
+      .toHaveBeenCalledTimes(1);
 
     expect(mockRegisterShutdownHandler).toHaveBeenCalled();
-
   });
 });

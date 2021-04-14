@@ -14,8 +14,8 @@
         "debug": "DEBUG=express-session node --unhandled-rejections=strict index.js",
         "test": "jest",
         "test:watch": "jest --watchAll --no-cache --runInBand --detectOpenHandles",
-        "lint": "eslint app/** index.js --ext .js",
-        "lint:fix": "eslint app/** index.js --fix --ext .js",
+        "lint": "eslint app/** tests/** index.js --ext .js",
+        "lint:fix": "eslint app/** tests/** index.js --fix --ext .js",
         "check-licenses": "apache2-license-checker"
     },
     "repository": {

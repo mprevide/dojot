@@ -49,7 +49,7 @@ const generatePKCEChallenge = (hash = 'sha256', stringSize = 128) => {
  *
  * For example 'tls.request.cert' will become tls.requestCert and tls.request.cert will be excluded
  *
- * Supports all tls.connect options(https://nodejs.org/api/tls.html#tls_tls_connect_port_host_options_callback)
+ * Supports all tls.createSecureContext options(https://nodejs.org/api/tls.html#tls_tls_createsecurecontext_optionsk)
  *
  * @param {Object} config with keys prefixed `tls.` or `ssl.`
  *
@@ -76,16 +76,16 @@ const replaceTLSFlattenConfigs = (config) => {
     delete configUn.ssl;
 
     if (tlsConfig.cert) {
-      tlsConfig.cert = fs.readFileSync(tlsConfig.cert);
+      tlsConfig.cert = fs.readFileSync(tlsConfig.cert).toString();
     }
     if (tlsConfig.key) {
-      tlsConfig.key = fs.readFileSync(tlsConfig.key);
+      tlsConfig.key = fs.readFileSync(tlsConfig.key).toString();
     }
     if (tlsConfig.ca) {
       if (!Array.isArray(tlsConfig.ca)) {
         tlsConfig.ca = [tlsConfig.ca];
       }
-      tlsConfig.ca = tlsConfig.ca.map((filename) => fs.readFileSync(filename));
+      tlsConfig.ca = tlsConfig.ca.map((filename) => fs.readFileSync(filename).toString());
     }
 
     if (keyType === 'tls') {

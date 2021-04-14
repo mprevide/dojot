@@ -33,6 +33,9 @@ class RedisSessionMgmt {
     this.redisSub.on('message', onExpiration);
   }
 
+  /**
+   * TODO
+   */
   initPub() {
     logger.debug('initPub:');
     try {
@@ -190,11 +193,7 @@ class RedisSessionMgmt {
   async restartIdleTTL(sid) {
     logger.debug(`restartIdleTTL: sid=${sid}`);
     try {
-      const ret = await this.redisPub.expire(this.prefixSessionIdle + sid, this.maxIdleTime);
-      if (ret !== 1) {
-        return false;
-      }
-      return true;
+      await this.redisPub.expire(this.prefixSessionIdle + sid, this.maxIdleTime);
     } catch (err) {
       logger.error('restartIdleTTL:', err);
       throw err;
