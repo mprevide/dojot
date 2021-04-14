@@ -22,7 +22,7 @@ tags:
   - name: graphql
     description: GraphQL (required authentication process)
   - name: proxy
-    description: | 
+    description: |
       Proxy for calls to Dojot via Api Gateway (required authentication process) -
 paths:
   /backstage/v1/auth:
