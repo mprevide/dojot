@@ -45,7 +45,6 @@ class Redis {
    */
   async init(serviceState) {
     try {
-
       const redisConfigReplaced = replaceTLSFlattenConfigs(redisConfig);
 
       this.redisPub = redis.createClient({
@@ -88,7 +87,6 @@ class Redis {
 
       await this.registerShutdown();
 
-      console.log('init createRedisAsync');
       this.initialized = true;
     } catch (error) {
       logger.error('init: error=', error);
@@ -170,7 +168,7 @@ class Redis {
    * Registers a shutdown to the redis
    * @private
    */
-  async registerShutdown() {
+  registerShutdown() {
     this.serviceState.registerShutdownHandler(async () => {
       logger.debug('ShutdownHandler: Trying close redis sub...');
       // TODO: I think things are not well organized unsubscribe here and subscribe in another class

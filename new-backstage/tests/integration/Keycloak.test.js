@@ -404,4 +404,5 @@ describe('Keycloak tests', () => {
 
     expect(urlLogout).toBe('http://localhost:8000/auth/realms/admin/protocol/openid-connect/logout?redirect_uri=redirectUri');
   });
+
 });

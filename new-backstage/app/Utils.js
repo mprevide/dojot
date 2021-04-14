@@ -30,8 +30,9 @@ const generatePKCEChallenge = (hash = 'sha256') => {
 /**
  * Loads files for cert, key, and CA, and transforms some settings to camelcase
  *
- * Receives an object with the key `tls.` in flatten inside and recreates them in carmelcase
- * in addition to uploading ca, key and cert files
+ * Receives an object with the key `tls.`or `ssl.` in flatten inside
+ * and recreates them in carmelcase in addition to uploading
+ * ca, key and cert files
  *
  * If it is not possible to find the key tls, returns the same value as the entry
  *
@@ -39,16 +40,29 @@ const generatePKCEChallenge = (hash = 'sha256') => {
  *
  * Supports all tls.connect options(https://nodejs.org/api/tls.html#tls_tls_connect_port_host_options_callback)
  *
- * @param {Object} config with keys prefixed `tls.`
+ * @param {Object} config with keys prefixed `tls.` or `ssl.`
  *
- * @returns {Object} new object with with keys prefixed `tls.`
+ * @returns {Object} new object with with keys prefixed `tls.` or `ssl.`
  *                        deleted and recreated within the key tls with in carmelcase
  */
 const replaceTLSFlattenConfigs = (config) => {
   const configUn = unflatten(config);
+  let configUnTLS = null;
+  let keyType = null;
+
   if (configUn.tls) {
-    const tlsConfig = transformObjectKeys(flatten(configUn.tls), camelCase);
+    configUnTLS = configUn.tls;
+    keyType = 'tls';
+  } else if (configUn.ssl) {
+    configUnTLS = configUn.ssl;
+    keyType = 'ssl';
+  }
+
+  if (configUnTLS && keyType) {
+    const tlsConfig = transformObjectKeys(flatten(configUnTLS), camelCase);
+
     delete configUn.tls;
+    delete configUn.ssl;
 
     if (tlsConfig.cert) {
     // eslint-disable-next-line security/detect-non-literal-fs-filename
@@ -66,12 +80,16 @@ const replaceTLSFlattenConfigs = (config) => {
       tlsConfig.ca = tlsConfig.ca.map((filename) => fs.readFileSync(filename));
     }
 
-    const replacedConfig = {
+    if (keyType === 'tls') {
+      return {
+        ...flatten(configUn),
+        tls: tlsConfig,
+      };
+    }
+    return {
       ...flatten(configUn),
-      tls: tlsConfig,
+      ssl: tlsConfig,
     };
-
-    return replacedConfig;
   }
 
   return config;
