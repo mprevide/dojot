@@ -1,3 +1,4 @@
+/* eslint-disable security/detect-non-literal-fs-filename */
 
 const randomString = require('randomstring');
 const crypto = require('crypto');
@@ -10,16 +11,26 @@ const {
 const fs = require('fs');
 
 /**
- * TODO
+ * Generate Proof Key for Code Exchange (PKCE) challenge pair.
+ *
+ * https://www.oauth.com/oauth2-servers/pkce/authorization-request/
+ *
  * @param {string} [hash='sha256']
+ * @param {number} [stringSize=128] 43 and 128 characters long.
  * @returns {{codeChallenge:string,codeVerifier:string}} PKCE challenge pair
  */
-const generatePKCEChallenge = (hash = 'sha256') => {
-  const codeVerifier = randomString.generate(128);
+const generatePKCEChallenge = (hash = 'sha256', stringSize = 128) => {
+  const codeVerifier = randomString.generate({
+    length: stringSize,
+    charset: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~',
+  });
+
   const base64Digest = crypto.createHash(hash)
     .update(codeVerifier)
     .digest('base64');
+
   const codeChallenge = base64url.fromBase64(base64Digest);
+
   return {
     codeChallenge,
     codeVerifier,
@@ -65,18 +76,15 @@ const replaceTLSFlattenConfigs = (config) => {
     delete configUn.ssl;
 
     if (tlsConfig.cert) {
-    // eslint-disable-next-line security/detect-non-literal-fs-filename
       tlsConfig.cert = fs.readFileSync(tlsConfig.cert);
     }
     if (tlsConfig.key) {
-      // eslint-disable-next-line security/detect-non-literal-fs-filename
       tlsConfig.key = fs.readFileSync(tlsConfig.key);
     }
     if (tlsConfig.ca) {
       if (!Array.isArray(tlsConfig.ca)) {
         tlsConfig.ca = [tlsConfig.ca];
       }
-      // eslint-disable-next-line security/detect-non-literal-fs-filename
       tlsConfig.ca = tlsConfig.ca.map((filename) => fs.readFileSync(filename));
     }
 
