@@ -50,6 +50,7 @@ const mockSdk = {
 jest.mock('@dojot/microservice-sdk', () => mockSdk);
 
 const mockRedisGet = jest.fn();
+// const mockRedisSet = jest.fn().mockResolvedValue('Ok');
 const mockRedis = {
   initialized: true,
   getManagementInstance: jest.fn(() => ({
@@ -64,16 +65,14 @@ const mockRedis = {
 const mockKeycloakLogout = jest.fn();
 const mockKeyInfoByToken = jest.fn();
 const mockTokenByRefresh = jest.fn();
+const urlLoginBuild = 'http://buildUrlLogin:8000';
+const mockBuildUrlLogin = jest.fn().mockReturnValueOnce(urlLoginBuild);
+const mockTokenByAuthCode = jest.fn();
 const mockKey = {
   initialized: true,
   getRequestsInstance: jest.fn(() => ({
     logout: mockKeycloakLogout,
-    getTokenByAuthorizationCode: jest.fn().mockResolvedValue({
-      accessToken: 'accessToken',
-      refreshToken: 'refreshToken',
-      refreshExpiresAt: 'refreshExpiresAt',
-      accessTokenExpiresAt: 'accessTokenExpiresAt',
-    }),
+    getTokenByAuthorizationCode: mockTokenByAuthCode,
     getPermissionsByToken: jest.fn().mockResolvedValue({
       resourceName: 'x',
       scopes: ['view', 'delete'],
@@ -81,10 +80,11 @@ const mockKey = {
     getUserInfoByToken: mockKeyInfoByToken,
     getTokenByRefreshToken: mockTokenByRefresh,
   })),
-  buildUrlLogin: jest.fn(() => ('http://buildUrlLogin:8000')),
+  buildUrlLogin: mockBuildUrlLogin,
   buildUrlLogout: jest.fn(() => ('http://buildUrlLogout:8000')),
 };
 
+const session = require('express-session');
 const request = require('supertest');
 
 const express = require('../../../app/express');
@@ -123,10 +123,6 @@ const sessionBaseObj = {
     path: '/',
     sameSite: 'strict',
   },
-};
-
-const sessionMock = {
-  ...sessionBaseObj,
 };
 
 const sessionMockIncomplete = {
@@ -173,8 +169,35 @@ describe('RoutesV1', () => {
       });
   });
 
+  test('/backstage/v1/auth: without query string', (done) => {
+    request(app)
+      .get('/backstage/v1/auth')
+      .then((res) => {
+        expect(res.statusCode).toBe(400);
+        expect(res.body).toStrictEqual({ error: "request.query should have required property 'tenant'" });
+        done();
+      });
+  });
+
+  test('/backstage/v1/auth: unexpected error', (done) => {
+    mockBuildUrlLogin.mockImplementationOnce(new Error());
+    request(app)
+      .get('/backstage/v1/auth?tenant=admin')
+      .then((res) => {
+        expect(res.statusCode).toBe(500);
+        expect(res.body).toStrictEqual({ error: 'An unexpected error has occurred.' });
+        done();
+      });
+  });
+
   test('/backstage/v1/auth/return: ok', (done) => {
     mockRedisGet.mockResolvedValueOnce(sessionMockIncomplete);
+    mockTokenByAuthCode.mockResolvedValue({
+      accessToken: 'accessToken',
+      refreshToken: 'refreshToken',
+      refreshExpiresAt: 'refreshExpiresAt',
+      accessTokenExpiresAt: 'accessTokenExpiresAt',
+    });
     request(app)
       .get('/backstage/v1/auth/return?code=code&state=state&session_state=session_state')
       .set('Cookie', [cookies])
@@ -182,6 +205,55 @@ describe('RoutesV1', () => {
         expect(response.statusCode).toBe(303);
         expect(response.redirect).toBe(true);
         expect(response.header.location).toBe('http://localhost:8000/return?state=state');
+        done();
+      });
+  });
+
+  test('/backstage/v1/auth/return: error when try get session', (done) => {
+    mockRedisGet.mockRejectedValueOnce(new Error());
+    request(app)
+      .get('/backstage/v1/auth/return?code=code&state=state&session_state=session_state')
+      .set('Cookie', [cookies])
+      .then((response) => {
+        expect(response.statusCode).toBe(500);
+        expect(response.body).toStrictEqual({ error: 'An unexpected error has occurred.' });
+        done();
+      });
+  });
+
+  test('/backstage/v1/auth/return: redirect with error', (done) => {
+    mockRedisGet.mockResolvedValueOnce(sessionMockIncomplete);
+    mockTokenByAuthCode.mockRejectedValueOnce(new Error('msgError'));
+    request(app)
+      .get('/backstage/v1/auth/return?code=code&state=state&session_state=session_state')
+      .set('Cookie', [cookies])
+      .then((response) => {
+        expect(response.statusCode).toBe(303);
+        expect(response.redirect).toBe(true);
+        expect(response.header.location).toBe('http://localhost:8000/return?error=msgError');
+        done();
+      });
+  });
+
+  test('/backstage/v1/auth/return: without call /auth ', (done) => {
+    mockRedisGet.mockResolvedValueOnce(sessionBaseObj);
+    request(app)
+      .get('/backstage/v1/auth/return?code=code&state=state&session_state=session_state')
+      .set('Cookie', [cookies])
+      .then((response) => {
+        expect(response.statusCode).toBe(303);
+        expect(response.redirect).toBe(true);
+        expect(response.header.location).toBe('http://localhost:8000/return?error=There+is+no+active+session');
+        done();
+      });
+  });
+
+  test('/backstage/v1/auth/return: without query string ', (done) => {
+    request(app)
+      .get('/backstage/v1/auth/return')
+      .then((response) => {
+        expect(response.statusCode).toBe(400);
+        expect(response.body).toStrictEqual({ error: "request.query should have required property 'code', request.query should have required property 'state', request.query should have required property 'session_state'" });
         done();
       });
   });
@@ -284,7 +356,7 @@ describe('RoutesV1', () => {
       });
   });
 
-  test('/backstage/v1/auth/user-info: not ok', (done) => {
+  test('/backstage/v1/auth/user-info: unexpected error', (done) => {
     mockRedisGet.mockResolvedValueOnce(sessionMockComplete);
     mockKeyInfoByToken.mockRejectedValueOnce(new Error());
 
@@ -309,6 +381,19 @@ describe('RoutesV1', () => {
         expect(response.statusCode).toBe(303);
         expect(response.redirect).toBe(true);
         expect(response.header.location).toBe('http://buildUrlLogout:8000');
+        done();
+      });
+  });
+
+  test('/backstage/v1/auth/revoke: no session ok', (done) => {
+    mockRedisGet.mockResolvedValueOnce(sessionBaseObj);
+    request(app)
+      .get('/backstage/v1/auth/revoke')
+      .set('Cookie', [cookies])
+      .then((response) => {
+        expect(response.statusCode).toBe(303);
+        expect(response.redirect).toBe(true);
+        expect(response.header.location).toBe('http://localhost:8000/?error=There+is+no+active+session');
         done();
       });
   });

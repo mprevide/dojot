@@ -87,62 +87,56 @@ module.exports = ({ mountPoint, keycloak }) => {
             logger.debug('auth-return-route.get: req.query=', req.query);
             logger.debug('auth-return-route.get: req.sessionID=', req.sessionID);
 
-            console.log('req.session', req.session);
-            try {
-              const url = new URL(GUI_RETURN_URL);
+            const url = new URL(GUI_RETURN_URL);
 
+            const {
+              realm,
+              codeVerifier,
+            } = req.session;
+
+            if (codeVerifier) {
               const {
-                realm,
-                codeVerifier,
-              } = req.session;
+                state,
+                code: authorizationCode,
+              } = req.query;
 
-              if (codeVerifier) {
+              try {
                 const {
-                  state,
-                  code: authorizationCode,
-                } = req.query;
+                  accessToken,
+                  refreshToken,
+                  refreshExpiresAt,
+                  accessTokenExpiresAt,
+                } = await keycloak.getRequestsInstance().getTokenByAuthorizationCode(
+                  realm,
+                  authorizationCode,
+                  codeVerifier,
+                  `${BASE_URL + mountPoint}/auth/return`,
+                );
 
-                try {
-                  const {
-                    accessToken,
-                    refreshToken,
-                    refreshExpiresAt,
-                    accessTokenExpiresAt,
-                  } = await keycloak.getRequestsInstance().getTokenByAuthorizationCode(
-                    realm,
-                    authorizationCode,
-                    codeVerifier,
-                    `${BASE_URL + mountPoint}/auth/return`,
-                  );
+                req.session.accessToken = accessToken;
+                req.session.refreshToken = refreshToken;
+                req.session.refreshExpiresAt = refreshExpiresAt;
+                req.session.accessTokenExpiresAt = accessTokenExpiresAt;
 
-                  req.session.accessToken = accessToken;
-                  req.session.refreshToken = refreshToken;
-                  req.session.refreshExpiresAt = refreshExpiresAt;
-                  req.session.accessTokenExpiresAt = accessTokenExpiresAt;
+                url.searchParams.append('state', state);
 
-                  url.searchParams.append('state', state);
+                logger.debug(`auth-return-route.get: redirect to ${GUI_RETURN_URL} with state=${state}`);
+                return res.redirect(303, url.href);
+              } catch (e) {
+                req.session.destroy((err) => {
+                  if (err) { logger.warn('auth-return-route.get:session-destroy-error:', err); }
+                });
 
-                  logger.debug(`auth-return-route.get: redirect to ${GUI_RETURN_URL} with state=${state}`);
-                  return res.redirect(303, url.href);
-                } catch (e) {
-                  req.session.destroy((err) => {
-                    if (err) { logger.warn('auth-return-route.get:session-destroy-error:', err); }
-                  });
+                url.searchParams.append('error', e.message);
 
-                  url.searchParams.append('error', e);
-
-                  logger.debug(`auth-return-route.get: redirect to ${GUI_RETURN_URL} with e=${e}`);
-                  return res.redirect(303, url.href);
-                }
-              } else {
-                const e = 'There is no active session';
-                url.searchParams.append('error', e);
                 logger.debug(`auth-return-route.get: redirect to ${GUI_RETURN_URL} with e=${e}`);
                 return res.redirect(303, url.href);
               }
-            } catch (e) {
-              logger.error('auth-return-route.get:', e);
-              throw e;
+            } else {
+              const e = 'There is no active session';
+              url.searchParams.append('error', e);
+              logger.debug(`auth-return-route.get: redirect to ${GUI_RETURN_URL} with e=${e}`);
+              return res.redirect(303, url.href);
             }
           },
         ],
@@ -166,7 +160,6 @@ module.exports = ({ mountPoint, keycloak }) => {
           async (req, res) => {
             res.set('Cache-Control', 'no-store');
             logger.debug('auth-user-info-route.get: req.sessionID=', req.sessionID);
-
             try {
               if (req.session && req.session.realm && req.session.accessToken) {
                 const { realm, accessToken } = req.session;
@@ -186,8 +179,6 @@ module.exports = ({ mountPoint, keycloak }) => {
               logger.error('device-user-info.get:', e);
               throw e;
             }
-            return res.status(401)
-              .json({ error: 'There is no active session' });
           },
         ],
       },
