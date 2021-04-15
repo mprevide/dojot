@@ -1,5 +1,4 @@
 /* eslint-disable security/detect-non-literal-fs-filename */
-
 const randomString = require('randomstring');
 const crypto = require('crypto');
 const base64url = require('base64url');
@@ -16,7 +15,7 @@ const fs = require('fs');
  * https://www.oauth.com/oauth2-servers/pkce/authorization-request/
  *
  * @param {string} [hash='sha256']
- * @param {number} [stringSize=128] 43 and 128 characters long.
+ * @param {number} [stringSize=128] 43 to 128 characters long.
  * @returns {{codeChallenge:string,codeVerifier:string}} PKCE challenge pair
  */
 const generatePKCEChallenge = (hash = 'sha256', stringSize = 128) => {
@@ -49,7 +48,8 @@ const generatePKCEChallenge = (hash = 'sha256', stringSize = 128) => {
  *
  * For example 'tls.request.cert' will become tls.requestCert and tls.request.cert will be excluded
  *
- * Supports all tls.createSecureContext options(https://nodejs.org/api/tls.html#tls_tls_createsecurecontext_optionsk)
+ * Supports all tls.createSecureContext options(https://nodejs.org/api/tls.html#tls_tls_createsecurecontext_optionsk),
+ * except for the key CA which cannot be an array.
  *
  * @param {Object} config with keys prefixed `tls.` or `ssl.`
  *
@@ -81,21 +81,28 @@ const replaceTLSFlattenConfigs = (config) => {
     if (tlsConfig.key) {
       tlsConfig.key = fs.readFileSync(tlsConfig.key).toString();
     }
+
+
     if (tlsConfig.ca) {
-      if (!Array.isArray(tlsConfig.ca)) {
-        tlsConfig.ca = [tlsConfig.ca];
-      }
-      tlsConfig.ca = tlsConfig.ca.map((filename) => fs.readFileSync(filename).toString());
+      tlsConfig.ca = fs.readFileSync(tlsConfig.ca).toString();
     }
+
+    const newConfig = config;
+    Object.keys(config).forEach((key) => {
+      if (key.substring(0, 3) === keyType) {
+        delete newConfig[key.toString()];
+      }
+    });
 
     if (keyType === 'tls') {
       return {
-        ...flatten(configUn),
+        ...newConfig,
         tls: tlsConfig,
       };
     }
+
     return {
-      ...flatten(configUn),
+      ...newConfig,
       ssl: tlsConfig,
     };
   }

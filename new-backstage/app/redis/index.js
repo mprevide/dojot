@@ -43,64 +43,48 @@ class Redis {
    *          with register services 'redis-pub' and 'redis-sub'} serviceState
    *          Manages the services' states, providing health check and shutdown utilities.
    */
-  async init(serviceState) {
-    try {
-      const redisConfigReplaced = replaceTLSFlattenConfigs(redisConfig);
+  constructor(serviceState) {
+    const redisConfigReplaced = replaceTLSFlattenConfigs(redisConfig);
 
-      this.redisPub = redis.createClient({
-        retry_strategy: retryStrategy,
-        ...redisConfigReplaced,
-      });
-      this.redisSub = redis.createClient({
-        retry_strategy: retryStrategy,
-        ...redisConfigReplaced,
-      });
+    this.redisPub = redis.createClient({
+      retry_strategy: retryStrategy,
+      ...redisConfigReplaced,
+    });
+    this.redisSub = redis.createClient({
+      retry_strategy: retryStrategy,
+      ...redisConfigReplaced,
+    });
 
-      this.serviceState = serviceState;
-
-
-      this.createRedisAsync();
+    this.serviceState = serviceState;
 
 
-      this.management = new RedisManagement(
-        this.redisPubAsync,
-        this.redisSubAsync,
-      );
+    this.createRedisAsync();
 
-      this.initSub = this.management.initSub.bind(this.management);
-      this.initPub = this.management.initPub.bind(this.management);
 
-      this.redisPub.on('connect', () => {
-        logger.debug('Redis pub is connect.');
-        this.serviceState.signalReady('redis-pub');
-        this.initPub();
-      });
+    this.management = new RedisManagement(
+      this.redisPubAsync,
+      this.redisSubAsync,
+    );
 
-      this.redisSub.on('connect', async () => {
-        logger.debug('Redis sub is connect.');
-        this.serviceState.signalReady('redis-sub');
-        await this.initSub(redisConfig.db);
-      });
+    this.initSub = this.management.initSub.bind(this.management);
+    this.initPub = this.management.initPub.bind(this.management);
 
-      this.handleEvents(this.redisPub, 'pub', this.serviceState);
-      this.handleEvents(this.redisSub, 'sub', this.serviceState);
+    this.redisPub.on('connect', () => {
+      logger.debug('Redis pub is connect.');
+      this.serviceState.signalReady('redis-pub');
+      this.initPub();
+    });
 
-      await this.registerShutdown();
+    this.redisSub.on('connect', async () => {
+      logger.debug('Redis sub is connect.');
+      this.serviceState.signalReady('redis-sub');
+      await this.initSub(redisConfig.db);
+    });
 
-      this.initialized = true;
-    } catch (error) {
-      logger.error('init: error=', error);
-    }
-  }
+    this.handleEvents(this.redisPub, 'pub', this.serviceState);
+    this.handleEvents(this.redisSub, 'sub', this.serviceState);
 
-  /**
-   * Checks whether it was started properly by calling the init method
-   * @private
-   */
-  checkInitiated() {
-    if (!this.initialized) {
-      throw new Error('Call init method first');
-    }
+    this.registerShutdown();
   }
 
 
@@ -160,7 +144,6 @@ class Redis {
   * @returns {RedisManagement}
   */
   getManagementInstance() {
-    this.checkInitiated();
     return this.management;
   }
 
@@ -186,4 +169,4 @@ class Redis {
   }
 }
 
-module.exports = new Redis();
+module.exports = Redis;

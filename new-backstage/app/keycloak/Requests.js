@@ -84,6 +84,7 @@ class Requests {
 
     this.urlToReturn = urlToReturn;
 
+    // TODO add tls option
     this.axiosKeycloak = axios.create({
       baseURL: keycloakInternalURL,
       headers: { 'content-type': 'application/x-www-form-urlencoded' },

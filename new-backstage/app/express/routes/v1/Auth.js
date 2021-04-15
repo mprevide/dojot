@@ -15,7 +15,7 @@ const logger = new Logger('backstage:express/routes/v1/Auth');
 
 /**
  * Routes to Auth
- * 
+ *
  * TODO
  *
  * @param {string} mountPoint be used as a route prefix
@@ -87,10 +87,10 @@ module.exports = ({ mountPoint, keycloak }) => {
             logger.debug('auth-return-route.get: req.query=', req.query);
             logger.debug('auth-return-route.get: req.sessionID=', req.sessionID);
 
+            console.log('req.session', req.session);
             try {
               const url = new URL(GUI_RETURN_URL);
 
-              console.log('req.session', req.session);
               const {
                 realm,
                 codeVerifier,
@@ -125,8 +125,8 @@ module.exports = ({ mountPoint, keycloak }) => {
                   logger.debug(`auth-return-route.get: redirect to ${GUI_RETURN_URL} with state=${state}`);
                   return res.redirect(303, url.href);
                 } catch (e) {
-                  req.session.destroy((err, msg) => {
-                    if (err) { logger.warn('auth-return-route.get:session-destroy-error:', msg, err); }
+                  req.session.destroy((err) => {
+                    if (err) { logger.warn('auth-return-route.get:session-destroy-error:', err); }
                   });
 
                   url.searchParams.append('error', e);
@@ -184,6 +184,7 @@ module.exports = ({ mountPoint, keycloak }) => {
               }
             } catch (e) {
               logger.error('device-user-info.get:', e);
+              throw e;
             }
             return res.status(401)
               .json({ error: 'There is no active session' });

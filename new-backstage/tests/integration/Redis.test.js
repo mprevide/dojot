@@ -87,10 +87,12 @@ const serviceStateMock = {
 };
 
 
-const redis = require('../../app/redis');
+const Redis = require('../../app/redis');
 
+let redis = null;
 describe('redis tests', () => {
   beforeAll(() => {
+    redis = new Redis(serviceStateMock);
   });
   beforeEach(() => {
     // jest.clearAllMocks();
@@ -99,10 +101,7 @@ describe('redis tests', () => {
   });
   afterEach(() => {
   });
-  test('init ok', async () => {
-    await redis.init(serviceStateMock);
-
-    expect(redis.initialized).toBe(true);
+  test('init', async () => {
     reqEventMapMock.connect[0]();
     await reqEventMapMock.connect[1]();
 

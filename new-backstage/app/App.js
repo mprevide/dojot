@@ -38,6 +38,8 @@ class App {
       this.serviceState.registerService('postgres');
 
       this.server = new Server(this.serviceState);
+      this.redis = new Redis(this.serviceState);
+      this.keycloak = new Keycloak(this.serviceState);
     } catch (e) {
       logger.error('constructor:', e);
       throw e;
@@ -53,15 +55,13 @@ class App {
       const mountPoint = '/backstage/v1';
 
       await Postgres.init(this.serviceState);
-      await Redis.init(this.serviceState);
-      Keycloak.init(this.serviceState, mountPoint);
 
       await this.server.init(express(
         this.serviceState,
         mountPoint,
         {
-          redis: Redis,
-          keycloak: Keycloak,
+          redis: this.redis,
+          keycloak: this.keycloak,
         },
       ));
     } catch (e) {

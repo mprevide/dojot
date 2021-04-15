@@ -5,6 +5,7 @@ const {
 const session = require('express-session');
 const createError = require('http-errors');
 
+// TODO
 // const Keycloak = require('../../../keycloak');
 const SessionStore = require('./SessionStore')(session);
 
@@ -81,17 +82,7 @@ module.exports = ({
   async (req, res, next) => {
     logger.debug(`Receiving requisition for: ${req.path}`);
 
-    // TODO
     // These routes do not require Token access in the session
-    // if (req.path === `${mountPoint}/auth` exceptionRoutes
-    //   || req.path === `${mountPoint}/auth/return`
-    //   || req.path === `${mountPoint}/auth/revoke`
-    // ) {
-    //   return next();
-    // }
-
-    console.log('req.path', req.path, exceptionRoutes);
-
     if (exceptionRoutes.includes(req.path)) {
       return next();
     }
@@ -109,10 +100,13 @@ module.exports = ({
       }
       return next();
     }
-    // TODO
-    req.session.destroy((err2, msg) => {
-      logger.warn(':', msg, err2);
+
+    req.session.destroy((errorDestroy) => {
+      if (errorDestroy) {
+        logger.warn('destroy:', errorDestroy);
+      }
     });
+
     // If  do not find a session with access
     // token returns that was not authorized
     err.message = 'There is no valid session.';

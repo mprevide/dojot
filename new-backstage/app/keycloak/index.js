@@ -21,9 +21,8 @@ class Keycloak {
    *          with register service 'keycloak'} serviceState
    *          Manages the services' states, providing health check and shutdown utilities.
    *
-   * @param {String} mountPoint
    */
-  init(serviceState) {
+  constructor(serviceState) {
     this.serviceName = 'keycloak';
     this.clientId = configKeycloak['public.client.id'];
     this.externalKeycloakUrl = configKeycloak['url.external'];
@@ -34,26 +33,15 @@ class Keycloak {
       this.clientId,
       this.internalKeycloakUrl,
     );
-    this.initialized = true;
   }
+
 
   /**
    * Returns a Requests instance
    * @returns {Requests}
    */
   getRequestsInstance() {
-    this.checkInitiated();
     return this.requests;
-  }
-
-  /**
-   * Checks whether it was started properly by calling the init method
-   * @private
-   */
-  checkInitiated() {
-    if (!this.initialized) {
-      throw new Error('Call init method first');
-    }
   }
 
   /**
@@ -65,7 +53,6 @@ class Keycloak {
    * @returns
    */
   buildUrlLogin(realm, state, codeChallenge, urlReturn) {
-    this.checkInitiated();
     return buildUrlLogin({
       baseUrl: this.externalKeycloakUrl,
       clientId: this.clientId,
@@ -84,7 +71,6 @@ class Keycloak {
    * @returns
    */
   buildUrlLogout(realm, redirectUri) {
-    this.checkInitiated();
     return buildUrlLogout({
       baseUrl: this.externalKeycloakUrl,
       redirectUri,
@@ -117,4 +103,4 @@ class Keycloak {
   }
 }
 
-module.exports = new Keycloak();
+module.exports = Keycloak;

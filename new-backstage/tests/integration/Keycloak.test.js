@@ -46,10 +46,13 @@ const mockAxios = {
 jest.mock('axios', () => mockAxios);
 
 
-const keycloak = require('../../app/keycloak');
+const Keycloak = require('../../app/keycloak');
+
+let keycloak = null;
 
 describe('Keycloak tests', () => {
   beforeAll(() => {
+
   });
   beforeEach(() => {
     jest.clearAllMocks();
@@ -59,11 +62,8 @@ describe('Keycloak tests', () => {
   afterEach(() => {
   });
   test('init', () => {
-    keycloak.init(serviceStateMock);
-
-    expect(keycloak.initialized).toBe(true);
+    keycloak = new Keycloak(serviceStateMock);
     expect(keycloak.healthCheckMs).toBe(30000);
-
     expect(mockAddHealthChecker)
       .toHaveBeenCalledWith(keycloak.serviceName, expect.any(Function), 30000);
   });

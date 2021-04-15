@@ -5,7 +5,6 @@ const authRoutes = require('./routes/v1/Auth');
 const openApiValidatorInterceptor = require('./interceptors/OpenApiValidator');
 const graphQLInterceptor = require('./interceptors/GraphQL');
 const sessionInterceptor = require('./interceptors/session/Session');
-const commonErrorsHandle = require('./interceptors/CommonErrorsHandle');
 const swaggerInterceptor = require('./interceptors/Swagger');
 const proxyInterceptor = require('./interceptors/Proxy');
 
@@ -86,7 +85,6 @@ module.exports = (serviceState, mountPoint, {
     ]).flat(),
     errorHandlers: [
       // The order of the error handlers matters
-      commonErrorsHandle(),
       defaultErrorHandler({
         logger,
       }),
