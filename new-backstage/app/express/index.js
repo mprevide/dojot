@@ -23,12 +23,15 @@ const {
  *
  * @param {string}mountPoint Start of all routes
  *
- *
+ * TODO
  * @throws  Some error when try load open api in yaml
  *
  * @returns {express}
  */
-module.exports = (serviceState, mountPoint) => {
+module.exports = (serviceState, mountPoint, {
+  redis,
+  keycloak,
+}) => {
   const { defaultErrorHandler } = WebUtils.framework;
 
   const {
@@ -65,6 +68,8 @@ module.exports = (serviceState, mountPoint) => {
           `${mountPoint}/auth/return`,
           `${mountPoint}/auth/revoke`,
         ],
+        keycloak,
+        redis,
       }),
       proxyInterceptor({
         mountPoint,
@@ -76,6 +81,7 @@ module.exports = (serviceState, mountPoint) => {
     routes: ([
       authRoutes({
         mountPoint,
+        keycloak,
       }),
     ]).flat(),
     errorHandlers: [

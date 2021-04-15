@@ -59,6 +59,10 @@ class App {
       await this.server.init(express(
         this.serviceState,
         mountPoint,
+        {
+          redis: Redis,
+          keycloak: Keycloak,
+        },
       ));
     } catch (e) {
       logger.error('init:', e);

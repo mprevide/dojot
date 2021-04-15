@@ -44,6 +44,7 @@ const mockPgClient = {
 
 const reqEventMapMock = {};
 const mockConnect = jest.fn();
+const mockEnd = jest.fn();
 const mockPg = {
   Pool: jest.fn(() => ({
     on: jest.fn().mockImplementation((event, onCallback) => {
@@ -53,6 +54,7 @@ const mockPg = {
       reqEventMapMock[event].push(onCallback);
     }),
     connect: mockConnect,
+    end: mockEnd,
   })),
 };
 jest.mock('pg', () => mockPg);
@@ -116,5 +118,18 @@ describe('Postgres tests', () => {
     expect(mockAddHealthChecker).toHaveBeenCalled();
     expect(ready).not.toHaveBeenCalled();
     expect(notReady).toHaveBeenCalled();
+  });
+
+  test('registerShutdown', async () => {
+    mockEnd.mockResolvedValueOnce('ok');
+    postgres.registerShutdown();
+
+    const callback = mockRegisterShutdownHandler.mock.calls[0][0];
+    await callback();
+
+    expect(mockEnd)
+      .toHaveBeenCalledTimes(1);
+
+    expect(mockRegisterShutdownHandler).toHaveBeenCalled();
   });
 });

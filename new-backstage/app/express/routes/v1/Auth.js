@@ -1,6 +1,6 @@
 const { Logger, ConfigManager: { getConfig } } = require('@dojot/microservice-sdk');
 const { generatePKCEChallenge } = require('../../../Utils');
-const Keycloak = require('../../../keycloak');
+// const Keycloak = require('../../../keycloak');
 
 const {
   gui: configGui,
@@ -15,10 +15,12 @@ const logger = new Logger('backstage:express/routes/v1/Auth');
 
 /**
  * Routes to Auth
+ * 
+ * TODO
  *
  * @param {string} mountPoint be used as a route prefix
 */
-module.exports = ({ mountPoint }) => {
+module.exports = ({ mountPoint, keycloak }) => {
   /**
    *  Create session, generate PKCE, and redirect to the
    *  keycloack login screen using the openid connect protocol
@@ -41,7 +43,7 @@ module.exports = ({ mountPoint }) => {
 
               const { codeVerifier, codeChallenge } = generatePKCEChallenge();
 
-              const url = Keycloak.buildUrlLogin(
+              const url = keycloak.buildUrlLogin(
                 realm,
                 newState,
                 codeChallenge,
@@ -88,6 +90,7 @@ module.exports = ({ mountPoint }) => {
             try {
               const url = new URL(GUI_RETURN_URL);
 
+              console.log('req.session', req.session);
               const {
                 realm,
                 codeVerifier,
@@ -105,7 +108,7 @@ module.exports = ({ mountPoint }) => {
                     refreshToken,
                     refreshExpiresAt,
                     accessTokenExpiresAt,
-                  } = await Keycloak.getRequestsInstance().getTokenByAuthorizationCode(
+                  } = await keycloak.getRequestsInstance().getTokenByAuthorizationCode(
                     realm,
                     authorizationCode,
                     codeVerifier,
@@ -168,9 +171,9 @@ module.exports = ({ mountPoint }) => {
               if (req.session && req.session.realm && req.session.accessToken) {
                 const { realm, accessToken } = req.session;
 
-                const permissionsArr = await Keycloak.getRequestsInstance()
+                const permissionsArr = await keycloak.getRequestsInstance()
                   .getPermissionsByToken(realm, accessToken);
-                const userInfoObj = await Keycloak.getRequestsInstance()
+                const userInfoObj = await keycloak.getRequestsInstance()
                   .getUserInfoByToken(realm, accessToken);
                 const result = {
                   permissions: permissionsArr,
@@ -214,7 +217,7 @@ module.exports = ({ mountPoint }) => {
                   logger.warn(`auth-user-logout-route.get: session-destroy-error:=${JSON.stringify(err)}`);
                 });
 
-                const url = Keycloak.buildUrlLogout(realm, GUI_HOME_URL);
+                const url = keycloak.buildUrlLogout(realm, GUI_HOME_URL);
                 logger.debug(`auth-user-logout-route.get: redirect to ${url}`);
                 return res.redirect(303, url);
               }

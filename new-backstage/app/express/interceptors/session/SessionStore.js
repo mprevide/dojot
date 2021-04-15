@@ -2,8 +2,8 @@
 const {
   Logger,
 } = require('@dojot/microservice-sdk');
-const Redis = require('../../../redis');
-const Keycloak = require('../../../keycloak');
+// const Redis = require('../../../redis');
+// const Keycloak = require('../../../keycloak');
 
 const logger = new Logger('backstage:express/interceptors/session/SessionStore');
 
@@ -20,11 +20,11 @@ module.exports = (session) => {
    *
    */
   class SessionStore extends Store {
-    constructor(options = {}) {
+    constructor(options = {}, redis, keycloak) {
       super(options);
-      this.redisManagement = Redis.getManagementInstance();
-      const logoutBound = Keycloak.getRequestsInstance()
-        .logout.bind(Keycloak.getRequestsInstance());
+      this.redisManagement = redis.getManagementInstance();
+      const logoutBound = keycloak.getRequestsInstance()
+        .logout.bind(keycloak.getRequestsInstance());
       this.redisManagement.setFuncToCallBeforeDestroy(logoutBound);
     }
 
@@ -47,6 +47,7 @@ module.exports = (session) => {
       logger.debug(`get: sid=${sid}`);
       try {
         const data = await this.redisManagement.get(sid);
+        console.log('data', data);
         return cb(null, data);
       } catch (err) {
         logger.warn(`get: err=${err.stack || err}`);

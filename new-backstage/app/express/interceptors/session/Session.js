@@ -5,7 +5,7 @@ const {
 const session = require('express-session');
 const createError = require('http-errors');
 
-const Keycloak = require('../../../keycloak');
+// const Keycloak = require('../../../keycloak');
 const SessionStore = require('./SessionStore')(session);
 
 const logger = new Logger('backstage:express/interceptors/session/Session');
@@ -17,7 +17,7 @@ const { session: sessionConfig } = getConfig('BACKSTAGE');
  *
  * @param {object} req
  */
-const renewAccessTokenIfNecessary = async (req) => {
+const renewAccessTokenIfNecessary = async (req, keycloak) => {
   logger.debug('renewAccessTokenIfNecessary: ...');
   if ((Date.now() > new Date(req.session.accessTokenExpiresAt).getTime())) {
     logger.debug('renewAccessTokenIfNecessary: Getting a new token...');
@@ -27,7 +27,7 @@ const renewAccessTokenIfNecessary = async (req) => {
       refreshExpiresAt,
       accessTokenExpiresAt,
       sessionState,
-    } = await Keycloak.getRequestsInstance().getTokenByRefreshToken(
+    } = await keycloak.getRequestsInstance().getTokenByRefreshToken(
       req.session.realm,
       req.session.refreshToken,
     );
@@ -45,9 +45,12 @@ const renewAccessTokenIfNecessary = async (req) => {
 
 /**
  * Middleware responsible for creating a session and managing it
+ * TODO
  */
 module.exports = ({
   exceptionRoutes,
+  keycloak,
+  redis,
 }) => ({
   name: 'session-express-interceptor',
   middleware:
@@ -56,7 +59,7 @@ module.exports = ({
     name: sessionConfig['cookie.name'],
     domain: sessionConfig.domain,
     proxy: sessionConfig.proxy,
-    store: new SessionStore(),
+    store: new SessionStore({}, redis, keycloak),
     // Forces the session to be saved back to the session store,
     // even if the session was never modified
     resave: false,
@@ -78,6 +81,7 @@ module.exports = ({
   async (req, res, next) => {
     logger.debug(`Receiving requisition for: ${req.path}`);
 
+    // TODO
     // These routes do not require Token access in the session
     // if (req.path === `${mountPoint}/auth` exceptionRoutes
     //   || req.path === `${mountPoint}/auth/return`
@@ -85,6 +89,8 @@ module.exports = ({
     // ) {
     //   return next();
     // }
+
+    console.log('req.path', req.path, exceptionRoutes);
 
     if (exceptionRoutes.includes(req.path)) {
       return next();
@@ -95,7 +101,7 @@ module.exports = ({
       try {
         // Get a new access token with the refresh token
         // if the current access token is expired
-        await renewAccessTokenIfNecessary(req);
+        await renewAccessTokenIfNecessary(req, keycloak);
       } catch (e) {
         logger.error(e);
         err.message = 'It was not possible to renew the token.';

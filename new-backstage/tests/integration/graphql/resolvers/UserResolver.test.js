@@ -20,10 +20,10 @@ const mockSdk = {
 jest.mock('@dojot/microservice-sdk', () => mockSdk);
 
 const mockQuery = jest.fn();
-const mockInflux = {
+const mockPG = {
   query: mockQuery,
 };
-jest.mock('../../../../app/postgres', () => mockInflux);
+jest.mock('../../../../app/postgres', () => mockPG);
 
 const Resolver = require('../../../../app/graphql/user/Resolvers');
 
