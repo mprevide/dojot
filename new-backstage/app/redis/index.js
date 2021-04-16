@@ -4,7 +4,9 @@ const {
   ConfigManager: { getConfig },
   Logger,
 } = require('@dojot/microservice-sdk');
+const { flatten, unflatten } = require('flat');
 const RedisManagement = require('./RedisManagement');
+
 const { replaceTLSFlattenConfigs } = require('../Utils');
 
 const logger = new Logger('backstage:Redis');
@@ -26,7 +28,7 @@ const { redis: redisConfig } = getConfig('BACKSTAGE');
  * @returns
  */
 const retryStrategy = (options) => {
-  logger.debug(`retryStrategy: options=${JSON.stringify(options)}`);
+  logger.warn(`retryStrategy: options=${JSON.stringify(options)}`);
 
   // reconnect after
   return redisConfig['reconnect.after'];
@@ -44,7 +46,10 @@ class Redis {
    *          Manages the services' states, providing health check and shutdown utilities.
    */
   constructor(serviceState) {
-    const redisConfigReplaced = replaceTLSFlattenConfigs(redisConfig);
+    const { client } = unflatten(redisConfig);
+    const configClient = flatten(client);
+
+    const redisConfigReplaced = replaceTLSFlattenConfigs(configClient);
 
     this.redisPub = redis.createClient({
       retry_strategy: retryStrategy,
@@ -103,6 +108,14 @@ class Redis {
     clientRedis.on('error', (error) => {
       logger.error(`Redis ${nameClient} has an error:`, error);
       this.serviceState.signalNotReady(`redis-${nameClient}`);
+      if (error.code === 'CONNECTION_BROKEN') {
+        logger.warn('The service will be shutdown for exceeding attempts to reconnect with Redis');
+        this.serviceState.shutdown().then(() => {
+          logger.warn('The service was gracefully shutdown');
+        }).catch(() => {
+          logger.error('The service was unable to be shutdown gracefully');
+        });
+      }
     });
     clientRedis.on('end', () => {
       logger.warn(`Redis ${nameClient} was ended.`);
@@ -154,15 +167,12 @@ class Redis {
   registerShutdown() {
     this.serviceState.registerShutdownHandler(async () => {
       logger.debug('ShutdownHandler: Trying close redis sub...');
-      // TODO: I think things are not well organized unsubscribe here and subscribe in another class
-      this.initialized = false;
       await this.redisSubAsync.unsubscribe();
       await this.redisSubAsync.quit();
       logger.warn('ShutdownHandler: Closed redis sub.');
     });
     this.serviceState.registerShutdownHandler(async () => {
       logger.debug('ShutdownHandler: Trying close redis pub...');
-      this.initialized = false;
       await this.redisPubAsync.quit();
       logger.warn('ShutdownHandler: Closed redis pub.');
     });

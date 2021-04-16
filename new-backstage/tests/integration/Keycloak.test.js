@@ -12,13 +12,14 @@ const mockConfig = {
   },
 };
 
+const mockLogDebug = jest.fn();
 const mockSdk = {
   ConfigManager: {
     getConfig: jest.fn(() => mockConfig),
     transformObjectKeys: jest.fn((obj) => obj),
   },
   Logger: jest.fn(() => ({
-    debug: () => jest.fn(),
+    debug: jest.fn(),
     error: () => jest.fn(),
     info: () => jest.fn(),
     warn: () => jest.fn(),
@@ -100,8 +101,22 @@ describe('Keycloak tests', () => {
   });
 
   test('getTokenByAuthorizationCode: reject', async () => {
-    expect.assertions(2);
-    mockAxiosPost.mockRejectedValueOnce(new Error('a'));
+    expect.assertions(3);
+    class ErrorTest extends Error {
+      constructor(message) {
+        super(message); // (1)
+        this.response = {
+          status: 'status',
+          data: {
+            error: 'errorTxt',
+            error_description: 'errorDesc',
+          },
+        };
+      }
+    }
+
+    mockAxiosPost.mockRejectedValueOnce(new ErrorTest());
+
     try {
       const realm = 'admin';
       const authorizationCode = 'authorizationCode';
@@ -111,7 +126,8 @@ describe('Keycloak tests', () => {
         .getTokenByAuthorizationCode(realm, authorizationCode, codeVerifier);
     } catch (e) {
       expect(mockAxiosPost).toHaveBeenCalled();
-      expect(e.message).toBe('a');
+      expect(e.status).toBe(500);
+      expect(e.message).toStrictEqual('errorTxt: errorDesc');
     }
   });
 
@@ -351,6 +367,37 @@ describe('Keycloak tests', () => {
 
     expect(mockAxiosGet).toHaveBeenCalled();
     expect(returnData).toBe(false);
+  });
+
+  test('logout: ok', async () => {
+    mockAxiosPost.mockResolvedValueOnce({
+      status: 204,
+      statusText: 'Logout',
+    });
+
+    const realm = 'admin';
+    const accessToken = 'accessToken';
+    const refreshToken = 'refreshToken';
+
+    await keycloak
+      .getRequestsInstance()
+      .logout(realm, accessToken, refreshToken);
+
+    expect(mockAxiosPost).toHaveBeenCalled();
+  });
+
+  test('logout: !=204', async () => {
+    mockAxiosPost.mockResolvedValueOnce({
+      status: 400,
+      statusText: 'Logout',
+    });
+    const realm = 'admin';
+    const accessToken = 'accessToken';
+    const refreshToken = 'refreshToken';
+
+    await keycloak
+      .getRequestsInstance()
+      .logout(realm, accessToken, refreshToken);
   });
 
   test('createInfluxHealthChecker - heath', async () => {

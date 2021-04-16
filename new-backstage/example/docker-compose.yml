@@ -239,6 +239,11 @@ services:
       # The BACKSTAGE_SESSION_SECRET should be unique for each environment
       BACKSTAGE_SESSION_SECRET: j0yYsBdc4p+PPq6ArjshcPdz0HA6W
       BACKSTAGE_SESSION_COOKIE_HTTPS: 'false'
+      # TODO: improve, so that it is not necessary to pass urls
+      BACKSTAGE_APP_BASE_URL: 'http://localhost:8000'
+      BACKSTAGE_GUI_RETURN_URL: 'http://localhost:8000/return'
+      BACKSTAGE_GUI_HOME_URL: 'http://localhost:8000'
+      BACKSTAGE_KEYCLOAK_URL_EXTERNAL: 'http://localhost:8000/auth'
     restart: always
     volumes:
       - ./../app/:/opt/backstage/app/:Z

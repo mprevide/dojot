@@ -5,10 +5,10 @@ const mockConfig = {
     'internal.base.url': 'http://apigw:8000',
   },
   redis: {
-    host: 'redis-backstage',
-    port: 6379,
-    db: 0,
-    connect_timeout: 3600000,
+    'client.host': 'redis-backstage',
+    'client.port': 6379,
+    'client.db': 0,
+    'client.connect_timeout': 3600000,
     'reconnect.after': 5000,
   },
   session: {

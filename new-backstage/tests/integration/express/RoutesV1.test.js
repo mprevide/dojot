@@ -50,15 +50,17 @@ const mockSdk = {
 jest.mock('@dojot/microservice-sdk', () => mockSdk);
 
 const mockRedisGet = jest.fn();
-// const mockRedisSet = jest.fn().mockResolvedValue('Ok');
+const mockRedisSet = jest.fn();
+const mockRedisDestroy = jest.fn();
+const mockRedisRestartIdleTTL = jest.fn().mockResolvedValue('Ok');
 const mockRedis = {
   initialized: true,
   getManagementInstance: jest.fn(() => ({
     setFuncToCallBeforeDestroy: jest.fn(),
-    set: jest.fn(),
+    set: mockRedisSet,
     get: mockRedisGet,
-    restartIdleTTL: jest.fn().mockResolvedValue('Ok'),
-    destroy: jest.fn(),
+    restartIdleTTL: mockRedisRestartIdleTTL,
+    destroy: mockRedisDestroy,
   })),
 };
 
@@ -84,7 +86,6 @@ const mockKey = {
   buildUrlLogout: jest.fn(() => ('http://buildUrlLogout:8000')),
 };
 
-const session = require('express-session');
 const request = require('supertest');
 
 const express = require('../../../app/express');
@@ -190,6 +191,18 @@ describe('RoutesV1', () => {
       });
   });
 
+  test('/backstage/v1/auth: error when try set session', (done) => {
+    mockRedisSet.mockRejectedValueOnce(new Error());
+    mockBuildUrlLogin.mockImplementationOnce(new Error());
+    request(app)
+      .get('/backstage/v1/auth?tenant=admin')
+      .then((res) => {
+        expect(res.statusCode).toBe(500);
+        expect(res.body).toStrictEqual({ error: 'An unexpected error has occurred.' });
+        done();
+      });
+  });
+
   test('/backstage/v1/auth/return: ok', (done) => {
     mockRedisGet.mockResolvedValueOnce(sessionMockIncomplete);
     mockTokenByAuthCode.mockResolvedValue({
@@ -279,6 +292,7 @@ describe('RoutesV1', () => {
         done();
       });
   });
+
 
   test('/backstage/v1/auth/user-info: renew token ok', (done) => {
     mockRedisGet.mockResolvedValueOnce(sessionMockExpiredToken);
@@ -372,6 +386,7 @@ describe('RoutesV1', () => {
       });
   });
 
+
   test('/backstage/v1/auth/revoke: ok', (done) => {
     mockRedisGet.mockResolvedValueOnce(sessionMockComplete);
     request(app)
@@ -394,6 +409,20 @@ describe('RoutesV1', () => {
         expect(response.statusCode).toBe(303);
         expect(response.redirect).toBe(true);
         expect(response.header.location).toBe('http://localhost:8000/?error=There+is+no+active+session');
+        done();
+      });
+  });
+
+  test('/backstage/v1/auth/revoke: cant destroy session', (done) => {
+    mockRedisGet.mockResolvedValueOnce(sessionMockComplete);
+    mockRedisDestroy.mockRejectedValueOnce(new Error());
+    request(app)
+      .get('/backstage/v1/auth/revoke')
+      .set('Cookie', [cookies])
+      .then((response) => {
+        expect(response.statusCode).toBe(303);
+        expect(response.redirect).toBe(true);
+        expect(response.header.location).toBe('http://buildUrlLogout:8000');
         done();
       });
   });
