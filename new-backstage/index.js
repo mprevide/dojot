@@ -6,8 +6,8 @@ const {
 const util = require('util');
 
 // Creating the configuration
-const userConfigFile = process.env.BACKSTAGE_CONFIG_FILE || 'production.conf';
-ConfigManager.loadSettings('BACKSTAGE', userConfigFile);
+const userConfigFile = process.env.BS_CONFIG_FILE || 'production.conf';
+ConfigManager.loadSettings('BS', userConfigFile);
 const config = ConfigManager.getConfig('BACKSTAGE');
 
 const {

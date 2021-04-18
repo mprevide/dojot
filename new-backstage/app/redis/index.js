@@ -31,7 +31,7 @@ const retryStrategy = (options) => {
   logger.warn(`retryStrategy: options=${JSON.stringify(options)}`);
 
   // reconnect after
-  return redisConfig['reconnect.after'];
+  return redisConfig['reconnect.after.ms'];
 };
 
 

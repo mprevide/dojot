@@ -16,11 +16,11 @@ class RedisSessionMgmt {
 
     // `session` is a key created in redis with ttl with the value`this.maxLifetime`.
     // It is the maximum time for a session.
-    this.prefixSession = 'session:';
+    this.prefixSession = sessionRedisConfig['redis.key.prefix.name.max.life'] || 'session:';
 
     // `session-idle` is a key created in redis with ttl with
     // the value `this.maxIdle` in each request, this ttl is restarted.
-    this.prefixSessionIdle = 'session-idle:';
+    this.prefixSessionIdle = sessionRedisConfig['redis.key.prefix.name.max.idle'] || 'session-idle:';
     this.prefixSessionIdleSize = (this.prefixSessionIdle).length;
 
     this.redisPub = redisPub;

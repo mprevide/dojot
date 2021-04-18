@@ -234,16 +234,18 @@ services:
       context: ./../
       dockerfile: ./Dockerfile
     environment:
-      BACKSTAGE_CONFIG_FILE: development.conf
+      BS_CONFIG_FILE: development.conf
       NODE_ENV: development
-      # The BACKSTAGE_SESSION_SECRET should be unique for each environment
-      BACKSTAGE_SESSION_SECRET: j0yYsBdc4p+PPq6ArjshcPdz0HA6W
-      BACKSTAGE_SESSION_COOKIE_HTTPS: 'false'
+      # The BS_SESSION_SECRET should be unique for each environment
+      BS_SESSION_SECRET: j0yYsBdc4p+PPq6ArjshcPdz0HA6W
+      BS_SESSION_COOKIE_HTTPS: 'false'
       # TODO: improve, so that it is not necessary to pass urls
-      BACKSTAGE_APP_BASE_URL: 'http://localhost:8000'
-      BACKSTAGE_GUI_RETURN_URL: 'http://localhost:8000/return'
-      BACKSTAGE_GUI_HOME_URL: 'http://localhost:8000'
-      BACKSTAGE_KEYCLOAK_URL_EXTERNAL: 'http://localhost:8000/auth'
+      BS_APP_BASE_URL: 'http://localhost:8000'
+      BS_GUI_RETURN_URL: 'http://localhost:8000/return'
+      BS_GUI_HOME_URL: 'http://localhost:8000'
+      BS_KEYCLOAK_URL_EXTERNAL: 'http://localhost:8000/auth'
+      BS_SESSION_DOMAIN: localhost
+      BS_GRAPHQL_GRAPHIQL: 'true'
     restart: always
     volumes:
       - ./../app/:/opt/backstage/app/:Z

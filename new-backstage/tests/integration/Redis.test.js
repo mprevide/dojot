@@ -9,7 +9,7 @@ const mockConfig = {
     'client.port': 6379,
     'client.db': 0,
     'client.connect_timeout': 3600000,
-    'reconnect.after': 5000,
+    'reconnect.after.ms': 5000,
   },
   session: {
     'redis.max.life.time.sec': 86400,

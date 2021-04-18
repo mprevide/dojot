@@ -84,10 +84,18 @@ class Requests {
 
     this.urlToReturn = urlToReturn;
 
+    // const httpsAgent = new https.Agent({
+    //   rejectUnauthorized: false, // (NOTE: this will disable client verification)
+    //   cert: fs.readFileSync("./usercert.pem"),
+    //   key: fs.readFileSync("./key.pem"),
+    //   passphrase: "YYY"
+    // })
+
     // TODO add tls option
     this.axiosKeycloak = axios.create({
       baseURL: keycloakInternalURL,
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      // httpsAgent
     });
     this.clientId = clientId;
   }
