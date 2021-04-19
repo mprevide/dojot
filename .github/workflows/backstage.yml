@@ -1,12 +1,10 @@
-name: Backstage (new-backstage)
+name: Backstage
 
 # trigger when create a branch, push a tag or a branch, PR with changes in 'storage/time-series/influxdb/retriever/**'
 on:
   create:
   push:
   pull_request:
-    paths:
-      - 'new-backstage/**'
 
 jobs:
   unit-tests:
@@ -28,7 +26,6 @@ jobs:
 
     - name: npm install, build, and test
       run: |
-        cd new-backstage/
         # npm ci
         # npm run build --if-present
         # npm run lint
@@ -37,7 +34,7 @@ jobs:
     # - name: Upload coverage to Codecov
     #   uses: codecov/codecov-action@v1
     #   with:
-    #     directory: new-backstage/
+    #     directory: /
     #     flags: backstage # Flags allow you to isolate coverage reports for different tests
     #     name: backstage # Custom defined name for the upload
 
@@ -63,7 +60,7 @@ jobs:
         name: ${{ steps.get_owner.outputs.owner }}/backstage
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
-        workdir: new-backstage/
+        # workdir: new-backstage/
         buildoptions: ' --label commit_sha_dojot=${{ github.sha }} '  # label with commit that built image
         tag_names: true # tag will be based in branch name or tag name
 
@@ -85,11 +82,9 @@ jobs:
           export TAG_VERSION=$(sh .github/workflows/scripts/translate_docker_tag.sh)
           echo Documentation Version $TAG_VERSION
           echo ::set-output name=version::$TAG_VERSION
-      # I need to improve this, find another way to do
       - name: Generate docs
         env:
-          FOLDER_TO_GH_PAGES: new-backstage
-          PATH_SWAGGER_YML: ./new-backstage/api/v1.yml
+          PATH_SWAGGER_YML: ./api/v1.yml
           VERSION_NAME: ${{ steps.version_doc.outputs.version }}
         run: |
           sh .github/workflows/scripts/swagger.sh
@@ -100,7 +95,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
           publish_dir: ./swagger-docs
-          destination_dir: new-backstage/swagger
+          destination_dir: api
           keep_files: true
           allow_empty_commit: false
 
@@ -135,10 +130,9 @@ jobs:
         env:
           VERSION_NAME: ${{ steps.version_doc.outputs.version }}
         run: |
-          cd new-backstage/
           npm install
-          mkdir -p new-backstage-docs
-          cd new-backstage-docs
+          mkdir -p backstage-docs-temp
+          cd backstage-docs-temp
           npm install -g @2fd/graphdoc
           node ../docs/GenerateFileSchema.js
           graphdoc -s ../docs/schemaDoc.graphql -o ./${VERSION_NAME} -f
@@ -148,7 +142,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
-          publish_dir: ./new-backstage/new-backstage-docs
-          destination_dir: new-backstage/graphql
+          publish_dir: ./backstage-docs-temp
+          destination_dir: graphql
           keep_files: true
           allow_empty_commit: false
