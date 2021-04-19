@@ -254,7 +254,7 @@ paths:
       description: |
         This endpoint server as a proxy for internal calls to dojot via api gateway (kong). It adds `Authorization: 'Bearer TOKEN'` to the request header based on the current session.
         It is necessary to have created a cookie for the session using / auth endpoint.
-        For example, calling `http://localhost:8000/backstage/v1/proxy/device` internall will be called `http://apigw:8000/device`.
+        For example, calling `http://localhost:8000/backstage/v1/proxy/device` internally will be called `http://apigw:8000/device`.
       operationId: proxyPost
       x-allow-unknown-query-parameters: true
       parameters:
