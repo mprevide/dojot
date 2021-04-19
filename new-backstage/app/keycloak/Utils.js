@@ -1,5 +1,4 @@
-// TODO
-const pathT = (url, realm) => `${url}/realms/${realm}/protocol/openid-connect`;
+const buildOIDCURL = (url, realm) => `${url}/realms/${realm}/protocol/openid-connect`;
 
 /**
  * Built external URL for browser login
@@ -15,7 +14,7 @@ const buildUrlLogin = ({
   codeChallengeMethod,
   urlReturn,
 }) => {
-  const url = new URL(`${pathT(baseUrl, realm)}/auth?`);
+  const url = new URL(`${buildOIDCURL(baseUrl, realm)}/auth?`);
 
   url.searchParams.append('client_id', clientId);
   url.searchParams.append('response_type', 'code');
@@ -39,7 +38,7 @@ const buildUrlLogout = ({
   redirectUri,
   realm,
 }) => {
-  const url = new URL(`${pathT(baseUrl, realm)}/logout?`);
+  const url = new URL(`${buildOIDCURL(baseUrl, realm)}/logout?`);
   url.searchParams.append('redirect_uri', redirectUri);
 
   return url.href;

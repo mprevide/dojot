@@ -16,9 +16,8 @@ const logger = new Logger('backstage:express/routes/v1/Auth');
 /**
  * Routes to Auth
  *
- * TODO
- *
- * @param {string} mountPoint be used as a route prefix
+ * @param {string} object.mountPoint be used as a route prefix
+ *  @param {an instance of ../keycloak} object.keycloak instance of the Keycloak class
 */
 module.exports = ({ mountPoint, keycloak }) => {
   /**

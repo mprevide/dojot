@@ -10,8 +10,8 @@ const { proxy: configProxy } = getConfig('BACKSTAGE');
 const configProxyReplaced = replaceTLSFlattenConfigs(configProxy);
 
 /**
- * TODO
- * @param {*} mountPoint
+ *  Generates configuration file for http-proxy-middleware
+ * @param {string} mountPoint
  * @returns
  */
 const proxyConfiguration = (mountPoint) => {
@@ -38,8 +38,11 @@ const proxyConfiguration = (mountPoint) => {
 };
 
 /**
- * Middleware graphql
+ * Middleware proxy that is an endpoint the proxy,
+ * for for internal calls to dojot via api gateway (kong). It adds
+ * `Authorization: 'Bearer TOKEN'` to the request header based on the current session.
  * Example: http://localhost:8000/backstage/v1/proxy/device to http://apigw:8000/device
+ *
  * @param {string} mountPoint
  * @returns
  */

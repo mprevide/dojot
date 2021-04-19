@@ -5,8 +5,6 @@ const {
 const session = require('express-session');
 const createError = require('http-errors');
 
-// TODO
-// const Keycloak = require('../../../keycloak');
 const SessionStore = require('./SessionStore')(session);
 
 const logger = new Logger('backstage:express/interceptors/session/Session');
@@ -17,6 +15,7 @@ const { session: sessionConfig } = getConfig('BACKSTAGE');
  * Renew the access token through the refresh token if the current access token is expired
  *
  * @param {object} req
+ * @param {an instance of ../keycloak} keycloak instance of the Keycloak class
  */
 const renewAccessTokenIfNecessary = async (req, keycloak) => {
   logger.debug('renewAccessTokenIfNecessary: ...');
@@ -46,7 +45,11 @@ const renewAccessTokenIfNecessary = async (req, keycloak) => {
 
 /**
  * Middleware responsible for creating a session and managing it
- * TODO
+ *
+ * @param {String[]} exceptionRoutes  Array with Patchs  that does not need an active session 
+ *                                    to be accessed
+ * @param {an instance of ../keycloak} object.keycloak instance of the Keycloak class
+ * @param {an instance of ../redis} object.redis instance of the Redis class
  */
 module.exports = ({
   exceptionRoutes,

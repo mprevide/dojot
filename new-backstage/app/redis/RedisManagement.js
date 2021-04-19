@@ -34,7 +34,7 @@ class RedisSessionMgmt {
   }
 
   /**
-   * TODO
+   * Starts client pub
    */
   initPub() {
     logger.debug('initPub:');
@@ -142,7 +142,6 @@ class RedisSessionMgmt {
       await this.redisPub.set(this.prefixSession + sid, value);
       await this.redisPub.expire(this.prefixSession + sid, this.maxLifetime);
       await this.redisPub.set(this.prefixSessionIdle + sid, this.sessionIdleValue);
-      // TODO: this.maxIdle mudar para primeira sessão
       await this.redisPub.expire(this.prefixSessionIdle + sid, this.maxLoginReturnTime);
     } catch (err) {
       logger.error('set:', err);
