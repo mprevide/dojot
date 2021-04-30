@@ -13,8 +13,10 @@ from src.dojot.api import APICallError, DojotAPI
 
 
 MOCK_CONFIG = {
+    'app': {
+        'tenant': 'admin'
+    },
     'dojot': {
-        'app': 'tenant',
         'user': 'admin',
         'passwd': 'admin',
         'url': 'dojot_url',
