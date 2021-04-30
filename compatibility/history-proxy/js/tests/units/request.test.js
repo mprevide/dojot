@@ -2,6 +2,7 @@ const supertest = require('supertest');
 
 const { WebUtils } = require('@dojot/microservice-sdk');
 
+// TODO: createTokenKeycloakGen.js in 0.1.13
 const tokenGen = WebUtils.createTokenGen();
 
 jest.mock('./../../src/handlers/utils', () => {

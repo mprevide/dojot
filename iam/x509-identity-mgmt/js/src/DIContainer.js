@@ -85,7 +85,7 @@ const {
   requestLogInterceptor,
   paginateInterceptor,
   jsonBodyParsingInterceptor,
-  tokenParsingInterceptor,
+  tokenParsingInterceptor, // TODO: /tokenKeycloakParsingInterceptor.js in 0.1.13
   staticFileInterceptor,
 } = WebUtils.framework.interceptors;
 
@@ -164,7 +164,7 @@ function createObject(config) {
       }),
       lifetime: Lifetime.SINGLETON,
     }),
-
+    // TODO: createTokenKeycloakGen.js in 0.1.13
     tokenGen: asFunction(WebUtils.createTokenGen, {
       lifetime: Lifetime.SINGLETON,
     }),
@@ -248,7 +248,7 @@ function createObject(config) {
           DIContainer.resolve('requestLogInterceptor'),
           DIContainer.resolve('paginateInterceptor'),
           DIContainer.resolve('jsonBodyParsingInterceptor'),
-          DIContainer.resolve('tokenParsingInterceptor'),
+          DIContainer.resolve('tokenParsingInterceptor'), // TODO: /tokenKeycloakParsingInterceptor.js in 0.1.13
           DIContainer.resolve('staticFileInterceptor'),
           DIContainer.resolve('scopedDIInterceptor'),
         ],
@@ -329,7 +329,7 @@ function createObject(config) {
       }),
       lifetime: Lifetime.SINGLETON,
     }),
-
+    // TODO: /tokenKeycloakParsingInterceptor.js in 0.1.13
     tokenParsingInterceptor: asFunction(tokenParsingInterceptor, {
       injector: () => ({
         ignoredPaths: ['/throw-away'],
@@ -337,7 +337,7 @@ function createObject(config) {
       }),
       lifetime: Lifetime.SINGLETON,
     }),
-
+    // TODO: /tokenKeycloakParsingInterceptor.js in 0.1.13
     staticFileInterceptor: asFunction(staticFileInterceptor, {
       injector: () => ({
         path: '/api/v1/schemas',

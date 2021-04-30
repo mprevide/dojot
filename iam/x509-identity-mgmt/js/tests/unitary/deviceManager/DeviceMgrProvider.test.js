@@ -10,6 +10,7 @@ const { Logger, WebUtils } = require('@dojot/microservice-sdk');
 
 const DeviceMgrProvider = require('../../../src/deviceManager/DeviceMgrProvider');
 
+// TODO: createTokenKeycloakGen.js in 0.1.13
 const { createTokenGen } = WebUtils;
 
 function deviceModelMock() {
@@ -32,7 +33,7 @@ describe("Unit tests of script 'DeviceMgrProvider.js'", () => {
       deviceMgrUrl: URL.parse(global.config.devicemgr.device.url),
       deviceMgrTimeout: global.config.devicemgr.device.timeout.ms,
       deviceModel: deviceModelMock(),
-      tokenGen: createTokenGen(),
+      tokenGen: createTokenGen(), // TODO: createTokenKeycloakGen.js in 0.1.13
       errorTemplate: global.errorTemplate,
       logger: new Logger('DeviceMgrProvider.test.js'),
     });
