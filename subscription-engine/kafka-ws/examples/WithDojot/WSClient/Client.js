@@ -24,9 +24,7 @@ const filterWhere = process.env.KAFKAWS_APP_FILTER_WHERE;
 // Reading the certificate files
 const ca = (tls) ? [fs.readFileSync(caFile)] : null;
 
-
 async function generateAccessToken() {
-
   const authAddress = `${dojotAddress}/auth/realms/${dojotTenant}/protocol/openid-connect/token`;
   const payload = querystring.stringify({
     grant_type: 'password',
