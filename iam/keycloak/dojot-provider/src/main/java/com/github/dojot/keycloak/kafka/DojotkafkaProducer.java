@@ -94,10 +94,14 @@ public class DojotkafkaProducer {
     }
 
     private Message generateTenantMessage(Event event, String tenant) {
-       Map<String, Object> metadata = generateMetadata(tenant);
-        Map<String, Object> data = new LinkedHashMap<>();
-        data.put("type", event.toString());
-        data.put("tenant", tenant);
-        return new Message(metadata, data);
+        Map<String, Object> metadata = generateMetadata(tenant);
+        Map<String, String> type = new LinkedHashMap<>();
+        Map<String, Object> tenant = new LinkedHashMap<>();
+
+        type.put("type", event.toString());
+
+        tenant.put("tenant", tenant);
+
+        return new Message(metadata, type, tenant);
     }
 }

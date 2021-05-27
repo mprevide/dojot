@@ -9,16 +9,19 @@ import java.util.Map;
 class Message {
 
     private Map<String, Object> metadata;
-    private Map<String, Object> data;
+    private Map<String, String> type;
+    private Map<String, String> tenant;
 
     public Message() {
         metadata = new LinkedHashMap<>();
-        data = new LinkedHashMap<>();
+        type = new LinkedHashMap<>();
+        tenant = new LinkedHashMap<>();
     }
 
-    public Message(Map<String, Object> metadata, Map<String, Object> data) {
+    public Message(Map<String, Object> metadata, Map<String, String> type, Map<String, String> tenant) {
         this.metadata = metadata;
-        this.data = data;
+        this.type = type;
+        this.tenant = tenant;
     }
 
     public Map<String, Object> getMetadata() {
@@ -29,11 +32,21 @@ class Message {
         this.metadata = metadata;
     }
 
-    public Map<String, Object> getData() {
-        return data;
+    public Map<String, String> getType() {
+        return type;
     }
 
-    public void setData(Map<String, Object> data) {
-        this.data = data;
+    public void setType(Map<String, String> type) {
+        this.type = type;
     }
+
+    public Map<String, String> getTenant() {
+        return tenant;
+    }
+
+    public void setTenant(Map<String, String> tenant) {
+        this.tenant = tenant;
+    }
+
+
 }
